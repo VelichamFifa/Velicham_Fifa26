@@ -104,6 +104,10 @@ class ApiService {
     return this.client.get('/leaderboard/community', { params: { limit } });
   }
 
+  getDailyCommunityLeaderboard(limit?: number, date?: string) {
+    return this.client.get('/leaderboard/community/daily', { params: { limit, date } });
+  }
+
   getUserStats() {
     return this.client.get('/leaderboard/stats');
   }

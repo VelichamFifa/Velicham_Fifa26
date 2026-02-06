@@ -1,7 +1,12 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { TopLeader, DailyLeader, CommunityLeader } from '../models';
-import { generateTopLeaderboard, generateDailyLeaderboard, generateCommunityLeaderboard } from '../services/leaderboardService';
+import {
+  generateTopLeaderboard,
+  generateDailyLeaderboard,
+  generateCommunityLeaderboard,
+  generateDailyCommunityLeaderboard,
+} from '../services/leaderboardService';
 
 export const getTopLeaderboard = async (req: AuthRequest, res: Response) => {
   try {
@@ -57,6 +62,26 @@ export const getCommunityLeaderboard = async (req: AuthRequest, res: Response) =
   } catch (error) {
     console.error('Get community leaderboard error:', error);
     res.status(500).json({ error: 'Failed to fetch community leaderboard' });
+  }
+};
+
+export const getDailyCommunityLeaderboard = async (req: AuthRequest, res: Response) => {
+  try {
+    const { limit = '30', date } = req.query;
+    const limitNum = parseInt(limit as string, 10);
+
+    const targetDate = date ? new Date(date as string) : new Date();
+    targetDate.setHours(0, 0, 0, 0);
+
+    const leaderboard = await generateDailyCommunityLeaderboard(limitNum, targetDate);
+
+    res.json({
+      leaderboard,
+      source: 'database',
+    });
+  } catch (error) {
+    console.error('Get daily community leaderboard error:', error);
+    res.status(500).json({ error: 'Failed to fetch daily community leaderboard' });
   }
 };
 

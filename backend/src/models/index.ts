@@ -8,3 +8,4 @@ export { CommunityResult } from './CommunityResult';
 export { TopLeader } from './TopLeader';
 export { DailyLeader } from './DailyLeader';
 export { CommunityLeader } from './CommunityLeader';
+export { DailyCommunityLeader } from './DailyCommunityLeader';

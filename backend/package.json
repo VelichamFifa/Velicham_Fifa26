@@ -13,8 +13,10 @@
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
     "seed:communities": "tsx scripts/seedCommunities.ts",
+    "seed:users": "tsx scripts/seedUsers.ts",
     "seed:teams": "tsx scripts/seedTeams.ts",
-    "seed:matches": "tsx scripts/seedMatches.ts"
+    "seed:matches": "tsx scripts/seedMatches.ts",
+    "seed:leaderboards": "tsx scripts/seedLeaderboards.ts"
   },
   "dependencies": {
     "axios": "^1.6.2",

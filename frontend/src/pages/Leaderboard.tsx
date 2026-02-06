@@ -4,10 +4,11 @@ import { LeaderboardEntry, CommunityLeaderboardEntry } from '../types';
 import Leaderboard from '../components/Leaderboard';
 
 const LeaderboardPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'top' | 'daily' | 'community'>('top');
+  const [activeTab, setActiveTab] = useState<'top' | 'daily' | 'community' | 'daily-community'>('top');
   const [topLeaderboard, setTopLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [dailyLeaderboard, setDailyLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [communityLeaderboard, setCommunityLeaderboard] = useState<CommunityLeaderboardEntry[]>([]);
+  const [dailyCommunityLeaderboard, setDailyCommunityLeaderboard] = useState<CommunityLeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -18,15 +19,17 @@ const LeaderboardPage: React.FC = () => {
     try {
       setLoading(true);
 
-      const [topRes, dailyRes, communityRes] = await Promise.all([
+      const [topRes, dailyRes, communityRes, dailyCommunityRes] = await Promise.all([
         apiService.getTopLeaderboard(30),
         apiService.getDailyLeaderboard(30),
         apiService.getCommunityLeaderboard(30),
+        apiService.getDailyCommunityLeaderboard(30),
       ]);
 
       setTopLeaderboard(topRes.data.leaderboard || []);
       setDailyLeaderboard(dailyRes.data.leaderboard || []);
       setCommunityLeaderboard(communityRes.data.leaderboard || []);
+      setDailyCommunityLeaderboard(dailyCommunityRes.data.leaderboard || []);
     } catch (error) {
       console.error('Failed to load leaderboards:', error);
     } finally {
@@ -69,6 +72,16 @@ const LeaderboardPage: React.FC = () => {
         >
           👥 Communities
         </button>
+        <button
+          onClick={() => setActiveTab('daily-community')}
+          className={`px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-medium border-b-2 transition whitespace-nowrap ${
+            activeTab === 'daily-community'
+              ? 'border-secondary text-secondary'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          🗓️ Daily Communities
+        </button>
       </div>
 
       {loading ? (
@@ -97,6 +110,13 @@ const LeaderboardPage: React.FC = () => {
               entries={communityLeaderboard}
               type="community"
               title="Community Rankings"
+            />
+          )}
+          {activeTab === 'daily-community' && (
+            <Leaderboard
+              entries={dailyCommunityLeaderboard}
+              type="community"
+              title="Today's Community Leaders"
             />
           )}
         </>

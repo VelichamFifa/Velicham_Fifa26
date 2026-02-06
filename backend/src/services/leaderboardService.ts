@@ -1,4 +1,11 @@
-import { Result, CommunityResult, TopLeader, DailyLeader, CommunityLeader, User, Community } from '../models';
+import {
+  Result,
+  CommunityResult,
+  TopLeader,
+  DailyLeader,
+  CommunityLeader,
+  DailyCommunityLeader,
+} from '../models';
 
 export const generateTopLeaderboard = async (limit: number = 30) => {
   try {
@@ -9,7 +16,6 @@ export const generateTopLeaderboard = async (limit: number = 30) => {
           _id: '$userId',
           totalPoints: { $sum: '$matchPoints' },
           userName: { $first: '$userName' },
-          email: { $first: '$email' },
         },
       },
       { $sort: { totalPoints: -1 } },
@@ -33,8 +39,8 @@ export const generateTopLeaderboard = async (limit: number = 30) => {
           _id: 0,
           userId: '$_id',
           totalPoints: 1,
-          userName: 1,
-          email: 1,
+          name: '$userName',
+          email: '$user.email',
           state: '$user.state',
           community1: '$user.communityId1',
           community2: '$user.communityId2',
@@ -75,7 +81,6 @@ export const generateDailyLeaderboard = async (limit: number = 30) => {
           _id: '$userId',
           totalPoints: { $sum: '$matchPoints' },
           userName: { $first: '$userName' },
-          email: { $first: '$email' },
         },
       },
       { $sort: { totalPoints: -1 } },
@@ -99,8 +104,8 @@ export const generateDailyLeaderboard = async (limit: number = 30) => {
           _id: 0,
           userId: '$_id',
           totalPoints: 1,
-          userName: 1,
-          email: 1,
+          name: '$userName',
+          email: '$user.email',
           state: '$user.state',
           community1: '$user.communityId1',
           community2: '$user.communityId2',
@@ -173,6 +178,65 @@ export const generateCommunityLeaderboard = async (limit: number = 30) => {
     return leaderboard;
   } catch (error) {
     console.error('Error generating community leaderboard:', error);
+    return [];
+  }
+};
+
+export const generateDailyCommunityLeaderboard = async (limit: number = 30, date?: Date) => {
+  try {
+    const targetDate = date ? new Date(date) : new Date();
+    targetDate.setHours(0, 0, 0, 0);
+
+    const results = await CommunityResult.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: targetDate },
+        },
+      },
+      {
+        $group: {
+          _id: '$communityId',
+          totalPoints: { $sum: '$communityMatchPoint' },
+        },
+      },
+      { $sort: { totalPoints: -1 } },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'communities',
+          localField: '_id',
+          foreignField: 'communityId',
+          as: 'community',
+        },
+      },
+      {
+        $unwind: {
+          path: '$community',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          communityId: '$_id',
+          communityName: '$community.name',
+          totalPoints: 1,
+        },
+      },
+    ]);
+
+    const leaderboard = results.map((item, index) => ({
+      rank: index + 1,
+      date: targetDate,
+      ...item,
+    }));
+
+    await DailyCommunityLeader.deleteMany({ date: { $gte: targetDate } });
+    await DailyCommunityLeader.insertMany(leaderboard);
+
+    return leaderboard;
+  } catch (error) {
+    console.error('Error generating daily community leaderboard:', error);
     return [];
   }
 };
