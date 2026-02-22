@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { TopLeader, DailyLeader, CommunityLeader } from '../models';
+import { User, TopLeader, DailyLeader, CommunityLeader, DailyCommunityLeader, Community } from '../models';
 import {
   generateTopLeaderboard,
   generateDailyLeaderboard,
@@ -93,12 +93,57 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const topRank = await TopLeader.findOne({ userId });
     const dailyRank = await DailyLeader.findOne({ userId });
+
+    // Fetch community ranks
+    const communityRanks: any[] = [];
+
+    if (user.communityId1) {
+      const overall = await CommunityLeader.findOne({ communityId: user.communityId1 });
+      const daily = await DailyCommunityLeader.findOne({ communityId: user.communityId1 }).sort({ date: -1 });
+
+      let communityName = overall?.communityName;
+      if (!communityName) {
+        const community = await Community.findOne({ communityId: user.communityId1 });
+        communityName = community?.name || 'Unknown';
+      }
+
+      communityRanks.push({
+        communityId: user.communityId1,
+        name: communityName,
+        overall: overall || { rank: 'N/A', totalPoints: 0 },
+        daily: daily || { rank: 'N/A', totalPoints: 0 },
+      });
+    }
+
+    if (user.communityId2) {
+      const overall = await CommunityLeader.findOne({ communityId: user.communityId2 });
+      const daily = await DailyCommunityLeader.findOne({ communityId: user.communityId2 }).sort({ date: -1 });
+
+      let communityName = overall?.communityName;
+      if (!communityName) {
+        const community = await Community.findOne({ communityId: user.communityId2 });
+        communityName = community?.name || 'Unknown';
+      }
+
+      communityRanks.push({
+        communityId: user.communityId2,
+        name: communityName,
+        overall: overall || { rank: 'N/A', totalPoints: 0 },
+        daily: daily || { rank: 'N/A', totalPoints: 0 },
+      });
+    }
 
     res.json({
       overall: topRank || { rank: 'N/A', totalPoints: 0 },
       daily: dailyRank || { rank: 'N/A', totalPoints: 0 },
+      communities: communityRanks,
     });
   } catch (error) {
     console.error('Get user stats error:', error);

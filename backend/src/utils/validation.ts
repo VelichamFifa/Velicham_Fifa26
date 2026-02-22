@@ -6,12 +6,13 @@ export const schemas = {
     firstName: Joi.string().min(2).required(),
     lastName: Joi.string().min(2).required(),
     password: Joi.string().min(6).required(),
-    whatsappNumber: Joi.string(),
-    city: Joi.string(),
-    state: Joi.string(),
-    country: Joi.string(),
-    communityId1: Joi.string(),
-    communityId2: Joi.string(),
+    whatsappNumber: Joi.string().allow('', null),
+    city: Joi.string().allow('', null),
+    state: Joi.string().allow('', null),
+    country: Joi.string().allow('', null),
+    communityId1: Joi.string().allow('', null),
+    communityId2: Joi.string().allow('', null),
+    requestedCommunity: Joi.string().allow('', null),
   }),
 
   login: Joi.object({
@@ -23,7 +24,7 @@ export const schemas = {
     matchId: Joi.string().required(),
     team1Score: Joi.number().min(0).required(),
     team2Score: Joi.number().min(0).required(),
-    comment: Joi.string(),
+    comment: Joi.string().allow('', null).optional(),
   }),
 
   match: Joi.object({

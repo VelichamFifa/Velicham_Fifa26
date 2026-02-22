@@ -19,6 +19,8 @@ export interface IUser extends Document {
   googleId?: string;
   instagramId?: string;
   profileImage?: string;
+  role: 'user' | 'admin';
+  requestedCommunity?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -102,6 +104,15 @@ const userSchema = new Schema<IUser>(
     },
     profileImage: {
       type: String,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+    requestedCommunity: {
+      type: String,
+      trim: true,
     },
   },
   { timestamps: true }

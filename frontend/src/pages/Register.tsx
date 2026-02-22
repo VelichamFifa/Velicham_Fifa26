@@ -2,14 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../hooks/useAuth';
+import { Community } from '../types';
 
-interface Community {
-  _id: string;
-  communityId: string;
-  name: string;
-  state: string;
-  city: string;
-}
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +19,7 @@ const Register: React.FC = () => {
     country: '',
     communityId1: '',
     communityId2: '',
+    requestedCommunity: '',
   });
 
   const [communities, setCommunities] = useState<Community[]>([]);
@@ -61,8 +56,25 @@ const Register: React.FC = () => {
     setError('');
     setLoading(true);
 
+    // Frontend validation: Check if at least one community is provided (selected or requested)
+    if (!formData.communityId1 && !formData.requestedCommunity) {
+      setError('Please select an existing community or request a new one.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await apiService.register(formData);
+
+      // If they only REQUESTED a community, the backend will block login.
+      // We should check if communityId1 was provided in the response (or if we sent it)
+      if (!formData.communityId1) {
+        setError('Your request has been submitted. An admin will review it soon. You can log in once your first community is approved.');
+        setLoading(false);
+        // We don't call login() here because they can't log in yet.
+        return;
+      }
+
       login(response.data.token, response.data.user);
       navigate('/dashboard');
     } catch (err: any) {
@@ -186,7 +198,7 @@ const Register: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Community 1 (Optional)
+                Community 1 (Required)
               </label>
               <select
                 name="communityId1"
@@ -224,6 +236,23 @@ const Register: React.FC = () => {
             </div>
           </div>
 
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Don't see your community? Request here:
+            </label>
+            <input
+              type="text"
+              name="requestedCommunity"
+              value={formData.requestedCommunity}
+              onChange={handleChange}
+              placeholder="Enter community name"
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+            />
+            <p className="text-[10px] text-gray-500 mt-1 italic leading-tight">
+              Note: If you request a new community as your first community, your account will be pending approval before you can log in.
+            </p>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
@@ -231,7 +260,7 @@ const Register: React.FC = () => {
           >
             {loading ? 'Creating Account...' : 'Register'}
           </button>
-        </form>
+        </form >
 
         <p className="text-center text-gray-600 mt-4">
           Already have an account?{' '}
@@ -239,8 +268,8 @@ const Register: React.FC = () => {
             Login
           </a>
         </p>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

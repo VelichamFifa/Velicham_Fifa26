@@ -13,6 +13,30 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [showPredictionForm, setShowPredictionForm] = useState(false);
+  const [predictionCount, setPredictionCount] = useState(0);
+  interface UserRankInfo {
+    rank: string | number;
+    totalPoints: number;
+  }
+
+  interface CommunityStat {
+    communityId: string;
+    name: string;
+    overall: UserRankInfo;
+    daily: UserRankInfo;
+  }
+
+  interface UserStats {
+    overall: UserRankInfo;
+    daily: UserRankInfo;
+    communities: CommunityStat[];
+  }
+
+  const [userStats, setUserStats] = useState<UserStats>({
+    overall: { rank: 'N/A', totalPoints: 0 },
+    daily: { rank: 'N/A', totalPoints: 0 },
+    communities: [],
+  });
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -20,16 +44,23 @@ const Dashboard: React.FC = () => {
       return;
     }
 
-    loadMatches();
+    loadDashboardData();
   }, [isLoggedIn, navigate]);
 
-  const loadMatches = async () => {
+  const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getAllMatches(undefined, 1, 20);
-      setMatches(response.data.matches);
+      const [matchesRes, predictionsRes, statsRes] = await Promise.all([
+        apiService.getAllMatches(undefined, 1, 20),
+        apiService.getUserPredictions(1, 1),
+        apiService.getUserStats(),
+      ]);
+
+      setMatches(matchesRes.data.matches);
+      setPredictionCount(predictionsRes.data.pagination.total);
+      setUserStats(statsRes.data);
     } catch (error) {
-      console.error('Failed to load matches:', error);
+      console.error('Failed to load dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -43,7 +74,7 @@ const Dashboard: React.FC = () => {
   const handlePredictionSuccess = () => {
     setShowPredictionForm(false);
     setSelectedMatch(null);
-    loadMatches();
+    loadDashboardData();
   };
 
   return (
@@ -58,13 +89,53 @@ const Dashboard: React.FC = () => {
           <h3 className="text-gray-600 text-sm font-medium mb-1">Active Matches</h3>
           <p className="text-3xl font-bold text-secondary">{matches.filter(m => m.status === 'scheduled').length}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-gray-600 text-sm font-medium mb-1">My Predictions</h3>
-          <p className="text-3xl font-bold text-secondary">0</p>
+        <div
+          onClick={() => navigate('/my-predictions')}
+          className="bg-white p-6 rounded-lg shadow cursor-pointer hover:bg-gray-50 transition border-2 border-transparent hover:border-secondary"
+        >
+          <div className="flex justify-between items-start">
+            <h3 className="text-gray-600 text-sm font-medium mb-1">My Predictions</h3>
+            <span className="text-xs text-secondary font-bold">VIEW ALL →</span>
+          </div>
+          <p className="text-3xl font-bold text-secondary">{predictionCount}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-gray-600 text-sm font-medium mb-1">Current Rank</h3>
-          <p className="text-3xl font-bold text-secondary">-</p>
+        <div
+          onClick={() => navigate('/leaderboard')}
+          className="bg-white p-4 rounded-lg shadow cursor-pointer hover:bg-gray-50 transition border-2 border-transparent hover:border-secondary overflow-hidden"
+        >
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-gray-600 text-[11px] uppercase font-bold tracking-wider">My Rankings</h3>
+            <span className="text-[10px] text-secondary font-bold">VIEW BOARD →</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="bg-gray-50 rounded p-2 flex flex-col items-center justify-center border-l-4 border-secondary">
+              <span className="text-[9px] text-gray-500 uppercase font-bold">Overall</span>
+              <span className="text-xl font-black text-secondary">#{userStats.overall.rank}</span>
+            </div>
+            <div className="bg-gray-50 rounded p-2 flex flex-col items-center justify-center border-l-4 border-primary">
+              <span className="text-[9px] text-gray-500 uppercase font-bold">Daily</span>
+              <span className="text-xl font-black text-primary">#{userStats.daily.rank}</span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            {userStats.communities.map((comm) => (
+              <div key={comm.communityId} className="bg-white border border-gray-100 rounded p-1.5">
+                <div className="text-[9px] text-gray-400 font-bold truncate mb-1">{comm.name}</div>
+                <div className="flex justify-between items-center px-1">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-[8px] text-gray-400 uppercase">Overall</span>
+                    <span className="text-xs font-bold text-secondary">#{comm.overall.rank}</span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-[8px] text-gray-400 uppercase">Daily</span>
+                    <span className="text-xs font-bold text-primary">#{comm.daily.rank}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

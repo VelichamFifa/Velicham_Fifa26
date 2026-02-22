@@ -61,6 +61,11 @@ const Header: React.FC = () => {
                 <Link to="/dashboard" className="hover:text-secondary transition">
                   Dashboard
                 </Link>
+                {user?.role === 'admin' && (
+                  <Link to="/admin" className="hover:text-secondary font-bold text-yellow-400 transition">
+                    Admin
+                  </Link>
+                )}
                 <div className="flex items-center gap-3">
                   <span className="text-sm hidden lg:inline">
                     Hi, {user?.firstName}
@@ -122,6 +127,15 @@ const Header: React.FC = () => {
                 >
                   Dashboard
                 </Link>
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className="block py-2 hover:text-secondary font-bold text-yellow-400 transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Admin Panel
+                  </Link>
+                )}
                 <div className="pt-2 border-t border-blue-800">
                   <span className="block text-sm mb-3">
                     Hi, {user?.firstName}

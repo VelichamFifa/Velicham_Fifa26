@@ -112,6 +112,31 @@ class ApiService {
     return this.client.get('/leaderboard/stats');
   }
 
+  // Admin endpoints
+  getCommunityRequests() {
+    return this.client.get('/admin/community-requests');
+  }
+
+  approveCommunity(data: { userId: string, communityId: string }) {
+    return this.client.post('/admin/approve-community', data);
+  }
+
+  createAndApproveCommunity(data: { userId: string; name: string; state?: string; city?: string }) {
+    return this.client.post('/admin/create-and-approve-community', data);
+  }
+
+  finalizeMatch(data: { matchId: string, team1Score: number, team2Score: number }) {
+    return this.client.post('/admin/finalize-match', data);
+  }
+
+  getAllUsers() {
+    return this.client.get('/admin/users');
+  }
+
+  deleteUser(userId: string) {
+    return this.client.delete(`/admin/users/${userId}`);
+  }
+
   // Community endpoints
   getCommunities() {
     return this.client.get('/communities');

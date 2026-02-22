@@ -1,4 +1,4 @@
-import { Match, Prediction, Result, User } from '../models';
+import { Match, Prediction, Result, User, CommunityResult } from '../models';
 
 interface ScoringCriteria {
   correctResult: number; // 5 points
@@ -65,6 +65,7 @@ export const processMatchResults = async (matchId: string) => {
     }
 
     const predictions = await Prediction.find({ matchId });
+    const communityPointsMap = new Map<string, number>();
 
     for (const prediction of predictions) {
       const points = calculatePredictionPoints(
@@ -94,7 +95,7 @@ export const processMatchResults = async (matchId: string) => {
       const user = await User.findOne({ userId: prediction.userId });
 
       if (user) {
-        const resultDoc = await Result.findOneAndUpdate(
+        await Result.findOneAndUpdate(
           { userId: prediction.userId, matchId },
           {
             userId: prediction.userId,
@@ -109,6 +110,39 @@ export const processMatchResults = async (matchId: string) => {
           },
           { upsert: true, new: true }
         );
+
+        // Accumulate points for Community 1
+        if (user.communityId1) {
+          const current = communityPointsMap.get(user.communityId1) || 0;
+          communityPointsMap.set(user.communityId1, current + points);
+        }
+
+        // Accumulate points for Community 2 (only if it's different from Community 1)
+        if (user.communityId2 && user.communityId2 !== user.communityId1) {
+          const current = communityPointsMap.get(user.communityId2) || 0;
+          communityPointsMap.set(user.communityId2, current + points);
+        }
+      }
+    }
+
+    console.log(`✓ Processed ${predictions.length} predictions for match ${matchId}`);
+    console.log(`📊 Community Points to save:`, Object.fromEntries(communityPointsMap));
+
+    // Update CommunityResult for each community that had members playing
+    for (const [communityId, communityPoints] of communityPointsMap) {
+      try {
+        await CommunityResult.findOneAndUpdate(
+          { communityId, matchId },
+          {
+            communityId,
+            matchId,
+            matchTag: match.matchTag,
+            communityMatchPoint: communityPoints,
+          },
+          { upsert: true, new: true }
+        );
+      } catch (saveError) {
+        console.error(`✗ Failed to save CommunityResult for ${communityId}:`, saveError);
       }
     }
 

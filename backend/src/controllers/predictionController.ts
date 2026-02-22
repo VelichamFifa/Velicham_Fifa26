@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { Prediction, Match, User } from '../models';
+import { Prediction, Match, User, Result } from '../models';
 
 export const submitPrediction = async (req: AuthRequest, res: Response) => {
   try {
@@ -70,14 +70,42 @@ export const getUserPredictions = async (req: AuthRequest, res: Response) => {
     }
 
     const predictions = await Prediction.find(filter)
-      .sort({ submittedTime: -1 })
+      .sort({ createdAt: -1 }) // Sort by newest prediction first
       .skip(skip)
       .limit(limitNum);
+
+    // Manually populate matchId
+    const matchIds = [...new Set(predictions.map(p => p.matchId))];
+    const [matches, results] = await Promise.all([
+      Match.find({ matchId: { $in: matchIds } }),
+      Result.find({ userId, matchId: { $in: matchIds } })
+    ]);
+
+    const populatedPredictions = predictions.map(prediction => {
+      const match = matches.find(m => m.matchId === prediction.matchId);
+      const result = results.find(r => r.matchId === prediction.matchId);
+
+      return {
+        ...prediction.toObject(),
+        matchId: match || prediction.matchId,
+        historicRank: result ? {
+          finalRank: result.finalRank,
+          dailyRank: result.dailyRank
+        } : null
+      };
+    });
+
+    // Sort by match time descending for history view
+    populatedPredictions.sort((a: any, b: any) => {
+      const timeA = a.matchId?.matchTime ? new Date(a.matchId.matchTime).getTime() : 0;
+      const timeB = b.matchId?.matchTime ? new Date(b.matchId.matchTime).getTime() : 0;
+      return timeB - timeA;
+    });
 
     const total = await Prediction.countDocuments(filter);
 
     res.json({
-      predictions,
+      predictions: populatedPredictions,
       pagination: {
         total,
         page: pageNum,

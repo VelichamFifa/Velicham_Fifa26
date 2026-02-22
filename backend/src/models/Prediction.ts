@@ -28,7 +28,6 @@ const predictionSchema = new Schema<IPrediction>(
     matchId: {
       type: String,
       required: true,
-      ref: 'Match',
     },
     matchTag: {
       type: String,

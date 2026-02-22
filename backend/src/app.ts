@@ -12,6 +12,7 @@ import matchRoutes from './routes/matchRoutes';
 import predictionRoutes from './routes/predictionRoutes';
 import leaderboardRoutes from './routes/leaderboardRoutes';
 import communityRoutes from './routes/communityRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 const app: Express = express();
 
@@ -45,6 +46,7 @@ app.use('/api/matches', matchRoutes);
 app.use('/api/predictions', predictionRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/communities', communityRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {

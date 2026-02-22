@@ -5,11 +5,16 @@ import { generateToken, hashPassword, comparePasswords } from '../utils/auth';
 
 export const register = async (req: AuthRequest, res: Response) => {
   try {
-    const { email, firstName, lastName, password, city, state, country, communityId1, communityId2, whatsappNumber } = req.body;
+    const { email, firstName, lastName, password, city, state, country, communityId1, communityId2, whatsappNumber, requestedCommunity } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    // Enforce mandatory community: either select one or request one
+    if (!communityId1 && !requestedCommunity) {
+      return res.status(400).json({ error: 'Please select a community or request a new one' });
     }
 
     // Validate communities exist if provided
@@ -21,6 +26,9 @@ export const register = async (req: AuthRequest, res: Response) => {
     }
 
     if (communityId2) {
+      if (communityId1 === communityId2) {
+        return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });
+      }
       const community2 = await Community.findOne({ communityId: communityId2 });
       if (!community2) {
         return res.status(400).json({ error: 'Community 2 not found' });
@@ -42,13 +50,15 @@ export const register = async (req: AuthRequest, res: Response) => {
       communityId1,
       communityId2,
       whatsappNumber,
+      requestedCommunity,
       status: 'active',
       isActive: true,
+      role: 'user', // Default role
     });
 
     await user.save();
 
-    const token = generateToken(userId, email);
+    const token = generateToken(userId, email, user.role);
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -63,6 +73,7 @@ export const register = async (req: AuthRequest, res: Response) => {
         country,
         communityId1,
         communityId2,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -85,7 +96,14 @@ export const login = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const token = generateToken(user.userId, user.email);
+    // Block login if the first community is pending approval (except for admins)
+    if (user.role !== 'admin' && !user.communityId1) {
+      return res.status(403).json({
+        error: 'Your community request is pending approval. You will be able to log in once it is approved.'
+      });
+    }
+
+    const token = generateToken(user.userId, user.email, user.role);
 
     res.json({
       message: 'Login successful',
@@ -100,6 +118,7 @@ export const login = async (req: AuthRequest, res: Response) => {
         country: user.country,
         communityId1: user.communityId1,
         communityId2: user.communityId2,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -127,6 +146,8 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       communityId1: user.communityId1,
       communityId2: user.communityId2,
       whatsappNumber: user.whatsappNumber,
+      requestedCommunity: user.requestedCommunity,
+      role: user.role,
       status: user.status,
       isActive: user.isActive,
     });
@@ -153,6 +174,10 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     if (whatsappNumber) user.whatsappNumber = whatsappNumber;
     if (communityId1) user.communityId1 = communityId1;
     if (communityId2) user.communityId2 = communityId2;
+
+    if (user.communityId1 && user.communityId2 && user.communityId1 === user.communityId2) {
+      return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });
+    }
 
     await user.save();
 

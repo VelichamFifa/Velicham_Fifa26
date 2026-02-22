@@ -35,6 +35,34 @@ export const generateTopLeaderboard = async (limit: number = 30) => {
         },
       },
       {
+        $lookup: {
+          from: 'communities',
+          localField: 'user.communityId1',
+          foreignField: 'communityId',
+          as: 'comm1',
+        },
+      },
+      {
+        $unwind: {
+          path: '$comm1',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'communities',
+          localField: 'user.communityId2',
+          foreignField: 'communityId',
+          as: 'comm2',
+        },
+      },
+      {
+        $unwind: {
+          path: '$comm2',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
           _id: 0,
           userId: '$_id',
@@ -42,17 +70,25 @@ export const generateTopLeaderboard = async (limit: number = 30) => {
           name: '$userName',
           email: '$user.email',
           state: '$user.state',
-          community1: '$user.communityId1',
-          community2: '$user.communityId2',
+          community1: { $ifNull: ['$comm1.name', '$user.communityId1'] },
+          community2: { $ifNull: ['$comm2.name', '$user.communityId2'] },
         },
       },
     ]);
 
-    // Add rank
-    const leaderboard = results.map((item, index) => ({
-      rank: index + 1,
-      ...item,
-    }));
+    // Add rank with Dense Ranking (1, 2, 2, 3...)
+    let lastPoints = -1;
+    let rankToAssign = 0;
+    const leaderboard = results.map((item) => {
+      if (item.totalPoints !== lastPoints) {
+        rankToAssign++;
+        lastPoints = item.totalPoints;
+      }
+      return {
+        rank: rankToAssign,
+        ...item,
+      };
+    });
 
     // Update TopLeader collection
     await TopLeader.deleteMany({});
@@ -100,6 +136,34 @@ export const generateDailyLeaderboard = async (limit: number = 30) => {
         },
       },
       {
+        $lookup: {
+          from: 'communities',
+          localField: 'user.communityId1',
+          foreignField: 'communityId',
+          as: 'comm1',
+        },
+      },
+      {
+        $unwind: {
+          path: '$comm1',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'communities',
+          localField: 'user.communityId2',
+          foreignField: 'communityId',
+          as: 'comm2',
+        },
+      },
+      {
+        $unwind: {
+          path: '$comm2',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
           _id: 0,
           userId: '$_id',
@@ -107,17 +171,26 @@ export const generateDailyLeaderboard = async (limit: number = 30) => {
           name: '$userName',
           email: '$user.email',
           state: '$user.state',
-          community1: '$user.communityId1',
-          community2: '$user.communityId2',
+          community1: { $ifNull: ['$comm1.name', '$user.communityId1'] },
+          community2: { $ifNull: ['$comm2.name', '$user.communityId2'] },
         },
       },
     ]);
 
-    const leaderboard = results.map((item, index) => ({
-      rank: index + 1,
-      date: today,
-      ...item,
-    }));
+    // Add rank with Dense Ranking
+    let lastPoints = -1;
+    let rankToAssign = 0;
+    const leaderboard = results.map((item) => {
+      if (item.totalPoints !== lastPoints) {
+        rankToAssign++;
+        lastPoints = item.totalPoints;
+      }
+      return {
+        rank: rankToAssign,
+        date: today,
+        ...item,
+      };
+    });
 
     // Update DailyLeader collection
     await DailyLeader.deleteMany({ date: { $gte: today } });
@@ -166,10 +239,19 @@ export const generateCommunityLeaderboard = async (limit: number = 30) => {
       },
     ]);
 
-    const leaderboard = results.map((item, index) => ({
-      rank: index + 1,
-      ...item,
-    }));
+    // Add rank with Dense Ranking
+    let lastPoints = -1;
+    let rankToAssign = 0;
+    const leaderboard = results.map((item) => {
+      if (item.totalPoints !== lastPoints) {
+        rankToAssign++;
+        lastPoints = item.totalPoints;
+      }
+      return {
+        rank: rankToAssign,
+        ...item,
+      };
+    });
 
     // Update CommunityLeader collection
     await CommunityLeader.deleteMany({});
@@ -225,11 +307,20 @@ export const generateDailyCommunityLeaderboard = async (limit: number = 30, date
       },
     ]);
 
-    const leaderboard = results.map((item, index) => ({
-      rank: index + 1,
-      date: targetDate,
-      ...item,
-    }));
+    // Add rank with Dense Ranking
+    let lastPoints = -1;
+    let rankToAssign = 0;
+    const leaderboard = results.map((item) => {
+      if (item.totalPoints !== lastPoints) {
+        rankToAssign++;
+        lastPoints = item.totalPoints;
+      }
+      return {
+        rank: rankToAssign,
+        date: targetDate,
+        ...item,
+      };
+    });
 
     await DailyCommunityLeader.deleteMany({ date: { $gte: targetDate } });
     await DailyCommunityLeader.insertMany(leaderboard);

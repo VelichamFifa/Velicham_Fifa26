@@ -3,6 +3,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  role: 'user' | 'admin';
   city: string;
   state: string;
   country: string;
@@ -11,6 +12,15 @@ export interface User {
   whatsappNumber?: string;
   status: 'active' | 'inactive' | 'suspended';
   isActive: boolean;
+  createdAt?: string;
+}
+
+export interface Community {
+  _id: string;
+  communityId: string;
+  name: string;
+  state: string;
+  city: string;
 }
 
 export interface Match {
@@ -33,15 +43,18 @@ export interface Prediction {
   _id?: string;
   userId: string;
   email: string;
-  matchId: string;
+  matchId: string | Match;
   matchTag: string;
   team1Score: number;
   team2Score: number;
   submittedTime: string;
   points: number;
   comment?: string;
+  historicRank?: {
+    finalRank: number;
+    dailyRank: number;
+  } | null;
 }
-
 export interface LeaderboardEntry {
   rank: number;
   totalPoints: number;

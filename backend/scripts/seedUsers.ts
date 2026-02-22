@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { User } from '../src/models';
-import { seedUsers } from './seedData/users';
+import { seedUsers as seedUsersData } from './seedData/users';
 
 dotenv.config();
 
@@ -19,7 +19,7 @@ async function seedUsers() {
     await User.deleteMany({});
     console.log('Cleared existing users');
 
-    const result = await User.insertMany(seedUsers);
+    const result = await User.insertMany(seedUsersData);
     console.log(`Successfully seeded ${result.length} users:`);
     result.forEach((user) => {
       console.log(`  - ${user.firstName} ${user.lastName} (${user.userId})`);
