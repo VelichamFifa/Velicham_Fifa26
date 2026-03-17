@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import { User, Community } from '../models';
 import { generateToken, hashPassword, comparePasswords } from '../utils/auth';
 import { OAuth2Client } from 'google-auth-library';
+import { capitalizeProperNoun } from '../utils/stringUtils';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -15,10 +16,7 @@ export const register = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
-    // Enforce mandatory community: either select one or request one
-    if (!communityId1 && !requestedCommunity) {
-      return res.status(400).json({ error: 'Please select a community or request a new one' });
-    }
+    // Registration is allowed with no community
 
     // Validate communities exist if provided
     if (communityId1) {
@@ -44,12 +42,12 @@ export const register = async (req: AuthRequest, res: Response) => {
     const user = new User({
       userId,
       email,
-      firstName,
-      lastName,
+      firstName: capitalizeProperNoun(firstName),
+      lastName: capitalizeProperNoun(lastName),
       password: hashedPassword,
-      city,
-      state,
-      country,
+      city: capitalizeProperNoun(city),
+      state: capitalizeProperNoun(state),
+      country: capitalizeProperNoun(country),
       communityId1,
       communityId2,
       whatsappNumber,
@@ -99,12 +97,7 @@ export const login = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Block login if the first community is pending approval (except for admins)
-    if (user.role !== 'admin' && !user.communityId1) {
-      return res.status(403).json({
-        error: 'Your community request is pending approval. You will be able to log in once it is approved.'
-      });
-    }
+    // Community requirement removed
 
     const token = generateToken(user.userId, user.email, user.role);
 
@@ -235,21 +228,22 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
 
 export const updateUserProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const { firstName, lastName, city, state, country, whatsappNumber, communityId1, communityId2 } = req.body;
+    const { firstName, lastName, city, state, country, whatsappNumber, communityId1, communityId2, requestedCommunity } = req.body;
 
     const user = await User.findOne({ userId: req.user?.userId });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
-    if (city) user.city = city;
-    if (state) user.state = state;
-    if (country) user.country = country;
+    if (firstName) user.firstName = capitalizeProperNoun(firstName);
+    if (lastName) user.lastName = capitalizeProperNoun(lastName);
+    if (city) user.city = capitalizeProperNoun(city);
+    if (state) user.state = capitalizeProperNoun(state);
+    if (country) user.country = capitalizeProperNoun(country);
     if (whatsappNumber) user.whatsappNumber = whatsappNumber;
     if (communityId1) user.communityId1 = communityId1;
     if (communityId2) user.communityId2 = communityId2;
+    if (requestedCommunity !== undefined) user.requestedCommunity = requestedCommunity;
 
     if (user.communityId1 && user.communityId2 && user.communityId1 === user.communityId2) {
       return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });

@@ -14,6 +14,7 @@ const Dashboard: React.FC = () => {
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [showPredictionForm, setShowPredictionForm] = useState(false);
   const [predictionCount, setPredictionCount] = useState(0);
+  const [userPredictions, setUserPredictions] = useState<any[]>([]);
   interface UserRankInfo {
     rank: string | number;
     totalPoints: number;
@@ -52,12 +53,13 @@ const Dashboard: React.FC = () => {
       setLoading(true);
       const [matchesRes, predictionsRes, statsRes] = await Promise.all([
         apiService.getAllMatches(undefined, 1, 20),
-        apiService.getUserPredictions(1, 1),
+        apiService.getUserPredictions(1, 100), // Get enough predictions to check against current matches
         apiService.getUserStats(),
       ]);
 
       setMatches(matchesRes.data.matches);
       setPredictionCount(predictionsRes.data.pagination.total);
+      setUserPredictions(predictionsRes.data.predictions);
       setUserStats(statsRes.data);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
@@ -150,13 +152,19 @@ const Dashboard: React.FC = () => {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {matches.length > 0 ? (
-              matches.map((match) => (
-                <MatchCard
-                  key={match._id}
-                  match={match}
-                  onPredictClick={handlePredictClick}
-                />
-              ))
+              matches.map((match) => {
+                const userPrediction = userPredictions.find(p =>
+                  (typeof p.matchId === 'string' ? p.matchId : p.matchId.matchId) === match.matchId
+                );
+                return (
+                  <MatchCard
+                    key={match._id}
+                    match={match}
+                    hasPredicted={!!userPrediction}
+                    onPredictClick={handlePredictClick}
+                  />
+                );
+              })
             ) : (
               <div className="col-span-full text-center py-12 text-gray-600">
                 No matches scheduled yet
@@ -170,6 +178,9 @@ const Dashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <PredictionForm
             match={selectedMatch}
+            initialPrediction={userPredictions.find(p =>
+              (typeof p.matchId === 'string' ? p.matchId : p.matchId.matchId) === selectedMatch.matchId
+            )}
             onSuccess={handlePredictionSuccess}
             onClose={() => setShowPredictionForm(false)}
           />

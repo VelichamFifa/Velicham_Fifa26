@@ -20,7 +20,14 @@ export interface IUser extends Document {
   instagramId?: string;
   profileImage?: string;
   role: 'user' | 'admin';
-  requestedCommunity?: string;
+  requestedCommunity?: {
+    name: string;
+    shortName: string;
+    description: string;
+    isOnline: boolean;
+    city: string;
+    state: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -111,8 +118,15 @@ const userSchema = new Schema<IUser>(
       default: 'user',
     },
     requestedCommunity: {
-      type: String,
-      trim: true,
+      type: new Schema({
+        name: { type: String, trim: true },
+        shortName: { type: String, trim: true },
+        description: { type: String, trim: true },
+        isOnline: { type: Boolean, default: false },
+        city: { type: String, trim: true },
+        state: { type: String, trim: true },
+      }, { _id: false }),
+      default: undefined
     },
   },
   { timestamps: true }

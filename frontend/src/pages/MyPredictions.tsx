@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/apiService';
 import { Prediction, Match } from '../types';
+import PredictionForm from '../components/PredictionForm';
 import { format } from 'date-fns';
 
 const MyPredictions: React.FC = () => {
     const [predictions, setPredictions] = useState<Prediction[]>([]);
     const [loading, setLoading] = useState(true);
     const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
+    const [editingPrediction, setEditingPrediction] = useState<Prediction | null>(null);
 
     useEffect(() => {
         fetchPredictions(1);
@@ -35,6 +37,11 @@ const MyPredictions: React.FC = () => {
             <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded">Closed</span>;
     };
 
+    const handleEditSuccess = () => {
+        setEditingPrediction(null);
+        fetchPredictions(pagination.page);
+    };
+
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -59,8 +66,9 @@ const MyPredictions: React.FC = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Prediction</th>
                                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actual Score</th>
-                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
-                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rank After Match</th>
+                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Match Rank</th>
+                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Overall Rank</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -90,18 +98,32 @@ const MyPredictions: React.FC = () => {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className={`font-bold ${prediction.points > 0 ? 'text-green-600' : 'text-gray-400'}`}>
-                                                    {match.status === 'completed' ? `+${prediction.points}` : 'TBD'}
-                                                </span>
+                                                {match.status === 'completed' && prediction.historicRank ? (
+                                                    <span className="text-sm font-black text-primary">
+                                                        #{prediction.historicRank.dailyRank}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-400 text-xs">TBD</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                {match.status === 'completed' && prediction.historicRank ? (
+                                                {match.status === 'completed' && prediction.historicRank && prediction.historicRank.finalRank > 0 ? (
                                                     <div className="flex flex-col items-center">
                                                         <span className="text-xs font-black text-secondary">#{prediction.historicRank.finalRank}</span>
                                                         <span className="text-[10px] text-gray-500">Overall</span>
                                                     </div>
                                                 ) : (
                                                     <span className="text-gray-400 text-xs">-</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                {match.status !== 'completed' && new Date(match.predictionsEndingTime || '') > new Date() && (
+                                                    <button
+                                                        onClick={() => setEditingPrediction(prediction)}
+                                                        className="text-secondary hover:text-blue-900 font-bold"
+                                                    >
+                                                        Edit
+                                                    </button>
                                                 )}
                                             </td>
                                         </tr>
@@ -137,6 +159,21 @@ const MyPredictions: React.FC = () => {
                 <div className="text-center py-12 bg-white rounded-lg shadow">
                     <p className="text-gray-500 mb-4">You haven't made any predictions yet.</p>
                     <a href="/dashboard" className="text-secondary font-bold hover:underline">Go to Dashboard to start predicting!</a>
+                </div>
+            )}
+
+            {editingPrediction && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <PredictionForm
+                        match={editingPrediction.matchId as Match}
+                        initialPrediction={{
+                            team1Score: editingPrediction.team1Score,
+                            team2Score: editingPrediction.team2Score,
+                            comment: editingPrediction.comment
+                        }}
+                        onSuccess={handleEditSuccess}
+                        onClose={() => setEditingPrediction(null)}
+                    />
                 </div>
             )}
         </div>

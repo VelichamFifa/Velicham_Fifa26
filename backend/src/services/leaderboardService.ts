@@ -332,6 +332,34 @@ export const generateDailyCommunityLeaderboard = async (limit: number = 30, date
   }
 };
 
+export const generateMatchLeaderboard = async (matchId: string) => {
+  try {
+    const results = await Result.find({ matchId }).sort({ matchPoints: -1 });
+
+    if (results.length === 0) return [];
+
+    // Add rank with Dense Ranking
+    let lastPoints = -1;
+    let rankToAssign = 0;
+    const leaderboard = results.map((item: any) => {
+      if (item.matchPoints !== lastPoints) {
+        rankToAssign++;
+        lastPoints = item.matchPoints;
+      }
+      return {
+        userId: item.userId,
+        rank: rankToAssign,
+        matchPoints: item.matchPoints
+      };
+    });
+
+    return leaderboard;
+  } catch (error) {
+    console.error(`Error generating match leaderboard for ${matchId}:`, error);
+    return [];
+  }
+};
+
 export const invalidateLeaderboardCache = async () => {
   try {
     // Cache invalidation no longer needed - using direct database queries

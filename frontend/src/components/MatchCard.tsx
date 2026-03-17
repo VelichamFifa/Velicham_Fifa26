@@ -4,10 +4,11 @@ import { format } from 'date-fns';
 
 interface MatchCardProps {
   match: Match;
+  hasPredicted?: boolean;
   onPredictClick?: (match: Match) => void;
 }
 
-const MatchCard: React.FC<MatchCardProps> = ({ match, onPredictClick }) => {
+const MatchCard: React.FC<MatchCardProps> = ({ match, hasPredicted, onPredictClick }) => {
   const isCompleted = match.status === 'completed';
   const isPredictionOpen = new Date(match.predictionsEndingTime) > new Date();
 
@@ -21,9 +22,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onPredictClick }) => {
           <p className="text-xs sm:text-sm text-gray-500">Round {match.round}</p>
         </div>
         <span
-          className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-            isCompleted ? 'bg-gray-200' : isPredictionOpen ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'
-          }`}
+          className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${isCompleted ? 'bg-gray-200' : isPredictionOpen ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'
+            }`}
         >
           {match.status.toUpperCase()}
         </span>
@@ -58,7 +58,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onPredictClick }) => {
             onClick={() => onPredictClick(match)}
             className="flex-1 bg-secondary text-white py-2 rounded hover:bg-blue-600 transition font-medium"
           >
-            Make Prediction
+            {hasPredicted ? 'Update Prediction' : 'Make Prediction'}
           </button>
         )}
         {isCompleted && (

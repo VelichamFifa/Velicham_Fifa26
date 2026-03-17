@@ -82,9 +82,9 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    const handleQuickCreateCommunity = async (userId: string, name: string, city: string, state: string) => {
+    const handleQuickCreateCommunity = async (userId: string, name: string, city: string, state: string, description: string, shortName: string, isOnline: boolean) => {
         try {
-            await apiService.createAndApproveCommunity({ userId, name, city, state });
+            await apiService.createAndApproveCommunity({ userId, name, city, state, description, shortName, isOnline });
             setSuccess(`Community "${name}" created and approved successfully`);
             setCommunityRequests(prev => prev.filter(req => req.userId !== userId));
             // Refresh communities list so it shows up in future selects
@@ -191,7 +191,18 @@ const AdminDashboard: React.FC = () => {
                                                     <td className="px-4 py-4 text-sm text-gray-600">
                                                         {req.city || '-'}, {req.state || '-'}
                                                     </td>
-                                                    <td className="px-4 py-4 text-sm font-bold text-secondary">{req.requestedCommunity}</td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="text-sm font-bold text-secondary">{req.requestedCommunity?.name || '-'}</div>
+                                                        <div className="text-[10px] text-gray-400 font-mono">Short: {req.requestedCommunity?.shortName || '-'}</div>
+                                                        <div className="text-[10px] text-gray-500 max-w-[200px] truncate" title={req.requestedCommunity?.description}>
+                                                            {req.requestedCommunity?.description || '-'}
+                                                        </div>
+                                                        {req.requestedCommunity?.isOnline ? (
+                                                            <div className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded inline-block mb-1">ONLINE</div>
+                                                        ) : (
+                                                            <div className="text-[10px] text-gray-400 italic">Loc: {req.requestedCommunity?.city}, {req.requestedCommunity?.state}</div>
+                                                        )}
+                                                    </td>
                                                     <td className="px-4 py-4">
                                                         <span className={`text-xs px-2 py-1 rounded font-bold ${!req.communityId1 ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
                                                             {!req.communityId1 ? 'FIRST' : 'SECOND'}
@@ -219,7 +230,15 @@ const AdminDashboard: React.FC = () => {
                                                                 Approve Existing
                                                             </button>
                                                             <button
-                                                                onClick={() => handleQuickCreateCommunity(req.userId, req.requestedCommunity, req.city, req.state)}
+                                                                onClick={() => handleQuickCreateCommunity(
+                                                                    req.userId,
+                                                                    req.requestedCommunity?.name || '',
+                                                                    req.requestedCommunity?.city || '',
+                                                                    req.requestedCommunity?.state || '',
+                                                                    req.requestedCommunity?.description || '',
+                                                                    req.requestedCommunity?.shortName || '',
+                                                                    !!req.requestedCommunity?.isOnline
+                                                                )}
                                                                 className="bg-secondary text-white px-3 py-1 rounded text-sm hover:bg-blue-700 whitespace-nowrap"
                                                             >
                                                                 Quick Create & Approve

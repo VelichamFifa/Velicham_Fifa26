@@ -125,7 +125,7 @@ class ApiService {
     return this.client.post('/admin/approve-community', data);
   }
 
-  createAndApproveCommunity(data: { userId: string; name: string; state?: string; city?: string }) {
+  createAndApproveCommunity(data: { userId: string; name: string; fullName?: string; state?: string; city?: string; address?: string; isOnline?: boolean; shortName?: string; description?: string }) {
     return this.client.post('/admin/create-and-approve-community', data);
   }
 

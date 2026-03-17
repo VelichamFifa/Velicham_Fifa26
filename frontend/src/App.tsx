@@ -11,6 +11,7 @@ import ProfileSetup from './pages/ProfileSetup';
 import Profile from './pages/Profile';
 import MyPredictions from './pages/MyPredictions';
 import AdminDashboard from './pages/AdminDashboard';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/my-predictions" element={<MyPredictions />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
     </Router>

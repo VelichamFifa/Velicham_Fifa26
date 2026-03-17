@@ -12,7 +12,33 @@ export const schemas = {
     country: Joi.string().allow('', null),
     communityId1: Joi.string().allow('', null),
     communityId2: Joi.string().allow('', null),
-    requestedCommunity: Joi.string().allow('', null),
+    requestedCommunity: Joi.object({
+      name: Joi.string().required(),
+      shortName: Joi.string().required(),
+      description: Joi.string().allow('', null),
+      isOnline: Joi.boolean().default(false),
+      city: Joi.string().allow('', null),
+      state: Joi.string().allow('', null),
+    }).allow(null),
+  }),
+
+  updateProfile: Joi.object({
+    firstName: Joi.string().min(2).optional(),
+    lastName: Joi.string().min(2).optional(),
+    whatsappNumber: Joi.string().allow('', null).optional(),
+    city: Joi.string().allow('', null).optional(),
+    state: Joi.string().allow('', null).optional(),
+    country: Joi.string().allow('', null).optional(),
+    communityId1: Joi.string().allow('', null).optional(),
+    communityId2: Joi.string().allow('', null).optional(),
+    requestedCommunity: Joi.object({
+      name: Joi.string().required(),
+      shortName: Joi.string().required(),
+      description: Joi.string().allow('', null),
+      isOnline: Joi.boolean().default(false),
+      city: Joi.string().allow('', null),
+      state: Joi.string().allow('', null),
+    }).allow(null).optional(),
   }),
 
   login: Joi.object({

@@ -22,10 +22,19 @@ export const submitPrediction = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Prediction deadline has passed' });
     }
 
-    // Check if user already predicted for this match
+    // Check if user already predicted for this match - if so, update it (upsert pattern)
     const existingPrediction = await Prediction.findOne({ userId, matchId });
     if (existingPrediction) {
-      return res.status(400).json({ error: 'You have already made a prediction for this match' });
+      existingPrediction.team1Score = team1Score;
+      existingPrediction.team2Score = team2Score;
+      existingPrediction.comment = comment;
+      existingPrediction.submittedTime = new Date();
+      await existingPrediction.save();
+
+      return res.status(200).json({
+        message: 'Prediction updated successfully',
+        prediction: existingPrediction,
+      });
     }
 
     const prediction = new Prediction({

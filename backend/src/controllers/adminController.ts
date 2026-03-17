@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { User, Match, Prediction, Community, Result, TopLeader, DailyLeader } from '../models';
 import { processMatchResults } from '../services/scoringService';
+import { capitalizeProperNoun } from '../utils/stringUtils';
 
 /**
  * Get all users who have requested a community during registration
@@ -10,7 +11,7 @@ export const getCommunityRequests = async (req: AuthRequest, res: Response) => {
     try {
         // Find users who have requested a community and don't have communityId1 set
         const requests = await User.find({
-            requestedCommunity: { $exists: true, $ne: '' }
+            'requestedCommunity.name': { $exists: true, $ne: '' }
         }).select('userId email firstName lastName requestedCommunity city state createdAt communityId1 communityId2');
 
         res.json({ requests });
@@ -51,7 +52,8 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
                 generateTopLeaderboard,
                 generateDailyLeaderboard,
                 generateCommunityLeaderboard,
-                generateDailyCommunityLeaderboard
+                generateDailyCommunityLeaderboard,
+                generateMatchLeaderboard
             } = require('../services/leaderboardService');
 
             await Promise.all([
@@ -62,28 +64,28 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
             ]);
             console.log('✓ All leaderboards refreshed automatically');
 
-            // Snapshot ranks into Result records for this match
-            const [topLeaders, dailyLeaders] = await Promise.all([
-                TopLeader.find({}),
-                DailyLeader.find({})
+            // Generate snapshots for both Match and Overall Rank
+            const [matchLeaderboard, topLeaders] = await Promise.all([
+                generateMatchLeaderboard(matchId),
+                TopLeader.find({}).select('userId rank')
             ]);
 
             const results = await Result.find({ matchId });
             for (const result of results) {
-                const topRank = topLeaders.find(tl => tl.userId === result.userId);
-                const dailyRank = dailyLeaders.find(dl => dl.userId === result.userId);
+                const matchRankObj = matchLeaderboard.find((ml: any) => ml.userId === result.userId);
+                const topRankObj = topLeaders.find((tl) => tl.userId === result.userId);
 
-                if (topRank || dailyRank) {
+                if (matchRankObj || topRankObj) {
                     await Result.updateOne(
                         { _id: result._id },
                         {
-                            finalRank: topRank?.rank || 0,
-                            dailyRank: dailyRank?.rank || 0
+                            dailyRank: matchRankObj?.rank || 0, // Match Rank
+                            finalRank: topRankObj?.rank || 0   // Overall Rank
                         }
                     );
                 }
             }
-            console.log(`✓ Rank snapshots captured for ${results.length} results`);
+            console.log(`✓ Rank snapshots (Match and Overall) captured for ${results.length} results`);
         } catch (refreshError) {
             console.error('Leaderboard refresh error:', refreshError);
             // Don't fail the whole request if refresh fails
@@ -130,10 +132,35 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
         }
 
         await User.deleteOne({ userId });
-        // Also delete their predictions if desired
-        await Prediction.deleteMany({ userId });
+        // Delete all associated data
+        await Promise.all([
+            Prediction.deleteMany({ userId }),
+            Result.deleteMany({ userId }),
+            TopLeader.deleteMany({ userId }),
+            DailyLeader.deleteMany({ userId })
+        ]);
 
-        res.json({ message: 'User and their predictions deleted successfully' });
+        // Refresh leaderboards automatically to remove user from rankings
+        try {
+            const {
+                generateTopLeaderboard,
+                generateDailyLeaderboard,
+                generateCommunityLeaderboard,
+                generateDailyCommunityLeaderboard
+            } = require('../services/leaderboardService');
+
+            await Promise.all([
+                generateTopLeaderboard(),
+                generateDailyLeaderboard(),
+                generateCommunityLeaderboard(),
+                generateDailyCommunityLeaderboard()
+            ]);
+            console.log(`✓ Leaderboards refreshed after deleting user ${userId}`);
+        } catch (refreshError) {
+            console.error('Leaderboard refresh error after deletion:', refreshError);
+        }
+
+        res.json({ message: 'User and all associated data deleted successfully, leaderboards refreshed' });
     } catch (error) {
         console.error('Delete user error:', error);
         res.status(500).json({ error: 'Failed to delete user' });
@@ -165,7 +192,7 @@ export const approveCommunityRequest = async (req: AuthRequest, res: Response) =
         }
 
         // Clear requestedCommunity once approved
-        user.requestedCommunity = undefined;
+        (user as any).requestedCommunity = null;
         await user.save();
 
         res.json({ message: 'Community request approved successfully', user });
@@ -180,7 +207,7 @@ export const approveCommunityRequest = async (req: AuthRequest, res: Response) =
  */
 export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Response) => {
     try {
-        const { userId, name, state, city } = req.body;
+        const { userId, name, state, city, shortName, description, isOnline } = req.body;
 
         if (!name) {
             return res.status(400).json({ error: 'Community name is required' });
@@ -195,21 +222,25 @@ export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Re
         const communityId = `comm_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
         const community = new Community({
             communityId,
-            name,
-            state: state || user.state || 'Unknown',
-            city: city || user.city || 'Unknown'
+            name: capitalizeProperNoun(shortName || name), // Short name becomes the primary name
+            fullName: capitalizeProperNoun(name),          // Original name becomes fullName
+            isOnline: !!isOnline,    // Capture online status
+            state: capitalizeProperNoun(state) || 'Unknown',
+            city: capitalizeProperNoun(city) || 'Unknown',
+            description: description || ''
         });
         await community.save();
 
-        // Assign user to newly created community (to first available slot)
+        // Assign user to newly created community (to first available EMPTY slot)
         if (!user.communityId1) {
             user.communityId1 = communityId;
-        } else {
+        } else if (!user.communityId2) {
             user.communityId2 = communityId;
         }
+        // If both slots are full, the community is created but not assigned to either slot.
 
         // Clear requestedCommunity
-        user.requestedCommunity = undefined;
+        (user as any).requestedCommunity = null;
         await user.save();
 
         res.json({ message: 'Community created and user assigned successfully', user, community });

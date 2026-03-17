@@ -3,9 +3,12 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface ICommunity extends Document {
   communityId: string;
   name: string;
+  fullName?: string;
+  isOnline?: boolean;
   state: string;
   city: string;
   address: string;
+  description?: string;
   creationTime: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -24,6 +27,14 @@ const communitySchema = new Schema<ICommunity>(
       required: true,
       trim: true,
     },
+    fullName: {
+      type: String,
+      trim: true,
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
     state: {
       type: String,
       required: true,
@@ -35,6 +46,10 @@ const communitySchema = new Schema<ICommunity>(
       trim: true,
     },
     address: {
+      type: String,
+      trim: true,
+    },
+    description: {
       type: String,
       trim: true,
     },
