@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../hooks/useAuth';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -26,6 +27,33 @@ const Login: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    if (!credentialResponse.credential) return;
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await apiService.googleLogin(credentialResponse.credential);
+      const user = response.data.user;
+      login(response.data.token, user);
+
+      // Check if user needs to complete profile (backend sets these to 'Not Set' for new Google users)
+      if (user.city === 'Not Set' || user.state === 'Not Set' || user.country === 'Not Set') {
+        navigate('/profile-setup');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Google Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google Login was unsuccessful. Please try again.');
   };
 
   return (
@@ -83,10 +111,17 @@ const Login: React.FC = () => {
           <div className="flex-1 border-t border-gray-300"></div>
         </div>
 
-        <div className="space-y-3">
-          <button className="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded font-medium hover:bg-gray-50 transition">
-            🔵 Login with Google
-          </button>
+        <div className="space-y-3 flex flex-col items-center">
+          <div className="w-full flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              useOneTap
+              theme="outline"
+              size="large"
+              width="100%"
+            />
+          </div>
           <button className="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded font-medium hover:bg-gray-50 transition">
             📷 Login with Instagram
           </button>

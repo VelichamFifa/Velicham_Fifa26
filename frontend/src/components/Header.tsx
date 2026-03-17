@@ -67,9 +67,9 @@ const Header: React.FC = () => {
                   </Link>
                 )}
                 <div className="flex items-center gap-3">
-                  <span className="text-sm hidden lg:inline">
+                  <Link to="/profile" className="text-sm hidden lg:inline hover:underline hover:text-blue-200 transition">
                     Hi, {user?.firstName}
-                  </span>
+                  </Link>
                   <button
                     onClick={() => {
                       logout();
@@ -137,9 +137,13 @@ const Header: React.FC = () => {
                   </Link>
                 )}
                 <div className="pt-2 border-t border-blue-800">
-                  <span className="block text-sm mb-3">
+                  <Link
+                    to="/profile"
+                    className="block text-sm mb-3 hover:underline hover:text-blue-200 transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
                     Hi, {user?.firstName}
-                  </span>
+                  </Link>
                   <button
                     onClick={() => {
                       logout();
