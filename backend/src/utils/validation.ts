@@ -19,6 +19,21 @@ export const schemas = {
     password: Joi.string().required(),
   }),
 
+  googleLogin: Joi.object({
+    credential: Joi.string().required(),
+  }),
+
+  updateProfile: Joi.object({
+    city: Joi.string().allow(''),
+    state: Joi.string().allow(''),
+    country: Joi.string().allow(''),
+    whatsappNumber: Joi.string().allow(''),
+    communityId1: Joi.string().allow(''),
+    communityId2: Joi.string().allow(''),
+    firstName: Joi.string().allow(''),
+    lastName: Joi.string().allow(''),
+  }),
+
   prediction: Joi.object({
     matchId: Joi.string().required(),
     team1Score: Joi.number().min(0).required(),
