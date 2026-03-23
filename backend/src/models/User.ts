@@ -8,7 +8,7 @@ export interface IUser extends Document {
   password?: string;
   status: 'active' | 'inactive' | 'suspended';
   creationTime: Date;
-  whatsappNumber?: string;
+  phoneNumber?: string;
   city: string;
   state: string;
   country: string;
@@ -70,7 +70,7 @@ const userSchema = new Schema<IUser>(
       type: Date,
       default: Date.now,
     },
-    whatsappNumber: {
+    phoneNumber: {
       type: String,
       trim: true,
     },

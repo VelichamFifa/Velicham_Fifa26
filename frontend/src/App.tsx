@@ -11,7 +11,7 @@ import ProfileSetup from './pages/ProfileSetup';
 import Profile from './pages/Profile';
 import MyPredictions from './pages/MyPredictions';
 import AdminDashboard from './pages/AdminDashboard';
-import Profile from './pages/Profile';
+
 
 function App() {
   return (

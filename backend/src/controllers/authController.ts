@@ -9,7 +9,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const register = async (req: AuthRequest, res: Response) => {
   try {
-    const { email, firstName, lastName, password, city, state, country, communityId1, communityId2, whatsappNumber, requestedCommunity } = req.body;
+    const { email, firstName, lastName, password, city, state, country, communityId1, communityId2, phoneNumber, requestedCommunity } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -50,7 +50,7 @@ export const register = async (req: AuthRequest, res: Response) => {
       country: capitalizeProperNoun(country),
       communityId1,
       communityId2,
-      whatsappNumber,
+      phoneNumber,
       requestedCommunity,
       status: 'active',
       isActive: true,
@@ -214,7 +214,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       country: user.country,
       communityId1: user.communityId1,
       communityId2: user.communityId2,
-      whatsappNumber: user.whatsappNumber,
+      phoneNumber: user.phoneNumber,
       requestedCommunity: user.requestedCommunity,
       role: user.role,
       status: user.status,
@@ -228,7 +228,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
 
 export const updateUserProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const { firstName, lastName, city, state, country, whatsappNumber, communityId1, communityId2, requestedCommunity } = req.body;
+    const { firstName, lastName, city, state, country, phoneNumber, communityId1, communityId2, requestedCommunity } = req.body;
 
     const user = await User.findOne({ userId: req.user?.userId });
     if (!user) {
@@ -240,7 +240,7 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     if (city) user.city = capitalizeProperNoun(city);
     if (state) user.state = capitalizeProperNoun(state);
     if (country) user.country = capitalizeProperNoun(country);
-    if (whatsappNumber) user.whatsappNumber = whatsappNumber;
+    if (phoneNumber) user.phoneNumber = phoneNumber;
     if (communityId1) user.communityId1 = communityId1;
     if (communityId2) user.communityId2 = communityId2;
     if (requestedCommunity !== undefined) user.requestedCommunity = requestedCommunity;

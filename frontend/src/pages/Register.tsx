@@ -19,7 +19,7 @@ const Register: React.FC = () => {
     country: '',
     communityId1: '',
     communityId2: '',
-    whatsappNumber: '',
+    phoneNumber: '',
   });
   const [requestedCommunity, setRequestedCommunity] = useState({
     name: '',
@@ -226,12 +226,12 @@ const Register: React.FC = () => {
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              WhatsApp Number (Required)
+              Phone Number (Required)
             </label>
             <input
               type="tel"
-              name="whatsappNumber"
-              value={formData.whatsappNumber}
+              name="phoneNumber"
+              value={formData.phoneNumber}
               onChange={handleChange}
               placeholder="+1234567890"
               className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"

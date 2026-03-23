@@ -9,7 +9,7 @@ export interface User {
   country: string;
   communityId1?: string;
   communityId2?: string;
-  whatsappNumber?: string;
+  phoneNumber?: string;
   status: 'active' | 'inactive' | 'suspended';
   isActive: boolean;
   createdAt?: string;

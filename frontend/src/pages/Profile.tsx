@@ -17,7 +17,7 @@ const Profile: React.FC = () => {
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
-        whatsappNumber: '',
+        phoneNumber: '',
         city: '',
         state: '',
         country: '',
@@ -26,7 +26,12 @@ const Profile: React.FC = () => {
     });
 
     const [requestData, setRequestData] = useState({
-        name: ''
+        name: '',
+        shortName: '',
+        description: '',
+        isOnline: false,
+        city: '',
+        state: ''
     });
 
     useEffect(() => {
@@ -46,7 +51,7 @@ const Profile: React.FC = () => {
             setFormData({
                 firstName: p.firstName || '',
                 lastName: p.lastName || '',
-                whatsappNumber: p.whatsappNumber || '',
+                phoneNumber: p.phoneNumber || '',
                 city: p.city || '',
                 state: p.state || '',
                 country: p.country || '',
@@ -107,12 +112,16 @@ const Profile: React.FC = () => {
             setError('');
             setSuccess('');
 
-            if (!requestData.name) {
-                setError('Community Name is required');
+            const isMissingRequired = !requestData.name || !requestData.shortName;
+            const isMissingLocation = !requestData.isOnline && (!requestData.city || !requestData.state);
+
+            if (isMissingRequired || isMissingLocation) {
+                setError('Please fill in all required details for the new community request.');
+                setEditLoading(false);
                 return;
             }
 
-            await apiService.updateProfile({ requestedCommunity: requestData.name });
+            await apiService.updateProfile({ requestedCommunity: requestData });
             setSuccess('Community request submitted successfully');
             setShowRequestForm(false);
             fetchData();
@@ -201,11 +210,11 @@ const Profile: React.FC = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">WhatsApp Number</label>
+                                    <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">Phone Number</label>
                                     {isEditing ? (
-                                        <input name="whatsappNumber" value={formData.whatsappNumber} onChange={handleChange} className="w-full px-3 py-2 border rounded text-sm" placeholder="+1234567890" />
+                                        <input name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className="w-full px-3 py-2 border rounded text-sm" placeholder="+1234567890" />
                                     ) : (
-                                        <p className="text-gray-800 font-medium px-1">{profile.whatsappNumber || 'Not provided'}</p>
+                                        <p className="text-gray-800 font-medium px-1">{profile.phoneNumber || 'Not provided'}</p>
                                     )}
                                 </div>
                             </div>
@@ -275,7 +284,7 @@ const Profile: React.FC = () => {
                                         onClick={() => setShowRequestForm(true)}
                                         className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-bold transition"
                                     >
-                                        + Request New
+                                        + Request New Community
                                     </button>
                                 )}
                             </div>
@@ -349,12 +358,95 @@ const Profile: React.FC = () => {
                                         <button onClick={() => setShowRequestForm(false)} className="text-gray-400 hover:text-gray-600">✕</button>
                                     </div>
 
-                                    <div className="mb-6">
-                                        <label className="block text-[10px] text-gray-400 uppercase font-black mb-1">Community Name Request</label>
-                                        <input name="name" value={requestData.name} onChange={handleRequestChange} className="w-full px-3 py-2 border rounded text-sm" placeholder="e.g. SF Soccer League" />
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <input
+                                            type="checkbox"
+                                            id="req_isOnline"
+                                            name="isOnline"
+                                            checked={requestData.isOnline}
+                                            onChange={handleRequestChange}
+                                            className="w-4 h-4 text-secondary focus:ring-secondary border-gray-300 rounded"
+                                        />
+                                        <label htmlFor="req_isOnline" className="text-xs font-bold text-gray-700 uppercase cursor-pointer">
+                                            This is an Online Community
+                                        </label>
                                     </div>
 
-                                    <div className="flex justify-end">
+                                    <div className="grid grid-cols-2 gap-3 mb-3">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                                                Full Name <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                value={requestData.name}
+                                                onChange={handleRequestChange}
+                                                placeholder="e.g. Mountain House Sports"
+                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                                                Short Name / Code <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="shortName"
+                                                value={requestData.shortName}
+                                                onChange={handleRequestChange}
+                                                placeholder="e.g. MHS"
+                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                                            Description <span className="text-gray-400 font-normal normal-case">(Optional)</span>
+                                        </label>
+                                        <textarea
+                                            name="description"
+                                            value={requestData.description}
+                                            onChange={handleRequestChange}
+                                            placeholder="Tell us about this community..."
+                                            rows={2}
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                                        />
+                                    </div>
+
+                                    {!requestData.isOnline && (
+                                        <div className="grid grid-cols-2 gap-3 mb-4">
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                                                    City <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="city"
+                                                    value={requestData.city}
+                                                    onChange={handleRequestChange}
+                                                    placeholder="e.g. Mountain House"
+                                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                                                    State <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="state"
+                                                    value={requestData.state}
+                                                    onChange={handleRequestChange}
+                                                    placeholder="e.g. California"
+                                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end mt-2">
                                         <button
                                             onClick={handleSubmitRequest}
                                             disabled={editLoading}
@@ -372,7 +464,11 @@ const Profile: React.FC = () => {
                                         <div>
                                             <label className="block text-[9px] text-orange-400 uppercase font-black mb-1">Pending Community Request</label>
                                             <div className="flex items-center gap-2">
-                                                <p className="text-orange-900 font-bold">{profile.requestedCommunity}</p>
+                                                <p className="text-orange-900 font-bold">
+                                                    {typeof profile.requestedCommunity === 'object' && profile.requestedCommunity !== null 
+                                                        ? profile.requestedCommunity.name 
+                                                        : profile.requestedCommunity}
+                                                </p>
                                             </div>
                                         </div>
                                         <button
