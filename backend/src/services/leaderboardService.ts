@@ -5,6 +5,7 @@ import {
   DailyLeader,
   CommunityLeader,
   DailyCommunityLeader,
+  User,
 } from '../models';
 
 export const generateTopLeaderboard = async (limit: number = 30) => {
@@ -68,8 +69,8 @@ export const generateTopLeaderboard = async (limit: number = 30) => {
           userId: '$_id',
           totalPoints: 1,
           name: '$userName',
-          email: '$user.email',
-          state: '$user.state',
+          email: { $ifNull: ['$user.email', 'unknown@example.com'] },
+          state: { $ifNull: ['$user.state', 'Unknown'] },
           community1: { $ifNull: ['$comm1.name', '$user.communityId1'] },
           community2: { $ifNull: ['$comm2.name', '$user.communityId2'] },
         },
@@ -169,8 +170,8 @@ export const generateDailyLeaderboard = async (limit: number = 30) => {
           userId: '$_id',
           totalPoints: 1,
           name: '$userName',
-          email: '$user.email',
-          state: '$user.state',
+          email: { $ifNull: ['$user.email', 'unknown@example.com'] },
+          state: { $ifNull: ['$user.state', 'Unknown'] },
           community1: { $ifNull: ['$comm1.name', '$user.communityId1'] },
           community2: { $ifNull: ['$comm2.name', '$user.communityId2'] },
         },
@@ -360,11 +361,80 @@ export const generateMatchLeaderboard = async (matchId: string) => {
   }
 };
 
-export const invalidateLeaderboardCache = async () => {
+export const generateCommunityUserRanking = async (communityId: string, isDaily: boolean = false, limit: number = 50) => {
   try {
-    // Cache invalidation no longer needed - using direct database queries
-    console.log('✓ Leaderboard data refreshed from database');
+
+    // --- Step 1: Get userIds in the community (early filter) ---
+    let userIdFilter: string[] | null = null;
+    if (communityId !== 'global') {
+      const communityUsers = await User.find(
+        { $or: [{ communityId1: communityId }, { communityId2: communityId }] },
+        { userId: 1, _id: 0 }
+      ).lean();
+
+      if (communityUsers.length === 0) return [];
+      userIdFilter = communityUsers.map((u: any) => u.userId);
+    }
+
+    // --- Step 2: Build the match stage (date + userId filter applied early) ---
+    const matchStage: any = {};
+    if (isDaily) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      matchStage.createdAt = { $gte: today };
+    }
+    if (userIdFilter) {
+      matchStage.userId = { $in: userIdFilter };
+    }
+
+    // --- Step 3: Aggregate only pre-filtered results ---
+    const pipeline: any[] = [
+      { $match: matchStage },
+      {
+        $group: {
+          _id: '$userId',
+          totalPoints: { $sum: '$matchPoints' },
+          userName: { $first: '$userName' },
+        },
+      },
+      { $sort: { totalPoints: -1 } },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'user',
+        },
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 0,
+          userId: '$_id',
+          name: '$userName',
+          totalPoints: 1,
+          state: { $ifNull: ['$user.state', ''] },
+        }
+      },
+    ];
+
+    const results = await Result.aggregate(pipeline);
+
+    // --- Step 4: Apply Dense Ranking ---
+    let lastPoints = -1;
+    let rankToAssign = 0;
+    const leaderboard = results.map((item) => {
+      if (item.totalPoints !== lastPoints) {
+        rankToAssign++;
+        lastPoints = item.totalPoints;
+      }
+      return { ...item, rank: rankToAssign };
+    });
+
+    return leaderboard;
   } catch (error) {
-    console.error('Error refreshing leaderboard:', error);
+    console.error('Error in generateCommunityUserRanking:', error);
+    return [];
   }
 };

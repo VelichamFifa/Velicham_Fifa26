@@ -27,6 +27,7 @@ export interface IUser extends Document {
     isOnline: boolean;
     city: string;
     state: string;
+    existingCommunityId?: string;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -125,6 +126,7 @@ const userSchema = new Schema<IUser>(
         isOnline: { type: Boolean, default: false },
         city: { type: String, trim: true },
         state: { type: String, trim: true },
+        existingCommunityId: { type: String, trim: true },
       }, { _id: false }),
       default: undefined
     },

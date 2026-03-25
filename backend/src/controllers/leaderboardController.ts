@@ -6,6 +6,7 @@ import {
   generateDailyLeaderboard,
   generateCommunityLeaderboard,
   generateDailyCommunityLeaderboard,
+  generateCommunityUserRanking,
 } from '../services/leaderboardService';
 
 export const getTopLeaderboard = async (req: AuthRequest, res: Response) => {
@@ -117,8 +118,8 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
       communityRanks.push({
         communityId: user.communityId1,
         name: communityName,
-        overall: overall || { rank: 'N/A', totalPoints: 0 },
-        daily: daily || { rank: 'N/A', totalPoints: 0 },
+        overall: overall || { rank: '-', totalPoints: 0 },
+        daily: daily || { rank: '-', totalPoints: 0 },
       });
     }
 
@@ -135,18 +136,43 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
       communityRanks.push({
         communityId: user.communityId2,
         name: communityName,
-        overall: overall || { rank: 'N/A', totalPoints: 0 },
-        daily: daily || { rank: 'N/A', totalPoints: 0 },
+        overall: overall || { rank: '-', totalPoints: 0 },
+        daily: daily || { rank: '-', totalPoints: 0 },
       });
     }
 
     res.json({
-      overall: topRank || { rank: 'N/A', totalPoints: 0 },
-      daily: dailyRank || { rank: 'N/A', totalPoints: 0 },
+      overall: topRank || { rank: '-', totalPoints: 0 },
+      daily: dailyRank || { rank: '-', totalPoints: 0 },
       communities: communityRanks,
     });
   } catch (error) {
     console.error('Get user stats error:', error);
     res.status(500).json({ error: 'Failed to fetch user stats' });
+  }
+};
+
+/**
+ * Get detailed user rankings for a specific community or global
+ * Supports overall and daily
+ */
+export const getCommunityUserRanking = async (req: AuthRequest, res: Response) => {
+  try {
+    const { communityId } = req.params;
+    const { isDaily, limit = '50' } = req.query;
+    
+    const limitNum = parseInt(limit as string, 10);
+    const dailyBool = isDaily === 'true';
+
+    const ranking = await generateCommunityUserRanking(communityId, dailyBool, limitNum);
+
+    res.json({
+      ranking,
+      communityId,
+      isDaily: dailyBool
+    });
+  } catch (error) {
+    console.error('Get community user ranking error:', error);
+    res.status(500).json({ error: 'Failed to fetch community user ranking' });
   }
 };

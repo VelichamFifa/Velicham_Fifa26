@@ -12,6 +12,7 @@ router.use(adminMiddleware);
 router.get('/community-requests', adminController.getCommunityRequests);
 router.post('/approve-community', adminController.approveCommunityRequest);
 router.post('/create-and-approve-community', adminController.createAndApproveCommunityRequest);
+router.post('/reject-community', adminController.rejectCommunityRequest);
 
 // Match management
 router.post('/finalize-match', adminController.finalizeMatch);

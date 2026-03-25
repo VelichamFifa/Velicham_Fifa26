@@ -172,6 +172,7 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
  */
 export const approveCommunityRequest = async (req: AuthRequest, res: Response) => {
     try {
+        console.log('Approve community request:', req.body);
         const { userId, communityId } = req.body;
 
         const user = await User.findOne({ userId });
@@ -184,18 +185,28 @@ export const approveCommunityRequest = async (req: AuthRequest, res: Response) =
             return res.status(404).json({ error: 'Community not found' });
         }
 
-        // Assign to first available slot
-        if (!user.communityId1) {
+        // Assign to first available slot ONLY if not already assigned and slots are available
+        let assigned = false;
+        if (user.communityId1 === communityId || user.communityId2 === communityId) {
+            // Already assigned to one of the slots, skip assignment but we will still clear the request
+            console.log(`User ${userId} already assigned to community ${communityId}, skipping assignment`);
+        } else if (!user.communityId1) {
             user.communityId1 = communityId;
-        } else {
+            assigned = true;
+        } else if (!user.communityId2) {
             user.communityId2 = communityId;
+            assigned = true;
         }
 
-        // Clear requestedCommunity once approved
-        (user as any).requestedCommunity = null;
+        // ALWAYS clear requestedCommunity once handled by admin (fulfilled or skipped due to full slots)
+        (user as any).requestedCommunity = undefined;
         await user.save();
 
-        res.json({ message: 'Community request approved successfully', user });
+        const message = assigned 
+            ? 'Community request approved successfully' 
+            : 'Community request handled (User slots full or already assigned, request cleared)';
+
+        res.json({ message, user });
     } catch (error) {
         console.error('Approve community error:', error);
         res.status(500).json({ error: 'Failed to approve community request' });
@@ -232,23 +243,52 @@ export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Re
         await community.save();
 
         // Assign user to newly created community (to first available EMPTY slot)
+        let assigned = false;
         if (!user.communityId1) {
             user.communityId1 = communityId;
+            assigned = true;
         } else if (!user.communityId2) {
             user.communityId2 = communityId;
+            assigned = true;
         }
-        // If both slots are full, the community is created but not assigned to either slot.
 
-        // Clear requestedCommunity
-        (user as any).requestedCommunity = null;
+        // ALWAYS clear requestedCommunity once handled by admin
+        (user as any).requestedCommunity = undefined;
         await user.save();
 
-        res.json({ message: 'Community created and user assigned successfully', user, community });
+        const message = assigned
+            ? 'Community created and user assigned successfully'
+            : 'Community created (User slots full, assignment skipped, request cleared)';
+
+        res.json({ message, user, community });
     } catch (error: any) {
         console.error('Create and approve community error:', error);
         if (error.code === 11000) {
             return res.status(400).json({ error: 'A community with a similar ID or name already exists' });
         }
         res.status(500).json({ error: 'Failed to create and approve community' });
+    }
+};
+
+/**
+ * Reject a community request (simply clears the pending request)
+ */
+export const rejectCommunityRequest = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req.body;
+
+        const user = await User.findOne({ userId });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Clear the requestedCommunity field
+        (user as any).requestedCommunity = undefined;
+        await user.save();
+
+        res.json({ message: 'Community request rejected and cleared successfully', user });
+    } catch (error) {
+        console.error('Reject community error:', error);
+        res.status(500).json({ error: 'Failed to reject community request' });
     }
 };

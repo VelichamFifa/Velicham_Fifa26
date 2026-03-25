@@ -6,6 +6,7 @@ const communities = [
   {
     communityId: 'mmnj',
     name: 'MMNJ',
+    fullName: 'Muslims Malayalis of  New Jersey',
     state: 'New Jersey',
     city: 'Multiple Cities',
     address: 'New Jersey Area',
@@ -13,13 +14,15 @@ const communities = [
   {
     communityId: 'gso',
     name: 'GSO',
+    fullName: 'Muslims Malayalis of  North Carolina',
     state: 'North Carolina',
     city: 'Greensboro',
     address: 'Greensboro, NC Area',
   },
   {
-    communityId: 'nanma',
-    name: 'NANMA',
+    communityId: 'nanmma',
+    name: 'NANMMA',
+    fullName: 'North American Network of Malayalee Muslim Associations',
     state: 'Massachusetts',
     city: 'Multiple Cities',
     address: 'North America - New England/Massachusetts Area',
@@ -27,6 +30,7 @@ const communities = [
   {
     communityId: 'velicham',
     name: 'Velicham',
+    fullName: 'Velicham ',
     state: 'Texas',
     city: 'Multiple Cities',
     address: 'Texas Area',

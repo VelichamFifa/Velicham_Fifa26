@@ -16,6 +16,22 @@ export const register = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
+    // Check if the requested community already exists
+    if (requestedCommunity) {
+      const existingCommunity = await Community.findOne({
+        $or: [
+          { name: { $regex: new RegExp(`^${requestedCommunity.name.trim()}$`, 'i') } },
+          { name: { $regex: new RegExp(`^${requestedCommunity.shortName.trim()}$`, 'i') } },
+          { fullName: { $regex: new RegExp(`^${requestedCommunity.name.trim()}$`, 'i') } },
+          { fullName: { $regex: new RegExp(`^${requestedCommunity.shortName.trim()}$`, 'i') } }
+        ]
+      });
+
+      if (existingCommunity) {
+        requestedCommunity.existingCommunityId = existingCommunity.communityId;
+      }
+    }
+
     // Registration is allowed with no community
 
     // Validate communities exist if provided
@@ -228,22 +244,38 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
 
 export const updateUserProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const { firstName, lastName, city, state, country, phoneNumber, communityId1, communityId2, requestedCommunity } = req.body;
+    const { communityId1, communityId2, requestedCommunity } = req.body;
 
     const user = await User.findOne({ userId: req.user?.userId });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    if (firstName) user.firstName = capitalizeProperNoun(firstName);
-    if (lastName) user.lastName = capitalizeProperNoun(lastName);
-    if (city) user.city = capitalizeProperNoun(city);
-    if (state) user.state = capitalizeProperNoun(state);
-    if (country) user.country = capitalizeProperNoun(country);
-    if (phoneNumber) user.phoneNumber = phoneNumber;
-    if (communityId1) user.communityId1 = communityId1;
-    if (communityId2) user.communityId2 = communityId2;
-    if (requestedCommunity !== undefined) user.requestedCommunity = requestedCommunity;
+    // Standard profile updates are now restricted to Communities Only
+    // Personal and Location details are locked after registration
+    
+    // Explicitly handle clearing slots by checking for truthiness or allowing empty string
+    if (communityId1 !== undefined) user.communityId1 = communityId1 || undefined;
+    if (communityId2 !== undefined) user.communityId2 = communityId2 || undefined;
+
+    // Handle community request with duplicate check
+    if (requestedCommunity) {
+      const existingCommunity = await Community.findOne({
+        $or: [
+          { name: { $regex: new RegExp(`^${requestedCommunity.name.trim()}$`, 'i') } },
+          { name: { $regex: new RegExp(`^${requestedCommunity.shortName.trim()}$`, 'i') } },
+          { fullName: { $regex: new RegExp(`^${requestedCommunity.name.trim()}$`, 'i') } },
+          { fullName: { $regex: new RegExp(`^${requestedCommunity.shortName.trim()}$`, 'i') } }
+        ]
+      });
+
+      if (existingCommunity) {
+        requestedCommunity.existingCommunityId = existingCommunity.communityId;
+      }
+      user.requestedCommunity = requestedCommunity;
+    } else if (requestedCommunity === null) {
+      user.requestedCommunity = undefined;
+    }
 
     if (user.communityId1 && user.communityId2 && user.communityId1 === user.communityId2) {
       return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });

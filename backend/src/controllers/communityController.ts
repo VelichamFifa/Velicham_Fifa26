@@ -3,7 +3,7 @@ import { Community } from '../models';
 
 export const getCommunities = async (req: Request, res: Response) => {
   try {
-    const communities = await Community.find().select('communityId name state city').sort('name');
+    const communities = await Community.find().select('communityId name fullName state city').sort('name');
     res.json(communities);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch communities' });

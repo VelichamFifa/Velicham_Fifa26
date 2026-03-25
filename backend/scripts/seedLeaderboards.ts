@@ -127,7 +127,8 @@ const results = [
     communityId2: 'NANMA',
     dailyRank: 6,
     finalRank: 8,
-  },
+  }
+
 ];
 
 const communityResults = [
