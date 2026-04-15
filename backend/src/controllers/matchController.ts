@@ -27,7 +27,6 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
 export const getMatchById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { matchId } = req.params;
-    console.log('[MatchController] getMatchById called with ID:', matchId);
     const match = await Match.findOne({ matchId });
     if (!match) {
       res.status(404).json({

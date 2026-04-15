@@ -224,8 +224,8 @@ export default function DashboardPage() {
           <div className="relative overflow-hidden group">
             <div className="relative bg-white rounded-[2rem] shadow-2xl border border-white/20 overflow-hidden transform transition-all duration-300 hover:scale-[1.01]">
               <div className="absolute top-0 left-0 w-full h-56 z-0 overflow-hidden">
-                <img src="/dashboard-bg.png" alt="Card Header BG" className="w-full h-full object-cover object-top" />
-                <div className="absolute inset-0 bg-gradient-to-r from-green-700/30 via-green-600/20 to-emerald-700/30"></div>
+                {/* <img src="/dashboard-bg.png" alt="Card Header BG" className="w-full h-full object-cover object-top" /> */}
+                <div className="absolute inset-0 bg-green-700"></div>
               </div>
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl z-0"></div>
 
