@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { finalizeMatch, getAllUsers, deleteUser } from '../controllers/adminController';
+import { finalizeMatch, getAllUsers, deleteUser, updateUser } from '../controllers/adminController';
 import { authMiddleware, adminMiddleware } from '../middleware/auth';
 
 const router = Router();
@@ -10,5 +10,6 @@ router.use(authMiddleware, adminMiddleware);
 router.get('/users', getAllUsers);
 router.post('/finalize-match', finalizeMatch);
 router.delete('/users/:userId', deleteUser);
+router.put('/users/:userId', updateUser);
 
 export default router;

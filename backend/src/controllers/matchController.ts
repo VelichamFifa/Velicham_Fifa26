@@ -24,6 +24,31 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+export const getMatchById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { matchId } = req.params;
+    console.log('[MatchController] getMatchById called with ID:', matchId);
+    const match = await Match.findOne({ matchId });
+    if (!match) {
+      res.status(404).json({
+        success: false,
+        message: 'Match not found'
+      });
+      return;
+    }
+    res.json({
+      success: true,
+      data: match
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
 export const createMatch = async (req: Request, res: Response): Promise<void> => {
   try {
     const { matchId, LDF, UDF, NDA } = req.body;

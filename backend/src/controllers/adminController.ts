@@ -74,6 +74,35 @@ export const getAllUsers = async (req: AuthRequest, res: Response) => {
 };
 
 /**
+ * Update a user's details
+ */
+export const updateUser = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req.params;
+        const { role, Community_ID } = req.body;
+
+        const user = await User.findOne({ User_ID: userId });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (role !== undefined) {
+            user.role = role;
+        }
+        if (Community_ID !== undefined) {
+            user.Community_ID = Community_ID;
+        }
+
+        await user.save();
+
+        res.json({ message: 'User updated successfully', user });
+    } catch (error) {
+        console.error('Update user error:', error);
+        res.status(500).json({ error: 'Failed to update user' });
+    }
+};
+
+/**
  * Delete a user from the system
  */
 export const deleteUser = async (req: AuthRequest, res: Response) => {

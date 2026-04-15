@@ -50,7 +50,7 @@ const PredictionSchema: Schema = new Schema(
     },
     Total_Points: {
       type: Schema.Types.Number,
-      default: 0
+      default: null
     },
     Last_Submitted_Time: {
       type: Schema.Types.Date,

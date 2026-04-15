@@ -13,19 +13,8 @@ const Profile: React.FC = () => {
   const { setUser } = useAuthStore();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [editLoading, setEditLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [communities, setCommunities] = useState<Community[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
-
-  const [formData, setFormData] = useState({
-    city: '',
-    state: '',
-    country: '',
-    communityId: '',
-    phoneNumber: '',
-  });
 
   useEffect(() => {
     fetchData();
@@ -42,38 +31,10 @@ const Profile: React.FC = () => {
       setProfile(p);
       setUser(p); // Update Global State
       setCommunities(communitiesRes.data);
-      setFormData({
-        city: p.City || '',
-        state: p.State || '',
-        country: p.Country || '',
-        communityId: p.Community_ID?.toString() || '',
-        phoneNumber: p.WhatsApp_Number || '',
-      });
     } catch (err: any) {
       setError(err.response?.data?.message || err.response?.data?.error || 'Failed to load profile');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSaveProfile = async () => {
-    try {
-      setEditLoading(true);
-      setError('');
-      setSuccess('');
-      await apiService.updateProfile(formData);
-      setSuccess('Profile updated successfully');
-      setIsEditing(false);
-      fetchData();
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.response?.data?.error || 'Failed to update profile');
-    } finally {
-      setEditLoading(false);
     }
   };
 
@@ -87,12 +48,6 @@ const Profile: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      {success && (
-        <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-          {success}
-          <button onClick={() => setSuccess('')} className="absolute right-2 top-2">×</button>
-        </div>
-      )}
       {error && (
         <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
           {error}
@@ -171,70 +126,20 @@ const Profile: React.FC = () => {
 
             {/* Community */}
             <div className="md:col-span-2 pt-6 border-t border-gray-100">
-              <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
-                <h2 className="text-lg font-bold text-green-800 flex items-center gap-2">
+              <div className="mb-4">
+                <h2 className="text-lg font-bold text-green-800 flex items-center gap-2 mb-4">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                   Community
                 </h2>
-                {!isEditing && (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="bg-green-50 text-green-700 hover:bg-green-100 text-[11px] px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 border border-green-200"
-                  >
-                    Edit
-                  </button>
-                )}
+                <label className="block text-[9px] text-gray-400 uppercase font-black mb-1">My Community</label>
+                <p className="text-green-800 font-bold">
+                  {profile?.Community_ID
+                    ? communities.find(c => String(c.Community_ID) === String(profile.Community_ID))?.Name || 'Unknown'
+                    : 'None assigned'}
+                </p>
               </div>
-
-              {isEditing ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-[9px] text-green-600 uppercase font-black mb-1">Community</label>
-                    <select
-                      name="communityId"
-                      value={formData.communityId}
-                      onChange={handleChange}
-                      className="w-full px-2 py-1 text-sm border rounded bg-white font-bold text-green-800"
-                    >
-                      <option value="">None</option>
-                      {communities.map(c => (
-                        <option key={c.Community_ID} value={c.Community_ID}>{c.Name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              ) : (
-                <div className="mb-4">
-                  <label className="block text-[9px] text-gray-400 uppercase font-black mb-1">My Community</label>
-                  <p className="text-green-800 font-bold">
-                    {profile?.Community_ID
-                      ? communities.find(c => c.Community_ID === profile.Community_ID)?.Name || 'Unknown'
-                      : 'None assigned'}
-                  </p>
-                </div>
-              )}
-
-              {isEditing && (
-                <div className="flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    disabled={editLoading}
-                    className="px-6 py-2 rounded-lg font-bold text-gray-500 hover:bg-gray-100 transition disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveProfile}
-                    disabled={editLoading}
-                    className="bg-green-700 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-800 transition shadow disabled:opacity-50"
-                  >
-                    {editLoading ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>

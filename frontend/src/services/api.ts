@@ -64,9 +64,10 @@ class ApiService {
     });
   }
 
-  getMatch(matchId: string) {
+  getMatchById(matchId: string) {
     return this.client.get(`/matches/${matchId}`);
   }
+
 
   createMatch(data: any) {
     return this.client.post('/matches', data);
@@ -149,6 +150,10 @@ class ApiService {
     return this.client.delete(`/admin/users/${userId}`);
   }
 
+  updateUser(userId: string, data: { role?: string; Community_ID?: string }) {
+    return this.client.put(`/admin/users/${userId}`, data);
+  }
+
   // Community endpoints
   getCommunities() {
     return this.client.get('/communities');
@@ -156,6 +161,10 @@ class ApiService {
 
   getCommunity(communityId: string) {
     return this.client.get(`/communities/${communityId}`);
+  }
+
+  getCommunityMembers(communityId: string) {
+    return this.client.get(`/communities/${communityId}/members`);
   }
 }
 

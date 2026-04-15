@@ -7,7 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "seed:leaderboards": "tsx src/scripts/seedLeaderboards.ts"
+    "seed:leaderboards": "tsx src/scripts/seedLeaderboards.ts",
+    "reset:match": "tsx src/scripts/resetMatch.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

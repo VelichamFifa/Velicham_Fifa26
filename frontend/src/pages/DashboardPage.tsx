@@ -8,6 +8,31 @@ import { applyDenseRanking } from '../utils/ranking';
 
 type PartyKey = 'UDF' | 'LDF' | 'NDA';
 
+const PREDICTION_END_DATE = new Date('2026-05-04T02:30:00Z');
+
+function calculateTimeLeft() {
+  const difference = +PREDICTION_END_DATE - +new Date();
+  let timeLeft = {
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    total: difference
+  };
+
+  if (difference > 0) {
+    timeLeft = {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / 1000 / 60) % 60),
+      seconds: Math.floor((difference / 1000) % 60),
+      total: difference
+    };
+  }
+
+  return timeLeft;
+}
+
 export default function DashboardPage() {
   const { user, setUser } = useAuthStore();
   const [community, setCommunity] = useState<any>(null);
@@ -17,33 +42,52 @@ export default function DashboardPage() {
 
   // Prediction State
   const [scores, setScores] = useState({ UDF: 0, LDF: 0, NDA: 0 });
-  const [lastTouched, setLastTouched] = useState<PartyKey[]>(['UDF', 'LDF']);
   const [existingPrediction, setExistingPrediction] = useState<Prediction | null>(null);
+  const [match, setMatch] = useState<any>(null);
   const [halaqaMembers, setHalaqaMembers] = useState<any[]>([]);
   const [showHalaqaModal, setShowHalaqaModal] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+    const timer = setInterval(() => {
+      const remaining = calculateTimeLeft();
+      setTimeLeft(remaining);
+      if (remaining.total <= 0) {
+        clearInterval(timer);
+      }
+    }, 1000);
 
-        // 1. Fetch full profile if needed
-        if (user && (!user.City || !user.Status)) {
-          const profileRes = await apiService.getProfile();
-          if (profileRes.data) {
-            setUser(profileRes.data);
-          }
+    return () => clearInterval(timer);
+  }, []);
+
+  const fetchData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // 1. Fetch full profile if needed
+      if (user && (!user.City || !user.Status)) {
+        const profileRes = await apiService.getProfile();
+        if (profileRes.data) {
+          setUser(profileRes.data);
         }
+      }
 
-        // 2. Fetch community details
-        if (user?.Community_ID) {
-          const commRes = await apiService.getCommunity(user.Community_ID.toString());
-          setCommunity(commRes.data);
-        }
+      // 2. Fetch community details
+      if (user?.Community_ID) {
+        const commRes = await apiService.getCommunity(user.Community_ID.toString());
+        setCommunity(commRes.data);
+      }
 
-        // 3. Fetch existing prediction
-        if (user?.Email) {
-          const predRes = await apiService.getUserPredictions({ email: user.Email, matchId: '1' });
+      // 3. Fetch existing prediction and match status
+      if (user?.Email) {
+        try {
+          const [predRes, matchRes] = await Promise.all([
+            apiService.getUserPredictions({ email: user.Email, matchId: '1' }),
+            apiService.getMatchById('1')
+          ]);
+
+          setMatch(matchRes.data.data);
+
           if (predRes.data && predRes.data.data && predRes.data.data.length > 0) {
             const pred = predRes.data.data[0];
             setExistingPrediction(pred);
@@ -53,30 +97,56 @@ export default function DashboardPage() {
               NDA: pred.NDA_Score
             });
           }
+        } catch (err) {
+          console.error('Error fetching prediction/match:', err);
         }
-
-        // 4. Fetch halaqa members' points from individual leaderboard
-        if (user?.Community_ID) {
-          try {
-            const lbRes = await apiService.getTopLeaderboard(200, '1');
-            const allMembers: any[] = lbRes.data?.leaderboard || [];
-            const members = allMembers
-              .filter((m: any) => String(m.communityId) === String(user.Community_ID))
-              .sort((a: any, b: any) => b.totalPoints - a.totalPoints);
-            setHalaqaMembers(members);
-          } catch (_) {
-            // leaderboard fetch is best-effort
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-      } finally {
-        setLoading(false);
       }
-    };
 
+      // 4. Fetch halaqa members and their points
+      if (user?.Community_ID) {
+        try {
+          const [membersRes, lbRes] = await Promise.all([
+            apiService.getCommunityMembers(user.Community_ID.toString()),
+            apiService.getTopLeaderboard(200, '1')
+          ]);
+
+          const allUsers: any[] = membersRes.data || [];
+          const leaderboardEntries: any[] = lbRes.data?.leaderboard || [];
+
+          const members = allUsers.map(u => {
+            const scoreEntry = leaderboardEntries.find(le => le.email === u.Email);
+            return {
+              email: u.Email,
+              firstName: u.First_Name,
+              lastName: u.Last_Name,
+              totalPoints: scoreEntry ? scoreEntry.totalPoints : 0,
+              hasPredicted: !!scoreEntry
+            };
+          });
+
+          // Sort by points if finalized, otherwise by name
+          const sortedMembers = members.sort((a: any, b: any) => {
+            if (match?.IsFinalized) {
+              return b.totalPoints - a.totalPoints || a.firstName.localeCompare(b.firstName);
+            }
+            return a.firstName.localeCompare(b.firstName);
+          });
+
+          setHalaqaMembers(sortedMembers);
+        } catch (_) {
+          // best-effort
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.Email, user?.Community_ID, setUser, match?.IsFinalized]);
+
+  useEffect(() => {
     fetchData();
-  }, [user?.Email, user?.Community_ID, setUser]);
+  }, [fetchData]);
 
   // Auto-clear success messages after 3 seconds
   useEffect(() => {
@@ -90,37 +160,14 @@ export default function DashboardPage() {
 
   const handleScoreChange = (party: PartyKey, value: string) => {
     const numValue = value === '' ? 0 : Math.max(0, parseInt(value) || 0);
-
-    setScores(prev => {
-      const newScores = { ...prev, [party]: numValue };
-
-      // Update lastTouched: edited party comes to front
-      const updatedTouched = [party, ...lastTouched.filter(p => p !== party)].slice(0, 2) as PartyKey[];
-      setLastTouched(updatedTouched);
-
-      // Identify the remainder party (the one NOT in updatedTouched)
-      const parties: PartyKey[] = ['UDF', 'LDF', 'NDA'];
-      const remainderParty = parties.find(p => !updatedTouched.includes(p))!;
-
-      // Check if current input already exceeds 140
-      const otherTouched = updatedTouched.find(p => p !== party)!;
-      const currentSum = newScores[party] + newScores[otherTouched];
-
-      if (currentSum > 140) {
-        // Cap the current input so the sum of the two touched doesn't exceed 140
-        newScores[party] = 140 - newScores[otherTouched];
-        newScores[remainderParty] = 0;
-      } else {
-        // Auto-calculate the remainder
-        newScores[remainderParty] = 140 - currentSum;
-      }
-
-      return newScores;
-    });
+    setScores(prev => ({ ...prev, [party]: numValue }));
     setMessage(null);
   };
 
-  const isTotalValid = (scores.UDF + scores.LDF + scores.NDA) === 140;
+  const totalScores = scores.UDF + scores.LDF + scores.NDA;
+  const isTotalValid = totalScores === 140;
+  const isClosed = timeLeft.total <= 0;
+  const remainingSeats = 140 - totalScores;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,10 +186,8 @@ export default function DashboardPage() {
       });
       setMessage({ type: 'success', text: 'Prediction saved successfully!' });
 
-      const predRes = await apiService.getUserPredictions({ email: user.Email, matchId: '1' });
-      if (predRes.data && predRes.data.data && predRes.data.data.length > 0) {
-        setExistingPrediction(predRes.data.data[0]);
-      }
+      // Refresh local data to show user in Halaqa lists immediately
+      await fetchData();
     } catch (error: any) {
       setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to save prediction' });
     } finally {
@@ -158,9 +203,7 @@ export default function DashboardPage() {
     );
   }
 
-  // Helper to identify the remainder party for UI hint
   const parties: PartyKey[] = ['UDF', 'LDF', 'NDA'];
-  const currentRemainder = parties.find(p => !lastTouched.includes(p))!;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -210,51 +253,51 @@ export default function DashboardPage() {
                   <div className="grid grid-cols-3 gap-4 sm:gap-8 items-center">
                     {/* UDF */}
                     <div className="flex flex-col items-center space-y-3">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all ${currentRemainder === 'UDF' ? 'bg-white border-green-200' : 'bg-blue-100 border-blue-200'}`}>
-                        <img src="/udf.png" alt="UDF" className="w-full h-full object-contain" />
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all bg-blue-100 border-blue-200">
+                        {/* <img src="/udf.png" alt="UDF" className="w-full h-full object-contain" /> */}
                       </div>
-                      <span className="text-xs font-black text-gray-500 uppercase tracking-widest">UDF</span>
+                      <span className="text-lg font-black text-blue-500 uppercase tracking-widest">UDF</span>
                       <input
                         type="number"
                         min="0"
                         max="140"
                         value={scores.UDF || ''}
                         onChange={(e) => handleScoreChange('UDF', e.target.value)}
-                        className={`w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 ${currentRemainder === 'UDF' ? 'bg-green-50/50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-100 text-blue-800 focus:border-blue-500'}`}
+                        className="w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-blue-800 focus:border-blue-500"
                         placeholder="0"
                       />
                     </div>
 
                     {/* LDF */}
                     <div className="flex flex-col items-center space-y-3">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all ${currentRemainder === 'LDF' ? 'bg-white border-green-200' : 'bg-red-100 border-red-200'}`}>
-                        <img src="/ldf.png" alt="LDF" className="w-full h-full object-contain" />
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all bg-red-100 border-red-200">
+                        {/* <img src="/ldf.png" alt="LDF" className="w-full h-full object-contain" /> */}
                       </div>
-                      <span className="text-xs font-black text-gray-500 uppercase tracking-widest">LDF</span>
+                      <span className="text-lg font-black text-red-500 uppercase tracking-widest">LDF</span>
                       <input
                         type="number"
                         min="0"
                         max="140"
                         value={scores.LDF || ''}
                         onChange={(e) => handleScoreChange('LDF', e.target.value)}
-                        className={`w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 ${currentRemainder === 'LDF' ? 'bg-green-50/50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-100 text-red-800 focus:border-red-500'}`}
+                        className="w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-red-800 focus:border-red-500"
                         placeholder="0"
                       />
                     </div>
 
                     {/* NDA */}
                     <div className="flex flex-col items-center space-y-3">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all ${currentRemainder === 'NDA' ? 'bg-white border-green-200' : 'bg-orange-100 border-orange-200'}`}>
-                        <img src="/nda.png" alt="NDA" className="w-full h-full object-contain" />
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all bg-orange-100 border-orange-200">
+                        {/* <img src="/nda.png" alt="NDA" className="w-full h-full object-contain" /> */}
                       </div>
-                      <span className="text-xs font-black text-gray-500 uppercase tracking-widest">NDA</span>
+                      <span className="text-lg font-black text-orange-500 uppercase tracking-widest">NDA</span>
                       <input
                         type="number"
                         min="0"
                         max="140"
                         value={scores.NDA || ''}
                         onChange={(e) => handleScoreChange('NDA', e.target.value)}
-                        className={`w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 ${currentRemainder === 'NDA' ? 'bg-green-50/50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-100 text-orange-800 focus:border-orange-500'}`}
+                        className="w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-orange-800 focus:border-orange-500"
                         placeholder="0"
                       />
                     </div>
@@ -267,27 +310,82 @@ export default function DashboardPage() {
                     </div>
                   )}
 
+                  <div className="bg-gray-50/50 p-4 rounded-xl border border-dashed border-gray-200 flex justify-between items-center transform transition-all duration-300">
+                    <div>
+                      <span className="text-[9px] font-black text-gray-400 uppercase block tracking-[0.2em] mb-0.5">Total Prediction</span>
+                      <span className={`text-lg font-black tabular-nums transition-colors duration-300 ${isTotalValid ? 'text-green-600' : 'text-red-500'}`}>
+                        {totalScores} / 140
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[9px] font-black text-gray-400 uppercase block tracking-[0.2em] mb-0.5">Remaining</span>
+                      <span className={`text-base font-black tabular-nums transition-colors duration-300 ${remainingSeats === 0 ? 'text-green-600' : remainingSeats < 0 ? 'text-red-500' : 'text-orange-500'}`}>
+                        {remainingSeats === 0 ? '✓ Ready' : `${remainingSeats} Seats`}
+                      </span>
+                    </div>
+                  </div>
+
                   <button
                     type="submit"
-                    disabled={submitting || !isTotalValid}
-                    className={`w-full py-5 rounded-[1.5rem] text-sm font-black uppercase tracking-[0.2em] transition-all shadow-xl hover:shadow-2xl active:scale-[0.98] ${isTotalValid
+                    disabled={submitting || !isTotalValid || isClosed}
+                    className={`w-full py-5 rounded-[1.5rem] text-sm font-black uppercase tracking-[0.2em] transition-all shadow-xl hover:shadow-2xl active:scale-[0.98] ${isTotalValid && !isClosed
                       ? 'bg-gradient-to-r from-green-700 via-green-600 to-emerald-600 text-white hover:brightness-110'
                       : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                       }`}
                   >
-                    {submitting ? 'Updating...' : existingPrediction ? 'Update Prediction' : 'Submit Prediction'}
+                    {isClosed ? 'Predictions Closed' : submitting ? 'Updating...' : existingPrediction ? 'Update Prediction' : 'Submit Prediction'}
                   </button>
+
+                  {!isClosed && (
+                    <div className="pt-6 border-t border-gray-100 mt-6">
+                      <div className="flex items-center justify-center gap-3 mb-6">
+                        <div className="h-[1px] bg-green-200 flex-1"></div>
+                        <span className="text-[11px] font-black text-green-800 uppercase tracking-[0.4em] whitespace-nowrap">
+                          Predictions Closing In
+                        </span>
+                        <div className="h-[1px] bg-green-200 flex-1"></div>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2">
+                        <div className="bg-green-50/50 rounded-2xl py-4 flex flex-col items-center justify-center border border-green-100/50">
+                          <span className="text-3xl sm:text-4xl font-black text-green-700 tabular-nums">
+                            {String(timeLeft.days).padStart(2, '0')}
+                          </span>
+                          <span className="text-[9px] font-black text-green-600/50 uppercase tracking-[0.2em] mt-1">Days</span>
+                        </div>
+                        <div className="bg-green-50/50 rounded-2xl py-4 flex flex-col items-center justify-center border border-green-100/50">
+                          <span className="text-3xl sm:text-4xl font-black text-green-700 tabular-nums">
+                            {String(timeLeft.hours).padStart(2, '0')}
+                          </span>
+                          <span className="text-[9px] font-black text-green-600/50 uppercase tracking-[0.2em] mt-1">Hours</span>
+                        </div>
+                        <div className="bg-green-50/50 rounded-2xl py-4 flex flex-col items-center justify-center border border-green-100/50">
+                          <span className="text-3xl sm:text-4xl font-black text-green-700 tabular-nums">
+                            {String(timeLeft.minutes).padStart(2, '0')}
+                          </span>
+                          <span className="text-[9px] font-black text-green-600/50 uppercase tracking-[0.2em] mt-1">Mins</span>
+                        </div>
+                        <div className="bg-green-50/50 rounded-2xl py-4 flex flex-col items-center justify-center border border-green-100/50">
+                          <span className="text-3xl sm:text-4xl font-black text-green-700 tabular-nums">
+                            {String(timeLeft.seconds).padStart(2, '0')}
+                          </span>
+                          <span className="text-[9px] font-black text-green-600/50 uppercase tracking-[0.2em] mt-1">Secs</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </form>
 
-                <div className="mt-8 flex justify-between items-center text-[10px] text-gray-400 font-bold uppercase tracking-widest px-2">
-                  <div className="flex flex-col">
+                <div className="mt-8 flex justify-end items-center text-[10px] text-gray-400 font-bold uppercase tracking-widest px-2">
+                  {/* <div className="flex flex-col">
                     <span>Election Date:</span>
                     <span className="text-gray-600">May 2026</span>
                   </div>
                   <div className="text-center flex flex-col">
                     <span>Prediction Ends:</span>
                     <span className="text-gray-600 font-black">20 May, 18:00</span>
-                  </div>
+                  </div> */}
+                  {/*make this card to the right end of the parent div */}
+
                   <div className="flex flex-col text-right">
                     <span>Assembly Size:</span>
                     <span className="text-gray-600">140 Seats</span>
@@ -328,9 +426,15 @@ export default function DashboardPage() {
               <div className="flex items-center space-x-4">
                 <div className="bg-green-100 text-green-700 p-4 rounded-2xl text-3xl shadow-inner">⭐</div>
                 <div>
+                  {/* <p className="text-3xl font-black text-green-700">
+                    {existingPrediction ? (existingPrediction as any).Total_Points ?? '-' : '—'}
+                  </p> */}
                   <p className="text-3xl font-black text-green-700">
-                    {existingPrediction ? (existingPrediction as any).Total_Points ?? 0 : '—'}
+                    {existingPrediction && existingPrediction.Total_Points !== null
+                      ? existingPrediction.Total_Points
+                      : '—'}
                   </p>
+
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Points</p>
                 </div>
               </div>
@@ -347,12 +451,12 @@ export default function DashboardPage() {
 
           <div className="card bg-amber-50 border-amber-200 shadow-sm">
             <h3 className="text-xs font-black text-amber-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span>⚠️</span> Pro Rules
+              <span>⚠️</span> Election Rules
             </h3>
             <ul className="text-xs text-amber-800 space-y-3 font-bold opacity-80">
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-amber-600 rounded-full"></span>
-                Predictions must sum to ≤ 140
+                Predictions must sum to 140
               </li>
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-amber-600 rounded-full"></span>
@@ -405,7 +509,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <span className="font-black text-green-700 bg-green-50 px-3 py-1 rounded-lg">
-                    {member.totalPoints ?? 0}
+                    {match?.IsFinalized ? (member.totalPoints ?? 0) : '—'}
                   </span>
                 </div>
               )) : (

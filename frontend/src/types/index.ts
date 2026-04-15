@@ -50,15 +50,19 @@ export interface Prediction {
 }
 
 export interface LeaderboardEntry {
-  Email: string;
-  Total_Points: number;
-  Last_Submitted_Time: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  totalPoints: number;
+  lastSubmittedTime?: string;
   communityId?: string;
+  denseRank?: number;
 }
 
 export interface CommunityLeaderboardEntry {
-  communityId: number;
+  communityId: string | number;
   Name: string;
+  communityName?: string;
   Average_Accuracy: number;
   Member_Count: number;
 }

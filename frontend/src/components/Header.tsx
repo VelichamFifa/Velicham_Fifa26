@@ -36,8 +36,8 @@ export default function Header() {
           >
             <div className="text-3xl transform group-hover:scale-110 transition-transform">🏛️</div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-black text-green-900 tracking-tight">Kerala Election</h1>
-              <p className="text-[10px] text-green-600 uppercase tracking-widest font-bold">Assembly 2026</p>
+              <h1 className="text-xl font-black text-green-900 tracking-tight">Kerala Assembly </h1>
+              <p className="text-[10px] text-green-600 uppercase tracking-widest font-bold"> Election 2026</p>
             </div>
           </Link>
 
@@ -56,8 +56,8 @@ export default function Header() {
                     key={link.path}
                     to={link.path}
                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all hover:bg-green-50 ${isActive(link.path)
-                        ? 'bg-green-100 text-green-800'
-                        : 'text-gray-600 hover:text-green-700'
+                      ? 'bg-green-100 text-green-800'
+                      : 'text-gray-600 hover:text-green-700'
                       }`}
                   >
                     {link.label}
@@ -122,12 +122,7 @@ export default function Header() {
                 >
                   Login
                 </Link>
-                <Link
-                  to="/login"
-                  className="bg-green-700 text-white px-5 py-2 rounded-xl text-sm font-black shadow-lg shadow-green-900/10 hover:bg-green-800 transition-all"
-                >
-                  Start Game
-                </Link>
+
               </div>
             )}
 
@@ -164,8 +159,8 @@ export default function Header() {
                   to={link.path}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center space-x-3 px-4 py-4 rounded-xl text-base font-bold transition-all ${isActive(link.path)
-                      ? 'bg-green-50 text-green-800 border-l-4 border-green-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-green-700'
+                    ? 'bg-green-50 text-green-800 border-l-4 border-green-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-green-700'
                     }`}
                 >
                   <span>{link.icon}</span>
