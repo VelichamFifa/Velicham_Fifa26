@@ -2,17 +2,13 @@ import { useCallback, useEffect } from 'react';
 import { useAuthStore } from '../context/store';
 
 export const useAuth = () => {
-  const { user, token, verifyToken, logout, fetchProfile } = useAuthStore();
+  const { user, token, logout } = useAuthStore();
 
   const isAuthenticated = !!token && !!user;
 
   const checkAuth = useCallback(async () => {
-    const isValid = await verifyToken();
-    if (isValid) {
-      await fetchProfile();
-    }
-    return isValid;
-  }, [verifyToken, fetchProfile]);
+    return !!localStorage.getItem('token') && !!localStorage.getItem('user');
+  }, []);
 
   useEffect(() => {
     if (token && !user) {

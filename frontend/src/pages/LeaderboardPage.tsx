@@ -135,7 +135,7 @@ export default function LeaderboardPage() {
             : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
         >
-          👥 Communities
+          👥 Halaqas
         </button>
       </div>
 
@@ -150,7 +150,7 @@ export default function LeaderboardPage() {
           <div className="bg-green-800 px-6 py-4 flex items-center text-white font-black uppercase tracking-widest text-[10px] sm:text-xs">
             {match?.IsFinalized && <div className="w-16 sm:w-24">Rank</div>}
             <div className="flex-1">
-              {activeTab === 'top' ? 'Participant' : 'Community Name'}
+              {activeTab === 'top' ? 'Participant' : 'Halaqa Name'}
             </div>
             {match?.IsFinalized && <div className="text-right w-24 sm:w-32">Points</div>}
           </div>
@@ -238,7 +238,7 @@ export default function LeaderboardPage() {
               ) : (
                 <div className="py-20 text-center">
                   <span className="text-4xl mb-4 block">👥</span>
-                  <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No community data yet</p>
+                  <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No Halaqa data yet</p>
                 </div>
               )
             )}

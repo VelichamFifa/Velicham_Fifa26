@@ -34,10 +34,15 @@ export default function Header() {
             className="flex items-center space-x-3 group"
             onClick={() => setMobileMenuOpen(false)}
           >
-            <div className="text-3xl transform group-hover:scale-110 transition-transform">🏛️</div>
+            <img
+              src="/VelichamLogo.png"
+              alt="Velicham logo"
+              className="h-10 w-10 object-contain transform group-hover:scale-110 transition-transform"
+            />
             <div className="hidden sm:block">
-              <h1 className="text-xl font-black text-green-900 tracking-tight">Kerala Assembly </h1>
-              <p className="text-[10px] text-green-600 uppercase tracking-widest font-bold"> Election 2026</p>
+            
+              <h1 className="text-xl font-black text-green-900 tracking-tight">Kerala Assembly Election</h1>
+              <p className="text-[10px] text-green-600 uppercase tracking-widest font-bold"> 2026 Prediction</p>
             </div>
           </Link>
 

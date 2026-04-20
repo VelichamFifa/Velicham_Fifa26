@@ -398,7 +398,7 @@ export default function DashboardPage() {
 
         <div className="space-y-6">
           <div className="card hover:shadow-lg transition-all group">
-            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Community Spirit</h3>
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Halaqa Spirit</h3>
             <div className="flex items-center space-x-4">
               <div className="bg-emerald-100 text-emerald-700 p-4 rounded-2xl text-3xl shadow-inner">
                 🏆
@@ -515,7 +515,7 @@ export default function DashboardPage() {
               )) : (
                 <div className="text-center py-10">
                   <span className="text-4xl block mb-3">👻</span>
-                  <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No predictions from your community yet</p>
+                  <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No predictions from your Halaqa yet</p>
                 </div>
               )}
             </div>

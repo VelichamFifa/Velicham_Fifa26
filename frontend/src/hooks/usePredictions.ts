@@ -1,12 +1,27 @@
-import { useCallback } from 'react';
-import { usePredictionStore } from '../context/store';
+import { useCallback, useState } from 'react';
+import { apiService } from '../services/api';
+import { Prediction } from '../types';
 
 export const usePredictions = () => {
-  const { userPredictions, isLoading, fetchUserPredictions, submitPrediction } = usePredictionStore();
+  const [userPredictions, setUserPredictions] = useState<Prediction[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const loadPredictions = useCallback(async (email: string, matchId?: number) => {
-    return await fetchUserPredictions(email, matchId);
-  }, [fetchUserPredictions]);
+    setIsLoading(true);
+    try {
+      const response = await apiService.getUserPredictions({
+        email,
+        matchId: matchId?.toString(),
+      });
+      const predictions = Array.isArray(response.data?.data)
+        ? response.data.data
+        : [];
+      setUserPredictions(predictions);
+      return predictions;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const savePrediction = useCallback(async (
     email: string,
@@ -15,8 +30,14 @@ export const usePredictions = () => {
     ldf: number,
     nda: number
   ) => {
-    return await submitPrediction({ Email: email, MatchID: matchId, UDF_Score: udf, LDF_Score: ldf, NDA_Score: nda });
-  }, [submitPrediction]);
+    return await apiService.submitPrediction({
+      Email: email,
+      MatchID: matchId,
+      UDF_Score: udf,
+      LDF_Score: ldf,
+      NDA_Score: nda,
+    });
+  }, []);
 
   return {
     predictions: userPredictions,

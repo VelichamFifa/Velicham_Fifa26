@@ -7,6 +7,14 @@ import { capitalizeProperNoun } from '../utils/stringUtils';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const getAllowedGoogleAudiences = (): string[] => {
+  const clientIdsEnv = process.env.GOOGLE_CLIENT_IDS || process.env.GOOGLE_CLIENT_ID || '';
+  return clientIdsEnv
+    .split(',')
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+};
+
 export const register = async (req: AuthRequest, res: Response) => {
   try {
     const {
@@ -127,11 +135,16 @@ export const login = async (req: AuthRequest, res: Response) => {
 
 export const googleLogin = async (req: AuthRequest, res: Response) => {
   try {
+    const allowedAudiences = getAllowedGoogleAudiences();
+    if (allowedAudiences.length === 0) {
+      return res.status(500).json({ success: false, message: 'Google auth is not configured on server' });
+    }
+
     const { credential } = req.body;
 
     const ticket = await client.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: allowedAudiences,
     });
 
     const payload = ticket.getPayload();
@@ -193,7 +206,8 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error('Google login error:', error);
-    res.status(500).json({ success: false, message: 'Google login failed' });
+    const errorMessage = error instanceof Error ? error.message : 'Google login failed';
+    res.status(500).json({ success: false, message: errorMessage });
   }
 };
 

@@ -185,22 +185,22 @@ async function seedAll() {
     console.log(`Seeded ${communities.length} communities`);
 
     // Seed users with hashed passwords
-    const usersWithHashedPasswords = await Promise.all(
-      users.map(async (user) => ({
-        ...user,
-        password: await hashPassword(user.password!)
-      }))
-    );
-    await User.insertMany(usersWithHashedPasswords);
-    console.log(`Seeded ${users.length} users`);
+    //const usersWithHashedPasswords = await Promise.all(
+   //   users.map(async (user) => ({
+    //    ...user,
+   //     password: await hashPassword(user.password!)
+   //   }))
+   // );
+   // await User.insertMany(usersWithHashedPasswords);
+    //console.log(`Seeded ${users.length} users`);
 
     // Seed matches
     await Match.insertMany(matches);
     console.log(`Seeded ${matches.length} matches`);
 
     // Seed predictions
-    await Prediction.insertMany(samplePredictions);
-    console.log(`Seeded ${samplePredictions.length} predictions`);
+    //await Prediction.insertMany(samplePredictions);
+    //console.log(`Seeded ${samplePredictions.length} predictions`);
 
     console.log('\n✅ Database seeded successfully!');
     console.log('\n📝 Demo Accounts (Password: password123):');

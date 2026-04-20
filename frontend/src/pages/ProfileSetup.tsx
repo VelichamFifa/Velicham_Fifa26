@@ -192,7 +192,7 @@ const ProfileSetup: React.FC = () => {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-            Community <span className="text-red-500">*</span>
+            Halaqa <span className="text-red-500">*</span>
             </label>
             <select
               name="communityId"
@@ -202,13 +202,13 @@ const ProfileSetup: React.FC = () => {
               disabled={loadingCommunities}
               required
             >
-              <option value="" disabled>Select your community</option>
+              <option value="" disabled>Select your Halaqa</option>
               {communities.map(c => (
                 <option key={c.Community_ID} value={c.Community_ID}>{c.Name}</option>
               ))}
             </select>
             {loadingCommunities && (
-              <p className="text-sm text-gray-500 mt-1">Loading communities...</p>
+              <p className="text-sm text-gray-500 mt-1">Loading Halaqas...</p>
             )}
             {formData.communityId && (() => {
               const selected = communities.find(c => c.Community_ID === formData.communityId);

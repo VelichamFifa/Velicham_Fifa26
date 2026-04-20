@@ -320,7 +320,7 @@ export default function AdminPage() {
                   <tr className="bg-gray-50 border-b border-gray-100">
                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Participant</th>
                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Role</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Halaqa (Community)</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Halaqa</th>
                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
@@ -415,13 +415,13 @@ export default function AdminPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Halaqa (Community)</label>
+                  <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Halaqa</label>
                   <select
                     value={editCommunityId}
                     onChange={(e) => setEditCommunityId(e.target.value)}
                     className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-green-500"
                   >
-                    <option value="">No Community</option>
+                    <option value="">No Halaqa</option>
                     {communities.map(c => (
                       <option key={c.Community_ID} value={c.Community_ID}>
                         {c.Name} {c.City ? `(${c.City})` : ''}

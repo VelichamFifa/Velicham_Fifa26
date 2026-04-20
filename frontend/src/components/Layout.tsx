@@ -23,11 +23,9 @@ export default function Layout({ children }: LayoutProps) {
       <footer className="bg-green-800 text-white py-6 mt-auto">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm text-green-200">
-            Kerala Election Predictor - Track & Predict Election Results
+            Velicham North America - Kerala Assembly Election Predictor 2026. All rights reserved.
           </p>
-          <p className="text-xs text-green-300 mt-1">
-            Built for political forecasting and community engagement
-          </p>
+          
         </div>
       </footer>
     </div>
