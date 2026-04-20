@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../hooks/useAuth';
+import SearchableDropdown from '../components/SearchableDropdown';
 
 interface Community {
     _id: string;
@@ -61,6 +62,13 @@ const ProfileSetup: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const handleDropdownChange = (name: string, value: string) => {
         setFormData((prev) => ({
             ...prev,
             [name]: value,
@@ -165,44 +173,22 @@ const ProfileSetup: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Community 1 (Optional)
-                            </label>
-                            <select
-                                name="communityId1"
-                                value={formData.communityId1}
-                                onChange={handleChange}
-                                disabled={loadingCommunities}
-                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary disabled:bg-gray-100"
-                            >
-                                <option value="">Select...</option>
-                                {communities.map((community) => (
-                                    <option key={community._id} value={community.communityId}>
-                                        {community.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Community 2 (Optional)
-                            </label>
-                            <select
-                                name="communityId2"
-                                value={formData.communityId2}
-                                onChange={handleChange}
-                                disabled={loadingCommunities}
-                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary disabled:bg-gray-100"
-                            >
-                                <option value="">Select...</option>
-                                {communities.map((community) => (
-                                    <option key={community._id} value={community.communityId}>
-                                        {community.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        <SearchableDropdown
+                            label="Community 1 (Optional)"
+                            value={formData.communityId1}
+                            onChange={(val) => handleDropdownChange('communityId1', val)}
+                            options={communities.map(c => ({ id: c.communityId, label: c.name }))}
+                            placeholder="Search community..."
+                            disabled={loadingCommunities}
+                        />
+                        <SearchableDropdown
+                            label="Community 2 (Optional)"
+                            value={formData.communityId2}
+                            onChange={(val) => handleDropdownChange('communityId2', val)}
+                            options={communities.map(c => ({ id: c.communityId, label: c.name }))}
+                            placeholder="Search community..."
+                            disabled={loadingCommunities}
+                        />
                     </div>
 
                     <button

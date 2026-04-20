@@ -8,6 +8,7 @@ const Profile: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [editLoading, setEditLoading] = useState(false);
     const [error, setError] = useState('');
+    const [requestError, setRequestError] = useState('');
     const [success, setSuccess] = useState('');
     const [communities, setCommunities] = useState<any[]>([]);
     const [isEditing, setIsEditing] = useState(false);
@@ -109,14 +110,14 @@ const Profile: React.FC = () => {
     const handleSubmitRequest = async () => {
         try {
             setEditLoading(true);
-            setError('');
+            setRequestError('');
             setSuccess('');
 
             const isMissingRequired = !requestData.name || !requestData.shortName;
             const isMissingLocation = !requestData.isOnline && (!requestData.city || !requestData.state);
 
             if (isMissingRequired || isMissingLocation) {
-                setError('Please fill in all required details for the new community request.');
+                setRequestError('Please fill in all required details for the new community request.');
                 setEditLoading(false);
                 return;
             }
@@ -124,9 +125,10 @@ const Profile: React.FC = () => {
             await apiService.updateProfile({ requestedCommunity: requestData });
             setSuccess('Community request submitted successfully');
             setShowRequestForm(false);
+            setRequestError('');
             fetchData();
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to submit request');
+            setRequestError(err.response?.data?.error || 'Failed to submit request');
         } finally {
             setEditLoading(false);
         }
@@ -166,14 +168,6 @@ const Profile: React.FC = () => {
                         <h1 className="text-3xl font-bold">{profile.firstName} {profile.lastName}</h1>
                         <p className="text-blue-200 mt-1 uppercase tracking-widest text-xs font-bold">{profile.role}</p>
                     </div>
-                    {!showRequestForm && (
-                        <button
-                            onClick={() => setIsEditing(!isEditing)}
-                            className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-bold transition-all border border-white/20"
-                        >
-                            {isEditing ? 'Cancel' : 'Edit Profile'}
-                        </button>
-                    )}
                 </div>
 
                 <div className="p-8">
@@ -194,28 +188,16 @@ const Profile: React.FC = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">First Name</label>
-                                        {isEditing ? (
-                                            <input name="firstName" value={formData.firstName} onChange={handleChange} className="w-full px-3 py-2 border rounded text-sm" />
-                                        ) : (
-                                            <p className="text-gray-800 font-medium px-1">{profile.firstName}</p>
-                                        )}
+                                        <p className="text-gray-800 font-medium px-1">{profile.firstName}</p>
                                     </div>
                                     <div>
                                         <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">Last Name</label>
-                                        {isEditing ? (
-                                            <input name="lastName" value={formData.lastName} onChange={handleChange} className="w-full px-3 py-2 border rounded text-sm" />
-                                        ) : (
-                                            <p className="text-gray-800 font-medium px-1">{profile.lastName}</p>
-                                        )}
+                                        <p className="text-gray-800 font-medium px-1">{profile.lastName}</p>
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">Phone Number</label>
-                                    {isEditing ? (
-                                        <input name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className="w-full px-3 py-2 border rounded text-sm" placeholder="+1234567890" />
-                                    ) : (
-                                        <p className="text-gray-800 font-medium px-1">{profile.phoneNumber || 'Not provided'}</p>
-                                    )}
+                                    <p className="text-gray-800 font-medium px-1">{profile.phoneNumber || 'Not provided'}</p>
                                 </div>
                             </div>
                         </div>
@@ -233,28 +215,16 @@ const Profile: React.FC = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">City</label>
-                                        {isEditing ? (
-                                            <input name="city" value={formData.city} onChange={handleChange} className="w-full px-3 py-2 border rounded text-sm" />
-                                        ) : (
-                                            <p className="text-gray-800 font-medium px-1">{profile.city || '-'}</p>
-                                        )}
+                                        <p className="text-gray-800 font-medium px-1">{profile.city || '-'}</p>
                                     </div>
                                     <div>
                                         <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">State</label>
-                                        {isEditing ? (
-                                            <input name="state" value={formData.state} onChange={handleChange} className="w-full px-3 py-2 border rounded text-sm" />
-                                        ) : (
-                                            <p className="text-gray-800 font-medium px-1">{profile.state || '-'}</p>
-                                        )}
+                                        <p className="text-gray-800 font-medium px-1">{profile.state || '-'}</p>
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">Country</label>
-                                    {isEditing ? (
-                                        <input name="country" value={formData.country} onChange={handleChange} className="w-full px-3 py-2 border rounded text-sm" />
-                                    ) : (
-                                        <p className="text-gray-800 font-medium px-1">{profile.country || '-'}</p>
-                                    )}
+                                    <p className="text-gray-800 font-medium px-1">{profile.country || '-'}</p>
                                 </div>
                             </div>
                         </div>
@@ -262,30 +232,45 @@ const Profile: React.FC = () => {
 
                         {/* Communities */}
                         <div className="md:col-span-2 pt-6 border-t border-gray-100">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-bold text-primary flex items-center gap-2">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                    </svg>
-                                    My Communities
-                                </h2>
-                                {isEditing && (
-                                    <div className="mb-4 bg-amber-50 border border-amber-200 p-3 rounded-lg flex gap-3 items-center">
-                                        <svg className="w-5 h-5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            <div className="mb-6">
+                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+                                    <h2 className="text-lg font-bold text-primary flex items-center gap-2">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                         </svg>
-                                        <p className="text-xs text-amber-800 font-medium leading-relaxed">
-                                            <span className="font-black uppercase">Important:</span> Changing your community will <span className="underline decoration-amber-500 underline-offset-2">not transfer</span> your previous game points to the new community.
+                                        My Communities
+                                    </h2>
+                                    <div className="flex gap-2">
+                                        {!showRequestForm && !isEditing && (
+                                            <button
+                                                onClick={() => setIsEditing(true)}
+                                                className="bg-blue-50 text-blue-600 hover:bg-blue-100 text-[11px] px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 border border-blue-200"
+                                            >
+                                                ✎ Edit
+                                            </button>
+                                        )}
+                                        {!profile.requestedCommunity && !showRequestForm && !isEditing && (
+                                            <button
+                                                onClick={() => setShowRequestForm(true)}
+                                                className="text-[11px] bg-gray-50 hover:bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg font-bold transition border border-gray-200"
+                                            >
+                                                + Request New Community
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {isEditing && (
+                                    <div className="mb-4 bg-amber-50 border border-amber-200 p-3 rounded-xl flex gap-3 items-center animate-in fade-in slide-in-from-top-2 shadow-sm">
+                                        <div className="bg-amber-100 p-1.5 rounded-full">
+                                            <svg className="w-4 h-4 text-amber-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-[11px] text-amber-900 font-medium leading-relaxed">
+                                            <span className="font-extrabold uppercase text-amber-700">Warning:</span> Changing your community will <span className="font-bold underline decoration-amber-400 underline-offset-2">not transfer</span> your previous game points to the new community. This action cannot be undone.
                                         </p>
                                     </div>
-                                )}
-                                {!profile.requestedCommunity && !showRequestForm && !isEditing && (
-                                    <button
-                                        onClick={() => setShowRequestForm(true)}
-                                        className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-bold transition"
-                                    >
-                                        + Request New Community
-                                    </button>
                                 )}
                             </div>
 
@@ -307,7 +292,6 @@ const Profile: React.FC = () => {
                                     ) : (
                                         <p className="text-primary font-bold">{profile.communityId1 ? getCommunityName(profile.communityId1) : 'None assigned'}</p>
                                     )}
-                                    {profile.communityId1 && !isEditing && <p className="text-[10px] text-gray-400 mt-1">ID: {profile.communityId1}</p>}
                                 </div>
                                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                                     <label className="block text-[9px] text-gray-400 uppercase font-black mb-1">Secondary Community</label>
@@ -326,13 +310,20 @@ const Profile: React.FC = () => {
                                     ) : (
                                         <p className="text-gray-700 font-bold">{profile.communityId2 ? getCommunityName(profile.communityId2) : 'None assigned'}</p>
                                     )}
-                                    {profile.communityId2 && !isEditing && <p className="text-[10px] text-gray-400 mt-1">ID: {profile.communityId2}</p>}
                                 </div>
                             </div>
 
                             {/* Save Button for Edit Mode - Positioned after inputs, before status blocks */}
                             {isEditing && (
-                                <div className="mt-8 flex justify-end">
+                                <div className="mt-8 flex justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditing(false)}
+                                        disabled={editLoading}
+                                        className="px-6 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition disabled:opacity-50"
+                                    >
+                                        Cancel
+                                    </button>
                                     <button
                                         onClick={handleSaveProfile}
                                         disabled={editLoading}
@@ -353,6 +344,12 @@ const Profile: React.FC = () => {
                             {/* Add Community Request Form */}
                             {showRequestForm && (
                                 <div className="mt-6 p-6 bg-blue-50 rounded-2xl border border-blue-100 animate-in fade-in slide-in-from-top-4">
+                                    {requestError && (
+                                        <div className="mb-4 bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                                            <span className="text-lg">⚠️</span>
+                                            {requestError}
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="font-bold text-primary">New Community Request</h3>
                                         <button onClick={() => setShowRequestForm(false)} className="text-gray-400 hover:text-gray-600">✕</button>
@@ -446,7 +443,15 @@ const Profile: React.FC = () => {
                                         </div>
                                     )}
 
-                                    <div className="flex justify-end mt-2">
+                                    <div className="flex justify-end mt-2 gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowRequestForm(false)}
+                                            disabled={editLoading}
+                                            className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition disabled:opacity-50"
+                                        >
+                                            Cancel
+                                        </button>
                                         <button
                                             onClick={handleSubmitRequest}
                                             disabled={editLoading}
@@ -461,15 +466,36 @@ const Profile: React.FC = () => {
                             {profile.requestedCommunity && (
                                 <div className="mt-4 p-4 bg-orange-50 border border-orange-100 rounded-xl">
                                     <div className="flex justify-between items-start">
-                                        <div>
+                                        <div className="flex-1">
                                             <label className="block text-[9px] text-orange-400 uppercase font-black mb-1">Pending Community Request</label>
                                             <div className="flex items-center gap-2">
                                                 <p className="text-orange-900 font-bold">
-                                                    {typeof profile.requestedCommunity === 'object' && profile.requestedCommunity !== null 
-                                                        ? profile.requestedCommunity.name 
+                                                    {typeof profile.requestedCommunity === 'object' && profile.requestedCommunity !== null
+                                                        ? profile.requestedCommunity.name
                                                         : profile.requestedCommunity}
                                                 </p>
+                                                {profile.requestedCommunity.existingCommunityId && (
+                                                    <span className="text-[9px] bg-green-600 text-white px-1.5 py-0.5 rounded-full font-bold uppercase">MATCHED</span>
+                                                )}
                                             </div>
+
+                                            {profile.requestedCommunity.existingCommunityId && (
+                                                <div className="mt-3 p-3 bg-white/50 border border-green-100 rounded-lg">
+                                                    <p className="text-[10px] text-green-700 font-bold uppercase mb-1">System Match Found</p>
+                                                    {(() => {
+                                                        const matched = communities.find(c => c.communityId === profile.requestedCommunity.existingCommunityId);
+                                                        if (!matched) return <p className="text-xs text-gray-500 italic">Matching community details found in our system. If this is not what you requested, please cancel and request a unique one.</p>;
+                                                        return (
+                                                            <div className="text-xs text-gray-600">
+                                                                <p className="mb-0.5"><span className="font-bold">Official Name:</span> {matched.name}</p>
+                                                                <p className="mb-0.5"><span className="font-bold">Official Full Name:</span> {matched.fullName}</p>
+                                                                <p><span className="font-bold">Official Location:</span> {matched.city}, {matched.state}</p>
+                                                                <p className="mt-1 italic text-[10px] text-green-600 font-medium">If this is not the community you meant, please cancel this request and try a different name.</p>
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            )}
                                         </div>
                                         <button
                                             onClick={() => apiService.updateProfile({ requestedCommunity: null }).then(fetchData)}

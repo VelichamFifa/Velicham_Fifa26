@@ -11,14 +11,24 @@ export interface User {
   communityId2?: string;
   phoneNumber?: string;
   status: 'active' | 'inactive' | 'suspended';
-  isActive: boolean;
+  isActive: boolean; 
   createdAt?: string;
+  requestedCommunity?: {
+    name: string;
+    shortName: string;
+    description: string;
+    isOnline: boolean;
+    city: string;
+    state: string;
+    existingCommunityId?: string;
+  };
 }
 
 export interface Community {
   _id: string;
   communityId: string;
   name: string;
+  fullName?: string;
   state: string;
   city: string;
 }

@@ -188,7 +188,7 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
       await user.save();
     }
 
-    const token = generateToken(user.userId, user.email);
+    const token = generateToken(user.userId, user.email, user.role);
 
     res.json({
       message: 'Google login successful',
@@ -204,6 +204,7 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
         profileImage: user.profileImage,
         communityId1: user.communityId1,
         communityId2: user.communityId2,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -253,7 +254,7 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
 
     // Standard profile updates are now restricted to Communities Only
     // Personal and Location details are locked after registration
-    
+
     // Explicitly handle clearing slots by checking for truthiness or allowing empty string
     if (communityId1 !== undefined) user.communityId1 = communityId1 || undefined;
     if (communityId2 !== undefined) user.communityId2 = communityId2 || undefined;

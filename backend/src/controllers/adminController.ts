@@ -67,7 +67,7 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
             // Generate snapshots for both Match and Overall Rank
             const [matchLeaderboard, topLeaders] = await Promise.all([
                 generateMatchLeaderboard(matchId),
-                TopLeader.find({}).select('userId rank')
+                TopLeader.find({}).select('userId rank totalPoints')
             ]);
 
             const results = await Result.find({ matchId });
@@ -80,7 +80,8 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
                         { _id: result._id },
                         {
                             dailyRank: matchRankObj?.rank || 0, // Match Rank
-                            finalRank: topRankObj?.rank || 0   // Overall Rank
+                            finalRank: topRankObj?.rank || 0,   // Overall Rank
+                            finalPoints: topRankObj?.totalPoints || result.matchPoints // Correct Cumulative Points
                         }
                     );
                 }

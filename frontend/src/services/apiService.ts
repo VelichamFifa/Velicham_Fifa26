@@ -112,6 +112,10 @@ class ApiService {
     return this.client.get('/leaderboard/community/daily', { params: { limit, date } });
   }
 
+  getCommunityRanking(communityId: string, isDaily: boolean = false) {
+    return this.client.get(`/leaderboard/ranking/community/${communityId}`, { params: { isDaily } });
+  }
+
   getUserStats() {
     return this.client.get('/leaderboard/stats');
   }
@@ -127,6 +131,10 @@ class ApiService {
 
   createAndApproveCommunity(data: { userId: string; name: string; fullName?: string; state?: string; city?: string; address?: string; isOnline?: boolean; shortName?: string; description?: string }) {
     return this.client.post('/admin/create-and-approve-community', data);
+  }
+
+  rejectCommunity(data: { userId: string }) {
+    return this.client.post('/admin/reject-community', data);
   }
 
   finalizeMatch(data: { matchId: string, team1Score: number, team2Score: number }) {

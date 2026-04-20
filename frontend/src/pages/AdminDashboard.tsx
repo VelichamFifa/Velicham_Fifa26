@@ -77,8 +77,8 @@ const AdminDashboard: React.FC = () => {
             await apiService.approveCommunity({ userId, communityId });
             setSuccess('Community approved successfully');
             setCommunityRequests(prev => prev.filter(req => req.userId !== userId));
-        } catch (err) {
-            setError('Failed to approve community');
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Failed to approve community');
         }
     };
 
@@ -92,6 +92,17 @@ const AdminDashboard: React.FC = () => {
             setCommunities(res.data);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Failed to quick create community');
+        }
+    };
+
+    const handleRejectCommunity = async (userId: string) => {
+        if (!window.confirm('Are you sure you want to reject and clear this community request?')) return;
+        try {
+            await apiService.rejectCommunity({ userId });
+            setSuccess('Community request rejected and cleared');
+            setCommunityRequests(prev => prev.filter(req => req.userId !== userId));
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Failed to reject community');
         }
     };
 
@@ -204,15 +215,24 @@ const AdminDashboard: React.FC = () => {
                                                         )}
                                                     </td>
                                                     <td className="px-4 py-4">
-                                                        <span className={`text-xs px-2 py-1 rounded font-bold ${!req.communityId1 ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                            {!req.communityId1 ? 'FIRST' : 'SECOND'}
+                                                        <span className={`text-xs px-2 py-1 rounded font-bold ${
+                                                            !req.communityId1 ? 'bg-orange-100 text-orange-700' : 
+                                                            !req.communityId2 ? 'bg-blue-100 text-blue-700' : 
+                                                            'bg-purple-100 text-purple-700'
+                                                        }`}>
+                                                            {!req.communityId1 ? 'FIRST' : !req.communityId2 ? 'SECOND' : 'NEW'}
                                                         </span>
+                                                        {req.requestedCommunity?.existingCommunityId && (
+                                                            <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-black bg-green-100 text-green-700 uppercase">
+                                                                MATCHED
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     <td className="px-4 py-4">
                                                         <select
                                                             id={`select-${req.userId}`}
                                                             className="text-sm border rounded px-2 py-1 w-full max-w-[200px]"
-                                                            defaultValue=""
+                                                            defaultValue={req.requestedCommunity?.existingCommunityId || ""}
                                                         >
                                                             <option value="">Select Community...</option>
                                                             {communities.map(c => <option key={c.communityId} value={c.communityId}>{c.name}</option>)}
@@ -242,6 +262,12 @@ const AdminDashboard: React.FC = () => {
                                                                 className="bg-secondary text-white px-3 py-1 rounded text-sm hover:bg-blue-700 whitespace-nowrap"
                                                             >
                                                                 Quick Create & Approve
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRejectCommunity(req.userId)}
+                                                                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 whitespace-nowrap"
+                                                            >
+                                                                Reject Request
                                                             </button>
                                                         </div>
                                                     </td>
