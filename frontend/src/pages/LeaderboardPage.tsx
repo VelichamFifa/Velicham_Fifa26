@@ -83,7 +83,7 @@ export default function LeaderboardPage() {
 
   const getMergedCommunities = () => {
     if (!communities.length) return leaderboardData?.community || [];
-    
+
     return communities.map(c => {
       const lb = leaderboardData?.community?.find(
         (l: any) => String(l.communityId) === String(c.Community_ID)
@@ -110,7 +110,7 @@ export default function LeaderboardPage() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-green-900 tracking-tight">Leaderboards</h1>
+          <h1 className="text-4xl font-black text-kerala-blue-900 tracking-tight">Leaderboards</h1>
           <p className="text-gray-600 font-medium mt-1">
             Kerala Assembly Election 2026 Participation Standings
           </p>
@@ -122,7 +122,7 @@ export default function LeaderboardPage() {
         <button
           onClick={() => setActiveTab('top')}
           className={`px-6 py-4 text-sm sm:text-base font-black uppercase tracking-widest transition-all border-b-4 ${activeTab === 'top'
-            ? 'border-green-600 text-green-700 bg-green-50/50'
+            ? 'border-kerala-blue-600 text-kerala-blue-700 bg-kerala-blue-50/50'
             : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
         >
@@ -131,7 +131,7 @@ export default function LeaderboardPage() {
         <button
           onClick={() => setActiveTab('community')}
           className={`px-6 py-4 text-sm sm:text-base font-black uppercase tracking-widest transition-all border-b-4 ${activeTab === 'community'
-            ? 'border-green-600 text-green-700 bg-green-50/50'
+            ? 'border-kerala-blue-600 text-kerala-blue-700 bg-kerala-blue-50/50'
             : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
         >
@@ -141,18 +141,23 @@ export default function LeaderboardPage() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2rem] shadow-sm border border-gray-100">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-600 border-t-transparent mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-kerala-blue-600 border-t-transparent mb-4"></div>
           <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading Standings...</p>
         </div>
       ) : leaderboardData ? (
         <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
           {/* Table Header Row */}
-          <div className="bg-green-800 px-6 py-4 flex items-center text-white font-black uppercase tracking-widest text-[10px] sm:text-xs">
-            {match?.IsFinalized && <div className="w-16 sm:w-24">Rank</div>}
-            <div className="flex-1">
-              {activeTab === 'top' ? 'Participant' : 'Halaqa Name'}
+          <div className="relative bg-kerala-blue-700 px-6 py-4 overflow-hidden">
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
             </div>
-            {match?.IsFinalized && <div className="text-right w-24 sm:w-32">Points</div>}
+            <div className="relative z-10 flex items-center text-white font-black uppercase tracking-widest text-[10px] sm:text-xs">
+              {match?.IsFinalized && <div className="w-16 sm:w-24">Rank</div>}
+              <div className="flex-1">
+                {activeTab === 'top' ? 'Participant' : 'Halaqa Name'}
+              </div>
+              {match?.IsFinalized && <div className="text-right w-24 sm:w-32">Points</div>}
+            </div>
           </div>
 
           <div className="divide-y divide-gray-100">
@@ -160,7 +165,7 @@ export default function LeaderboardPage() {
               !match?.IsFinalized ? (
                 <div className="py-20 text-center">
                   <span className="text-4xl mb-4 block">🏆</span>
-                  <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Top Leaders will appear once match is finalized</p>
+                  <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Top Leaders will appear once election results are finalized</p>
                 </div>
               ) : leaderboardData.individual && leaderboardData.individual.length > 0 ? (
                 leaderboardData.individual.map((entry: any, index: number) => {
@@ -168,8 +173,8 @@ export default function LeaderboardPage() {
                   return (
                     <div
                       key={entry.email}
-                      className={`px-6 py-4 flex items-center hover:bg-gray-50 transition-colors ${isUserEntry(entry) ? 'bg-green-50/80 ring-2 ring-green-600/20 ring-inset' :
-                        rank <= 3 ? 'bg-blue-50/30' : ''
+                      className={`px-6 py-4 flex items-center hover:bg-gray-50 transition-colors ${isUserEntry(entry) ? 'bg-kerala-blue-50/80 ring-2 ring-kerala-blue-600/20 ring-inset' :
+                        rank <= 3 ? 'bg-kerala-blue-50/30' : ''
                         }`}
                     >
                       {match?.IsFinalized && <div className="w-16 sm:w-24 flex items-center">{getRankMedal(rank)}</div>}
@@ -178,13 +183,13 @@ export default function LeaderboardPage() {
                           {entry.firstName ? `${entry.firstName} ${entry.lastName}` : entry.email}
                         </span>
                         {isUserEntry(entry) && (
-                          <span className="text-[10px] font-black text-green-600 uppercase tracking-tighter">
+                          <span className="text-[10px] font-black text-kerala-blue-600 uppercase tracking-tighter">
                             Your Performance
                           </span>
                         )}
                       </div>
                       <div className="text-right w-24 sm:w-32">
-                        <span className="text-xl sm:text-2xl font-black text-green-700">
+                        <span className="text-xl sm:text-2xl font-black text-kerala-blue-700">
                           {match?.IsFinalized ? entry.totalPoints : '—'}
                         </span>
                       </div>
@@ -205,8 +210,8 @@ export default function LeaderboardPage() {
                     <div
                       key={entry.Community_ID || entry.communityId}
                       onClick={() => setSelectedCommunity(entry)}
-                      className={`cursor-pointer px-6 py-4 flex items-center hover:bg-gray-50 transition-colors ${isUserEntry(entry) ? 'bg-green-50/80 ring-2 ring-green-600/20 ring-inset' :
-                        rank !== '-' && rank <= 3 ? 'bg-blue-50/30' : ''
+                      className={`cursor-pointer px-6 py-4 flex items-center hover:bg-gray-50 transition-colors ${isUserEntry(entry) ? 'bg-kerala-blue-50/80 ring-2 ring-kerala-blue-600/20 ring-inset' :
+                        rank !== '-' && rank <= 3 ? 'bg-kerala-blue-50/30' : ''
                         }`}
                     >
                       {match?.IsFinalized && (
@@ -224,10 +229,10 @@ export default function LeaderboardPage() {
                       </div>
                       {match?.IsFinalized && (
                         <div className="text-right w-24 sm:w-32 flex flex-col">
-                          <span className="text-xl sm:text-2xl font-black text-green-700">
+                          <span className="text-xl sm:text-2xl font-black text-kerala-blue-700">
                             {typeof entry.Average_Accuracy !== 'undefined'
-                                ? entry.Average_Accuracy.toFixed(1)
-                                : (entry.totalPoints != null ? entry.totalPoints.toFixed(1) : '0.0')}
+                              ? entry.Average_Accuracy.toFixed(1)
+                              : (entry.totalPoints != null ? entry.totalPoints.toFixed(1) : '0.0')}
                           </span>
                           <span className="text-[10px] font-black text-gray-400 uppercase">Avg Pts</span>
                         </div>
@@ -255,24 +260,29 @@ export default function LeaderboardPage() {
       {selectedCommunity && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedCommunity(null)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-green-800 to-emerald-900 px-6 py-6 flex items-center justify-between">
-              <div>
-                <h3 className="text-2xl font-black text-white">{selectedCommunity.Name}</h3>
-                <p className="text-green-200 text-xs font-bold uppercase tracking-widest mt-1">Halaqa Roster</p>
+            <div className="relative bg-gradient-to-r from-kerala-blue-800 to-kerala-blue-950 px-6 py-6 overflow-hidden">
+              <div className="absolute inset-0 opacity-30">
+                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
               </div>
-              <button
-                onClick={() => setSelectedCommunity(null)}
-                className="text-white/80 hover:text-white transition bg-white/10 hover:bg-white/20 rounded-full h-8 w-8 flex items-center justify-center leading-none"
-              >
-                ✕
-              </button>
+              <div className="relative z-10 flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-black text-white">{selectedCommunity.Name}</h3>
+                  <p className="text-kerala-blue-200 text-xs font-bold uppercase tracking-widest mt-1">Halaqa Members</p>
+                </div>
+                <button
+                  onClick={() => setSelectedCommunity(null)}
+                  className="text-white/80 hover:text-white transition bg-white/10 hover:bg-white/20 rounded-full h-8 w-8 flex items-center justify-center leading-none"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-            
+
             <div className="max-h-[60vh] overflow-y-auto bg-gray-50 p-6 space-y-3">
               {modalLoading ? (
                 <div className="flex flex-col items-center justify-center py-10">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-600 border-t-transparent mb-2"></div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fetching Roster...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-kerala-blue-600 border-t-transparent mb-2"></div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fetching Members...</p>
                 </div>
               ) : modalMembers.length > 0 ? (
                 applyDenseRanking(
@@ -293,9 +303,9 @@ export default function LeaderboardPage() {
                     return a.firstName.localeCompare(b.firstName);
                   })
                 ).map((member: any) => (
-                  <div key={member.email} className={`bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm hover:shadow transition-shadow ${member.email === user?.Email ? 'border-green-300 ring-2 ring-green-400/30' : 'border-gray-100'}`}>
+                  <div key={member.email} className={`bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm hover:shadow transition-shadow ${member.email === user?.Email ? 'border-kerala-blue-300 ring-2 ring-kerala-blue-400/30' : 'border-gray-100'}`}>
                     <div className="flex items-center gap-4">
-                      <div className={`font-black h-8 w-8 rounded-full flex items-center justify-center text-xs ${member.email === user?.Email ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      <div className={`font-black h-8 w-8 rounded-full flex items-center justify-center text-xs ${member.email === user?.Email ? 'bg-kerala-blue-100 text-kerala-blue-700' : 'bg-gray-100 text-gray-500'}`}>
                         {match?.IsFinalized && member.hasPredicted ? `#${member.denseRank}` : '•'}
                       </div>
                       <div>
@@ -303,14 +313,14 @@ export default function LeaderboardPage() {
                           {member.firstName} {member.lastName}
                         </span>
                         {member.email === user?.Email && (
-                          <span className="ml-2 text-[10px] font-black text-green-600 uppercase tracking-widest">You</span>
+                          <span className="ml-2 text-[10px] font-black text-kerala-blue-600 uppercase tracking-widest">You</span>
                         )}
                         {!member.hasPredicted && (
                           <span className="ml-2 text-[10px] font-bold text-gray-400 uppercase tracking-tight italic">(No prediction)</span>
                         )}
                       </div>
                     </div>
-                    <span className="font-black text-green-700 bg-green-50 px-3 py-1 rounded-lg">
+                    <span className="font-black text-kerala-blue-700 bg-kerala-blue-50 px-3 py-1 rounded-lg">
                       {match?.IsFinalized ? (member.totalPoints ?? 0) : '—'}
                     </span>
                   </div>

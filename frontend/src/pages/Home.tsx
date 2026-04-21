@@ -347,7 +347,7 @@ export default function Home() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-[#0f172a] text-white font-sans overflow-x-hidden">
+        <div className="bg-kerala-blue-950 text-white font-sans overflow-x-hidden">
             <Header />
 
             {/* ── Hero ────────────────────────────────────────────────────────── */}
@@ -390,7 +390,7 @@ export default function Home() {
                     <div className="hero-stagger flex items-center justify-center gap-3 mb-10 flex-wrap">
                         {[
                             { label: "LDF", color: "bg-red-500/20 text-red-400 border-red-500/30" },
-                            { label: "UDF", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
+                            { label: "UDF", color: "bg-green-500/20 text-green-400 border-green-500/30" },
                             { label: "NDA", color: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
                         ].map((p) => (
                             <span key={p.label} className={`border rounded-full px-4 py-1 text-sm font-semibold ${p.color}`}>
@@ -434,7 +434,7 @@ export default function Home() {
                             { icon: BarChart3, label: "Predictions Made", value: 48293, suffix: "", color: "text-amber-400" },
                             { icon: Users, label: "Active Participants", value: 7841, suffix: "", color: "text-green-400" },
                             { icon: MapPin, label: "Constituencies", value: 140, suffix: "", color: "text-red-400" },
-                            { icon: Star, label: "Halaqas Competing", value: 68, suffix: "", color: "text-blue-400" },
+                            { icon: Star, label: "Halaqas Competing", value: 68, suffix: "", color: "text-green-400" },
                         ].map(({ icon: Icon, label, value, suffix, color }) => (
                             <div key={label} className="text-center">
                                 <Icon size={20} className={`${color} mx-auto mb-2`} />
@@ -554,7 +554,7 @@ export default function Home() {
                         moment — make sure your voice shapes your Halaqa's destiny.
                     </p>
                     <div className="flex items-center justify-center gap-4 flex-wrap">
-                        <button 
+                        <button
                             onClick={handlePredictClick}
                             className="group bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-lg px-10 py-4 rounded-xl transition-all duration-200 hover:scale-105 shadow-xl shadow-amber-500/30 flex items-center gap-2.5"
                         >

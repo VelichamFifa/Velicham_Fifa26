@@ -166,17 +166,20 @@ export default function AdminPage() {
   if (loading && matches.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-600 border-t-transparent"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-kerala-blue-600 border-t-transparent"></div>
       </div>
     );
   }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-      <div className="flex justify-between items-center bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
-        <div>
-          <h1 className="text-3xl font-black text-green-900 tracking-tight flex items-center gap-3">
-            <span className="bg-green-100 p-2 rounded-2xl text-2xl">🛡️</span> Admin Hub
+      <div className="relative overflow-hidden flex justify-between items-center bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+        <div className="absolute inset-0 opacity-5 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+        </div>
+        <div className="relative z-10">
+          <h1 className="text-3xl font-black text-kerala-blue-900 tracking-tight flex items-center gap-3">
+            <span className="bg-kerala-blue-100 p-2 rounded-2xl text-2xl">🛡️</span> Admin Hub
           </h1>
           <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mt-1">Control Center | Kerala 2026</p>
         </div>
@@ -189,20 +192,20 @@ export default function AdminPage() {
       {error && <div className="p-4 bg-red-100 text-red-700 rounded-2xl font-bold flex justify-between items-center border border-red-200">
         {error} <button onClick={() => setError('')} className="bg-white/50 w-8 h-8 rounded-full">×</button>
       </div>}
-      {success && <div className="p-4 bg-green-100 text-green-700 rounded-2xl font-bold flex justify-between items-center border border-green-200">
+      {success && <div className="p-4 bg-kerala-blue-100 text-kerala-blue-700 rounded-2xl font-bold flex justify-between items-center border border-kerala-blue-200">
         {success} <button onClick={() => setSuccess('')} className="bg-white/50 w-8 h-8 rounded-full">×</button>
       </div>}
 
       <div className="flex gap-4 border-b border-gray-200 overflow-x-auto no-scrollbar pb-1">
         <button
           onClick={() => setActiveTab('finalize')}
-          className={`px-6 py-4 whitespace-nowrap text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'finalize' ? 'border-b-4 border-green-600 text-green-700' : 'text-gray-400 hover:text-gray-600'}`}
+          className={`px-6 py-4 whitespace-nowrap text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'finalize' ? 'border-b-4 border-kerala-blue-600 text-kerala-blue-700' : 'text-gray-400 hover:text-gray-600'}`}
         >
           🗳️ Finalize Result
         </button>
         <button
           onClick={() => setActiveTab('users')}
-          className={`px-6 py-4 whitespace-nowrap text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'border-b-4 border-green-600 text-green-700' : 'text-gray-400 hover:text-gray-600'}`}
+          className={`px-6 py-4 whitespace-nowrap text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'border-b-4 border-kerala-blue-600 text-kerala-blue-700' : 'text-gray-400 hover:text-gray-600'}`}
         >
           👥 User Directory ({users.length || '...'})
         </button>
@@ -212,14 +215,19 @@ export default function AdminPage() {
         {activeTab === 'finalize' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             <div className="lg:col-span-2 bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-green-800 to-emerald-900 p-8 text-white">
-                <h3 className="text-xl font-black uppercase tracking-widest">Election Result Center</h3>
-                <p className="text-green-200 text-xs font-bold mt-1">Enter official Kerala Assembly 2026 seat counts</p>
+              <div className="relative bg-gradient-to-r from-kerala-blue-800 to-kerala-blue-700 p-8 text-white overflow-hidden">
+                <div className="absolute inset-0 opacity-20">
+                  <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
+                </div>
+                <div className="relative z-10">
+                  <h3 className="text-xl font-black uppercase tracking-widest">Election Result Center</h3>
+                  <p className="text-kerala-blue-200 text-xs font-bold mt-1">Enter official Kerala Assembly 2026 seat counts</p>
+                </div>
               </div>
               <form onSubmit={handleFinalize} className="p-8 space-y-8">
                 <div className="grid grid-cols-3 gap-6">
                   <div className="space-y-3">
-                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100 shadow-sm">
+                    <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center border border-kerala-blue-100 shadow-sm">
                       <img src="/udf.png" alt="UDF" className="w-8 h-8 object-contain" />
                     </div>
                     <label className="block text-[10px] font-black uppercase text-gray-400">Official UDF</label>
@@ -228,7 +236,7 @@ export default function AdminPage() {
                       value={officialResults.official_UDF}
                       onChange={(e) => setOfficialResults({ ...officialResults, official_UDF: parseInt(e.target.value) || 0 })}
                       onFocus={(e) => e.target.select()}
-                      className="w-full text-3xl font-black text-blue-900 bg-gray-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-green-500"
+                      className="w-full text-3xl font-black text-kerala-blue-900 bg-gray-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-kerala-blue-500"
                     />
                   </div>
                   <div className="space-y-3">
@@ -241,7 +249,7 @@ export default function AdminPage() {
                       value={officialResults.official_LDF}
                       onChange={(e) => setOfficialResults({ ...officialResults, official_LDF: parseInt(e.target.value) || 0 })}
                       onFocus={(e) => e.target.select()}
-                      className="w-full text-3xl font-black text-red-900 bg-gray-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-green-500"
+                      className="w-full text-3xl font-black text-red-900 bg-gray-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-kerala-blue-500"
                     />
                   </div>
                   <div className="space-y-3">
@@ -254,7 +262,7 @@ export default function AdminPage() {
                       value={officialResults.official_NDA}
                       onChange={(e) => setOfficialResults({ ...officialResults, official_NDA: parseInt(e.target.value) || 0 })}
                       onFocus={(e) => e.target.select()}
-                      className="w-full text-3xl font-black text-orange-900 bg-gray-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-green-500"
+                      className="w-full text-3xl font-black text-orange-900 bg-gray-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-kerala-blue-500"
                     />
                   </div>
                 </div>
@@ -262,13 +270,13 @@ export default function AdminPage() {
                 <div className="bg-gray-50/50 p-4 rounded-xl border border-dashed border-gray-200 flex justify-between items-center transform transition-all duration-300">
                   <div>
                     <span className="text-[9px] font-black text-gray-400 uppercase block tracking-[0.2em] mb-0.5">Total Verified Seats</span>
-                    <span className={`text-lg font-black tabular-nums transition-colors duration-300 ${officialResults.official_UDF + officialResults.official_LDF + officialResults.official_NDA === 140 ? 'text-green-600' : 'text-red-500'}`}>
+                    <span className={`text-lg font-black tabular-nums transition-colors duration-300 ${officialResults.official_UDF + officialResults.official_LDF + officialResults.official_NDA === 140 ? 'text-kerala-blue-600' : 'text-red-500'}`}>
                       {officialResults.official_UDF + officialResults.official_LDF + officialResults.official_NDA} / 140
                     </span>
                   </div>
                   <div className="text-right">
                     <span className="text-[9px] font-black text-gray-400 uppercase block tracking-[0.2em] mb-0.5">Remaining</span>
-                    <span className={`text-base font-black tabular-nums transition-colors duration-300 ${140 - (officialResults.official_UDF + officialResults.official_LDF + officialResults.official_NDA) === 0 ? 'text-green-600' : 140 - (officialResults.official_UDF + officialResults.official_LDF + officialResults.official_NDA) < 0 ? 'text-red-500' : 'text-orange-500'}`}>
+                    <span className={`text-base font-black tabular-nums transition-colors duration-300 ${140 - (officialResults.official_UDF + officialResults.official_LDF + officialResults.official_NDA) === 0 ? 'text-kerala-blue-600' : 140 - (officialResults.official_UDF + officialResults.official_LDF + officialResults.official_NDA) < 0 ? 'text-red-500' : 'text-orange-500'}`}>
                       {140 - (officialResults.official_UDF + officialResults.official_LDF + officialResults.official_NDA) === 0 ? '✓ Ready' : `${140 - (officialResults.official_UDF + officialResults.official_LDF + officialResults.official_NDA)} Seats`}
                     </span>
                   </div>
@@ -279,7 +287,7 @@ export default function AdminPage() {
                   disabled={officialResults.official_UDF + officialResults.official_LDF + officialResults.official_NDA !== 140 || matches[0]?.IsFinalized}
                   className={`w-full py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl transition-all ${matches[0]?.IsFinalized
                     ? 'bg-gray-100 text-gray-400'
-                    : 'bg-green-700 text-white hover:bg-green-800 active:scale-95'}`}
+                    : 'bg-kerala-blue-700 text-white hover:bg-kerala-blue-800 active:scale-95'}`}
                 >
                   {matches[0]?.IsFinalized ? 'Result Already Published' : 'Publish Official Results'}
                 </button>
@@ -296,8 +304,8 @@ export default function AdminPage() {
               </p>
               <div className="pt-4 border-t border-amber-200 space-y-4">
                 <div className="flex justify-between text-[10px] font-black uppercase">
-                  <span className="text-amber-600">Match Status:</span>
-                  <span className={`px-2 py-0.5 rounded ${matches[0]?.IsFinalized ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  <span className="text-amber-600">Election Status:</span>
+                  <span className={`px-2 py-0.5 rounded ${matches[0]?.IsFinalized ? 'bg-kerala-blue-100 text-kerala-blue-700' : 'bg-red-100 text-red-700'}`}>
                     {matches[0]?.IsFinalized ? 'FINALIZED' : 'OPEN'}
                   </span>
                 </div>
@@ -308,10 +316,15 @@ export default function AdminPage() {
 
         {activeTab === 'users' && (
           <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
-            <div className="bg-green-800 p-6 text-white flex justify-between items-center">
-              <div>
-                <h3 className="text-lg font-black uppercase tracking-widest leading-none">User Directory</h3>
-                <span className="text-[10px] font-bold text-green-200">Manage all registered participants</span>
+            <div className="relative bg-kerala-blue-800 p-6 text-white overflow-hidden">
+              <div className="absolute inset-0 opacity-20">
+                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
+              </div>
+              <div className="relative z-10 flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-widest leading-none">User Directory</h3>
+                  <span className="text-[10px] font-bold text-kerala-blue-200">Manage all registered participants</span>
+                </div>
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -337,7 +350,7 @@ export default function AdminPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-xs font-black text-green-700 bg-green-50 px-2 py-1 rounded-md border border-green-100">
+                        <span className="text-xs font-black text-kerala-blue-700 bg-green-50 px-2 py-1 rounded-md border border-kerala-blue-100">
                           {communities.find(c => String(c.Community_ID) === String(u.Community_ID))?.Name || u.Community_ID || '-'}
                         </span>
                       </td>
@@ -345,7 +358,7 @@ export default function AdminPage() {
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleEditUser(u)}
-                            className="bg-blue-50 text-blue-600 w-8 h-8 rounded-xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all"
+                            className="bg-green-50 text-kerala-blue-600 w-8 h-8 rounded-xl flex items-center justify-center hover:bg-kerala-blue-600 hover:text-white transition-all"
                             title="Edit User"
                           >
                             ✏️
@@ -381,17 +394,22 @@ export default function AdminPage() {
       {showEditModal && editingUser && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-            <div className="bg-gradient-to-r from-green-800 to-emerald-900 p-8 text-white relative">
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="absolute top-6 right-6 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all text-white"
-              >
-                ✕
-              </button>
-              <h3 className="text-xl font-black uppercase tracking-widest">Edit Participant</h3>
-              <p className="text-green-100 text-xs font-bold mt-1">
-                Updating {editingUser.First_Name} {editingUser.Last_Name}
-              </p>
+            <div className="relative bg-gradient-to-r from-kerala-blue-800 to-kerala-blue-950 p-8 text-white overflow-hidden">
+              <div className="absolute inset-0 opacity-30">
+                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
+              </div>
+              <div className="relative z-10">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="absolute top-0 right-0 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all text-white"
+                >
+                  ✕
+                </button>
+                <h3 className="text-xl font-black uppercase tracking-widest">Edit Participant</h3>
+                <p className="text-kerala-blue-100 text-xs font-bold mt-1">
+                  Updating {editingUser.First_Name} {editingUser.Last_Name}
+                </p>
+              </div>
             </div>
 
             <div className="p-8 space-y-6">
@@ -401,13 +419,13 @@ export default function AdminPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => setEditRole('user')}
-                      className={`py-3 rounded-xl border-2 font-black text-xs uppercase transition-all ${editRole === 'user' ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-100 text-gray-400 hover:border-gray-200'}`}
+                      className={`py-3 rounded-xl border-2 font-black text-xs uppercase transition-all ${editRole === 'user' ? 'border-kerala-blue-600 bg-green-50 text-kerala-blue-700' : 'border-gray-100 text-gray-400 hover:border-gray-200'}`}
                     >
                       User
                     </button>
                     <button
                       onClick={() => setEditRole('admin')}
-                      className={`py-3 rounded-xl border-2 font-black text-xs uppercase transition-all ${editRole === 'admin' ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-gray-100 text-gray-400 hover:border-gray-200'}`}
+                      className={`py-3 rounded-xl border-2 font-black text-xs uppercase transition-all ${editRole === 'admin' ? 'border-kerala-blue-600 bg-kerala-blue-50 text-kerala-blue-700' : 'border-gray-100 text-gray-400 hover:border-gray-200'}`}
                     >
                       Admin
                     </button>
@@ -419,7 +437,7 @@ export default function AdminPage() {
                   <select
                     value={editCommunityId}
                     onChange={(e) => setEditCommunityId(e.target.value)}
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-green-500"
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-kerala-blue-500"
                   >
                     <option value="">No Halaqa</option>
                     {communities.map(c => (
@@ -440,7 +458,7 @@ export default function AdminPage() {
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="flex-1 py-4 bg-green-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-green-200 hover:bg-green-800 active:scale-95 transition-all"
+                  className="flex-1 py-4 bg-kerala-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-kerala-blue-200 hover:bg-kerala-blue-800 active:scale-95 transition-all"
                 >
                   Save Changes
                 </button>

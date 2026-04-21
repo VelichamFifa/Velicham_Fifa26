@@ -12,7 +12,7 @@ A full-stack web application for predicting Kerala Assembly election results wit
 - **Scoring Algorithm**: Up to 20 points per prediction based on:
   - Correct winner/runner-up/third-place (+5 each)
   - Accurate seat count predictions (±5% tolerance, +5 each)
-- **Kerala-themed UI**: Green color scheme reflecting Kerala's identity
+- **Kerala-themed UI**: green color scheme reflecting Kerala's identity
 - **Community Engagement**: Users assigned to communities with presidents
 
 ## Tech Stack

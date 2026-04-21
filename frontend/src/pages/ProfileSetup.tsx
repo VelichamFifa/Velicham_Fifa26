@@ -101,7 +101,7 @@ const ProfileSetup: React.FC = () => {
       }
 
       const { token, user: newUser } = response.data;
-      
+
       // Update global auth store
       // If updating existing, token might already be in localstorage
       const finalToken = token || localStorage.getItem('token') || '';
@@ -192,7 +192,7 @@ const ProfileSetup: React.FC = () => {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-            Halaqa <span className="text-red-500">*</span>
+              Halaqa <span className="text-red-500">*</span>
             </label>
             <select
               name="communityId"

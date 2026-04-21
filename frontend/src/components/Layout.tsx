@@ -11,7 +11,7 @@ export default function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuthStore();
   const location = useLocation();
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-green-50 to-emerald-100">
+    <div className="flex flex-col bg-gradient-to-br from-kerala-blue-50 to-kerala-blue-100">
       <Header />
 
       {/* Main Content */}
@@ -20,12 +20,12 @@ export default function Layout({ children }: LayoutProps) {
       </main>
 
       {/* Footer */}
-      <footer className="bg-green-800 text-white py-6 mt-auto">
+      <footer className="bg-kerala-blue-700 text-white py-6 mt-auto">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-sm text-green-200">
-            Velicham North America - Kerala Assembly Election Predictor 2026. All rights reserved.
+          <p className="text-sm text-kerala-blue-200">
+            Velicham North America - Kerala Assembly Election Prediction 2026. All rights reserved.
           </p>
-          
+
         </div>
       </footer>
     </div>

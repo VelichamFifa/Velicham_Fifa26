@@ -25,7 +25,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white text-gray-900 border-b border-green-100 shadow-sm fixed top-0 left-0 right-0 z-50">
+    <header className="bg-white text-gray-900 border-b border-kerala-blue-100 shadow-sm fixed top-0 left-0 right-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
@@ -39,10 +39,9 @@ export default function Header() {
               alt="Velicham logo"
               className="h-10 w-10 object-contain transform group-hover:scale-110 transition-transform"
             />
-            <div className="hidden sm:block">
-            
-              <h1 className="text-xl font-black text-green-900 tracking-tight">Kerala Assembly Election</h1>
-              <p className="text-[10px] text-green-600 uppercase tracking-widest font-bold"> 2026 Prediction</p>
+            <div className="flex flex-col">
+              <h1 className="text-sm sm:text-xl font-black text-kerala-blue-900 tracking-tight leading-tight">Kerala Assembly Election</h1>
+              <p className="text-[8px] sm:text-[10px] text-kerala-blue-600 uppercase tracking-widest font-bold"> 2026 Prediction</p>
             </div>
           </Link>
 
@@ -60,9 +59,9 @@ export default function Header() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all hover:bg-green-50 ${isActive(link.path)
-                      ? 'bg-green-100 text-green-800'
-                      : 'text-gray-600 hover:text-green-700'
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all hover:bg-kerala-blue-50 ${isActive(link.path)
+                      ? 'bg-kerala-blue-100 text-kerala-blue-800'
+                      : 'text-gray-600 hover:text-kerala-blue-700'
                       }`}
                   >
                     {link.label}
@@ -77,15 +76,15 @@ export default function Header() {
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center space-x-3 p-1 rounded-full hover:bg-gray-100 transition-colors focus:outline-none"
                 >
-                  <div className="w-9 h-9 bg-green-700 rounded-full flex items-center justify-center border-2 border-green-100 text-white text-sm font-bold shadow-sm">
+                  <div className="w-9 h-9 bg-kerala-blue-700 rounded-full flex items-center justify-center border-2 border-kerala-blue-100 text-white text-sm font-bold shadow-sm">
                     {user.First_Name?.[0]}{user.Last_Name?.[0]}
                   </div>
                   <div className="hidden lg:block text-left">
                     <p className="text-sm font-bold leading-none text-gray-900">{user.First_Name}</p>
-                    <p className="text-[10px] text-green-600 mt-1 font-semibold uppercase tracking-wider">Account</p>
+                    <p className="text-[10px] text-kerala-blue-600 mt-1 font-semibold uppercase tracking-wider">Account</p>
                   </div>
                   <svg
-                    className={`w-4 h-4 text-green-700 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 text-kerala-blue-700 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -103,7 +102,7 @@ export default function Header() {
                     </div>
                     <Link
                       to="/profile"
-                      className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+                      className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-kerala-blue-50 hover:text-kerala-blue-700 transition-colors"
                       onClick={() => setUserMenuOpen(false)}
                     >
                       <span>👤</span>
@@ -123,7 +122,7 @@ export default function Header() {
               <div className="flex items-center space-x-2">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-green-700 transition-colors"
+                  className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-kerala-blue-700 transition-colors"
                 >
                   Login
                 </Link>
@@ -134,7 +133,7 @@ export default function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-green-900 hover:bg-gray-100 transition-colors"
+              className="md:hidden p-2 rounded-lg text-kerala-blue-900 hover:bg-gray-100 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {mobileMenuOpen ? (
@@ -150,7 +149,7 @@ export default function Header() {
 
       {/* Mobile Slide Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-green-100 animate-in slide-in-from-top duration-200 shadow-2xl relative z-40">
+        <div className="md:hidden bg-white border-t border-kerala-blue-100 animate-in slide-in-from-top duration-200 shadow-2xl relative z-40">
           <div className="px-4 py-6 space-y-1">
             {navLinks
               .filter(link => {
@@ -164,8 +163,8 @@ export default function Header() {
                   to={link.path}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center space-x-3 px-4 py-4 rounded-xl text-base font-bold transition-all ${isActive(link.path)
-                    ? 'bg-green-50 text-green-800 border-l-4 border-green-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-green-700'
+                    ? 'bg-kerala-blue-50 text-kerala-blue-800 border-l-4 border-kerala-blue-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-kerala-blue-700'
                     }`}
                 >
                   <span>{link.icon}</span>
@@ -185,7 +184,7 @@ export default function Header() {
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="px-4 py-3 text-center rounded-xl bg-green-700 text-white font-bold"
+                  className="px-4 py-3 text-center rounded-xl bg-kerala-blue-700 text-white font-bold"
                 >
                   Join
                 </Link>
