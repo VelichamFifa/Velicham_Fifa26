@@ -4,6 +4,7 @@ import { useAuthStore } from '../context/store';
 import { apiService } from '../services/api';
 import { Prediction } from '../types';
 import { applyDenseRanking } from '../utils/ranking';
+import { PieChart, Pie, BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 
 type PartyKey = 'UDF' | 'LDF' | 'NDA';
@@ -46,6 +47,7 @@ export default function DashboardPage() {
   const [match, setMatch] = useState<any>(null);
   const [halaqaMembers, setHalaqaMembers] = useState<any[]>([]);
   const [showHalaqaModal, setShowHalaqaModal] = useState(false);
+  const [analytics, setAnalytics] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
@@ -81,12 +83,17 @@ export default function DashboardPage() {
       // 3. Fetch existing prediction and match status
       if (user?.Email) {
         try {
-          const [predRes, matchRes] = await Promise.all([
+          const [predRes, matchRes, analyticsRes] = await Promise.all([
             apiService.getUserPredictions({ email: user.Email, matchId: '1' }),
-            apiService.getMatchById('1')
+            apiService.getMatchById('1'),
+            apiService.getPredictionAnalytics('1')
           ]);
 
           setMatch(matchRes.data.data);
+
+          if (analyticsRes.data?.success) {
+            setAnalytics(analyticsRes.data.data);
+          }
 
           if (predRes.data && predRes.data.data && predRes.data.data.length > 0) {
             const pred = predRes.data.data[0];
@@ -452,6 +459,70 @@ export default function DashboardPage() {
               </button>
             )}
           </div>
+
+          {/* Analytics Charts */}
+          {analytics && analytics.totalPredictions > 0 && (
+            <div className="space-y-6 animate-in fade-in zoom-in duration-500 ">
+              <div className="card hover:shadow-lg transition-all border border-kerala-blue-50 ">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center justify-between">
+                  <span>Crowd Consensus</span>
+                  <span className="bg-kerala-blue-50 text-kerala-blue-600 px-2 py-1 rounded-md text-[10px]">{analytics.totalPredictions} Predictions</span>
+                </h3>
+                <div className="h-60 w-full mb-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'UDF', value: analytics.averages.UDF, fill: '#65dcf1ff' },
+                          { name: 'LDF', value: analytics.averages.LDF, fill: '#ef4444' },
+                          { name: 'NDA', value: analytics.averages.NDA, fill: '#f59e0b' }
+                        ]}
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      />
+                      <Tooltip
+                        separator=" - "
+                        formatter={(value: any, name: any) => [`${value} Avg Seats`, name]}
+                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                        itemStyle={{ color: '#1e293b', fontWeight: 'bold' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex justify-center gap-4 text-[10px] font-black uppercase tracking-widest">
+                  <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#00d8ff]"></span>UDF: {analytics.averages.UDF}</div>
+                  <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500"></span>LDF: {analytics.averages.LDF}</div>
+                  <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-500"></span>NDA: {analytics.averages.NDA}</div>
+                </div>
+              </div>
+
+              {/* <div className="card hover:shadow-lg transition-all border border-kerala-blue-50">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center justify-between">
+                  <span>Winner Distribution</span>
+                  <span className="text-kerala-blue-400 text-[10px]">Proj. Majority</span>
+                </h3>
+                <div className="h-48 w-full mt-6">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[
+                      { name: 'UDF Win', users: analytics.winnerDistribution.UDF, fill: '#00d8ff' },
+                      { name: 'LDF Win', users: analytics.winnerDistribution.LDF, fill: '#ef4444' },
+                      { name: 'NDA Win', users: analytics.winnerDistribution.NDA, fill: '#f59e0b' }
+                    ]}>
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 'bold' }} />
+                      <Tooltip
+                        cursor={{ fill: '#f8fafc' }}
+                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                        itemStyle={{ color: '#1e293b', fontWeight: 'bold' }}
+                      />
+                      <Bar dataKey="users" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div> */}
+            </div>
+          )}
 
 
         </div>

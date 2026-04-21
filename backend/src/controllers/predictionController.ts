@@ -130,3 +130,101 @@ export const getUserPredictions = async (req: Request, res: Response): Promise<v
     });
   }
 };
+
+export const getPredictionAnalytics = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { matchId } = req.query;
+
+    if (!matchId) {
+      res.status(400).json({
+        success: false,
+        message: 'matchId is required'
+      });
+      return;
+    }
+
+    const pipeline = [
+      { $match: { matchId: String(matchId) } },
+      {
+        $group: {
+          _id: null,
+          totalPredictions: { $sum: 1 },
+          avgUDF: { $avg: '$UDF_Score' },
+          avgLDF: { $avg: '$LDF_Score' },
+          avgNDA: { $avg: '$NDA_Score' },
+          udfWins: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$UDF_Score', '$LDF_Score'] }, { $gt: ['$UDF_Score', '$NDA_Score'] }] },
+                1,
+                0
+              ]
+            }
+          },
+          ldfWins: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$LDF_Score', '$UDF_Score'] }, { $gt: ['$LDF_Score', '$NDA_Score'] }] },
+                1,
+                0
+              ]
+            }
+          },
+          ndaWins: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$NDA_Score', '$UDF_Score'] }, { $gt: ['$NDA_Score', '$LDF_Score'] }] },
+                1,
+                0
+              ]
+            }
+          }
+        }
+      }
+    ];
+
+    const results = await Prediction.aggregate(pipeline);
+
+    if (results.length === 0) {
+      res.json({
+        success: true,
+        data: {
+          totalPredictions: 0,
+          averages: { UDF: 0, LDF: 0, NDA: 0 },
+          winnerDistribution: { UDF: 0, LDF: 0, NDA: 0, Tie: 0 }
+        }
+      });
+      return;
+    }
+
+    const data = results[0];
+    const totalPredictions = data.totalPredictions;
+    const tieCount = totalPredictions - (data.udfWins + data.ldfWins + data.ndaWins);
+
+    res.json({
+      success: true,
+      data: {
+        totalPredictions,
+        averages: {
+          UDF: Math.round(data.avgUDF * 10) / 10,
+          LDF: Math.round(data.avgLDF * 10) / 10,
+          NDA: Math.round(data.avgNDA * 10) / 10
+        },
+        winnerDistribution: {
+          UDF: data.udfWins,
+          LDF: data.ldfWins,
+          NDA: data.ndaWins,
+          Tie: tieCount
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error generating analytics',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+

@@ -96,6 +96,10 @@ class ApiService {
     return this.client.delete(`/predictions/${predictionId}`);
   }
 
+  getPredictionAnalytics(matchId: string) {
+    return this.client.get('/predictions/analytics', { params: { matchId } });
+  }
+
   // Leaderboard endpoints
   getTopLeaderboard(limit?: number, matchId?: string) {
     return this.client.get('/leaderboard/top', { params: { limit, matchId } });
