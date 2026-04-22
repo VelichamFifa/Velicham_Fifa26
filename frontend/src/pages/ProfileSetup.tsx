@@ -116,9 +116,9 @@ const ProfileSetup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-600 to-emerald-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-kerala-blue-600 to-kerala-blue-800 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-6 sm:p-8 max-w-md w-full my-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center text-green-800 mb-4">
+        <h2 className="text-2xl sm:text-3xl font-bold text-center text-kerala-blue-800 mb-4">
           Complete Your Profile
         </h2>
 
@@ -143,7 +143,7 @@ const ProfileSetup: React.FC = () => {
               value={formData.phoneNumber}
               onChange={handleChange}
               placeholder="+91 1234567890"
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600"
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-kerala-blue-600"
             />
           </div>
 
@@ -157,7 +157,7 @@ const ProfileSetup: React.FC = () => {
                 name="city"
                 value={formData.city}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600"
+                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-kerala-blue-600"
                 required
               />
             </div>
@@ -170,7 +170,7 @@ const ProfileSetup: React.FC = () => {
                 name="state"
                 value={formData.state}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600"
+                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-kerala-blue-600"
                 required
               />
             </div>
@@ -185,7 +185,7 @@ const ProfileSetup: React.FC = () => {
               name="country"
               value={formData.country}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600"
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-kerala-blue-600"
               required
             />
           </div>
@@ -198,7 +198,7 @@ const ProfileSetup: React.FC = () => {
               name="communityId"
               value={formData.communityId}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600"
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-kerala-blue-600"
               disabled={loadingCommunities}
               required
             >
@@ -213,7 +213,7 @@ const ProfileSetup: React.FC = () => {
             {formData.communityId && (() => {
               const selected = communities.find(c => c.Community_ID === formData.communityId);
               return selected?.President_Name ? (
-                <p className="text-sm text-green-700 font-medium mt-2 flex items-center gap-1">
+                <p className="text-sm text-kerala-blue-700 font-medium mt-2 flex items-center gap-1">
                   <span>👤</span> President: <span className="font-bold">{selected.President_Name}</span>
                 </p>
               ) : null;
@@ -223,7 +223,7 @@ const ProfileSetup: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-700 text-white py-2 rounded font-medium hover:bg-green-800 transition disabled:opacity-50"
+            className="w-full bg-kerala-blue-700 text-white py-2 rounded font-medium hover:bg-kerala-blue-800 transition disabled:opacity-50"
           >
             {loading ? 'Saving...' : 'Finish Setup'}
           </button>

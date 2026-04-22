@@ -40,11 +40,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-kerala-blue-50 to-kerala-blue-100 px-4">
       <div className="card max-w-md w-full">
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🏛️</div>
-          <h1 className="text-2xl font-bold text-green-800">Kerala Election Predictor</h1>
+          <h1 className="text-2xl font-bold text-kerala-blue-800">Kerala Election Predictor</h1>
           <p className="text-sm text-gray-600 mt-2">Sign in to make your predictions</p>
         </div>
 
@@ -56,7 +56,7 @@ export default function LoginPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-4">
-            <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></span>
+            <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-kerala-blue-600"></span>
           </div>
         ) : (
           <div className="flex justify-center">
