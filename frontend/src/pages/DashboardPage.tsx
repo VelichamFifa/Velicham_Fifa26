@@ -11,6 +11,7 @@ type PartyKey = 'UDF' | 'LDF' | 'NDA';
 
 const PREDICTION_END_DATE = new Date('2026-05-04T02:30:00Z');
 
+
 function calculateTimeLeft() {
   const difference = +PREDICTION_END_DATE - +new Date();
   let timeLeft = {
@@ -271,7 +272,7 @@ export default function DashboardPage() {
                         max="140"
                         value={scores.UDF || ''}
                         onChange={(e) => handleScoreChange('UDF', e.target.value)}
-                        disabled={match?.IsFinalized}
+                        disabled={match?.IsFinalized || isClosed}
                         className="w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-kerala-blue-800 focus:border-kerala-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
                         placeholder="0"
                       />
@@ -288,8 +289,8 @@ export default function DashboardPage() {
                         max="140"
                         value={scores.LDF || ''}
                         onChange={(e) => handleScoreChange('LDF', e.target.value)}
-                        disabled={match?.IsFinalized}
-                        className="w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-red-800 focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
+                        disabled={match?.IsFinalized || isClosed}
+                        className="w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-red-800 focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 placeholder-gray-300"
                         placeholder="0"
                       />
                     </div>
@@ -305,8 +306,8 @@ export default function DashboardPage() {
                         max="140"
                         value={scores.NDA || ''}
                         onChange={(e) => handleScoreChange('NDA', e.target.value)}
-                        disabled={match?.IsFinalized}
-                        className="w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-orange-800 focus:border-orange-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 "
+                        disabled={match?.IsFinalized || isClosed}
+                        className="w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-orange-800 focus:border-orange-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100  placeholder-gray-300"
                         placeholder="0"
                       />
                     </div>
@@ -337,14 +338,22 @@ export default function DashboardPage() {
                   {!match?.IsFinalized && (
                     <button
                       type="submit"
-                      disabled={submitting || !isTotalValid}
-                      className={`w-full py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl transition-all ${submitting || !isTotalValid
+                      disabled={submitting || !isTotalValid || isClosed}
+                      className={`w-full py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl transition-all ${submitting || !isTotalValid || isClosed
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-kerala-blue-700 text-white hover:bg-kerala-blue-800 active:scale-95'
                         }`}
                     >
-                      {submitting ? 'Processing...' : existingPrediction ? 'Update Prediction' : 'Submit Prediction'}
+                      {submitting ? 'Processing...' : isClosed ? 'Predictions Closed' : existingPrediction ? 'Update Prediction' : 'Submit Prediction'}
                     </button>
+                  )}
+
+                  {isClosed && !match?.IsFinalized && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center mt-4">
+                      <p className="text-amber-800 text-sm font-bold">
+                        ⚠️ The deadline for submitting predictions has passed.
+                      </p>
+                    </div>
                   )}
 
                   {!isClosed && (

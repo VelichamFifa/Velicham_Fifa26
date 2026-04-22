@@ -3,8 +3,19 @@ import { User, Match, Prediction } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { validateRequest, validateScoreSum } from '../utils/validation';
 
+const PREDICTION_DEADLINE = new Date('2026-05-04T02:30:00Z');
+
 export const submitPrediction = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    // Check if deadline has passed
+    if (new Date() > PREDICTION_DEADLINE) {
+      res.status(400).json({
+        success: false,
+        message: 'Predictions are closed. The deadline was May 4, 2026, 02:30 AM UTC.'
+      });
+      return;
+    }
+
     const { Email, matchId, UDF_Score, LDF_Score, NDA_Score } = req.body;
 
     // Validation
@@ -96,7 +107,7 @@ export const submitPrediction = async (req: AuthRequest, res: Response): Promise
 export const getUserPredictions = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, matchId } = req.query;
-    
+
     // Use email from query or from authenticated user
     const targetEmail = (email as string) || (req as any).user?.Email;
 
