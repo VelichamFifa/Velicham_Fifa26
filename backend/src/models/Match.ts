@@ -11,6 +11,7 @@ export interface IMatch extends Document {
   official_NDA?: number;
   createdAt: Date;
   updatedAt: Date;
+  prediction_end_date: Date;
 }
 
 const MatchSchema: Schema = new Schema<IMatch>(
@@ -45,6 +46,9 @@ const MatchSchema: Schema = new Schema<IMatch>(
     },
     official_NDA: {
       type: Schema.Types.Number
+    },
+    prediction_end_date: {
+      type: Schema.Types.Date
     }
   },
   {
