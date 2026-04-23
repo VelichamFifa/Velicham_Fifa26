@@ -1,7 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
-import Home from './pages/Home';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -25,7 +24,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Public Routes */}
-        <Route path="/" element={<Layout><HomePage /></Layout>} />
+        <Route path="/" element={<Layout fullHeight={true}><HomePage /></Layout>} />
         {/* <Route path="/" element={<Home />} /> */}
         <Route path="/leaderboard" element={<Layout><LeaderboardPage /></Layout>} />
         <Route path="/profile-setup" element={<Layout><ProfileSetup /></Layout>} />

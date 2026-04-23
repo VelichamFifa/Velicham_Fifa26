@@ -8,60 +8,81 @@ const communities = [
   // Men Halqa
   {
     Community_ID: '1',
-    Name: "Mens's halaqa East 1",
-    President_Name: 'Riyas'
+    Name: "Brothers halaqa East 1",
+    President_Name: 'Riyas',
+    State: 'New York',
+    City: 'New York'
   },
   {
     Community_ID: '2',
-    Name: "Mens's halaqa East 2",
-    President_Name: 'Aman'
+    Name: "Brothers halaqa East 2",
+    President_Name: 'Aman',
+    State: 'New York',
+    City: 'New York'
   },
   {
     Community_ID: '3',
-    Name: "Mens's halaqa East 3",
-    President_Name: 'Jumsheed'
+    Name: "Brothers halaqa East 3",
+    President_Name: 'Jumsheed',
+    State: 'New York',
+    City: 'Albany'
   },
   {
     Community_ID: '4',
-    Name: "Mens's halaqa West 1",
-    President_Name: 'Shine'
+    Name: "Brothers halaqa West 1",
+    President_Name: 'Shine',
+    State: 'California',
+    City: 'Pleasanton'
   },
   {
     Community_ID: '5',
-    Name: "Mens's halaqa West 2",
-    President_Name: 'Suhail'
+    Name: "Brothers halaqa West 2",
+    President_Name: 'Suhail',
+    State: 'California',
+    City: 'San Jose'
   },
   {
     Community_ID: '6',
-    Name: "Mens's halaqa West 3",
-    President_Name: 'Riyas'
+    Name: "Brothers halaqa West 3",
+    President_Name: 'Riyas',
+    State: 'California',
+    City: 'San Francisco'
   },
   {
     Community_ID: '7',
-    Name: "Mens's halaqa Physical (Chatham)",
+    Name: "Brothers halaqa Physical (Chatham)",
     President_Name: 'Haroon',
-    City: 'Chatham'
+    City: 'Chatham',
+    State: 'Toronto'
   },
   // Ladies Halqa
   {
     Community_ID: '8',
-    Name: 'Ladies halaqa 1',
-    President_Name: 'Saleena'
+    Name: 'Sisters halaqa 1',
+    President_Name: 'Saleena',
+    State: 'Edison',
+    City: 'New Jersey'
   },
   {
     Community_ID: '9',
-    Name: 'Ladies halaqa 2',
-    President_Name: 'Farha'
+    Name: 'Sisters halaqa 2',
+    President_Name: 'Farha',
+    State: 'Toronto',
+    City: 'Toronto'
   },
   {
     Community_ID: '10',
-    Name: 'Ladies halaqa 3',
-    President_Name: 'Thasni'
+    Name: 'Sisters halaqa 3',
+    President_Name: 'Thasni',
+    City: 'Albany',
+    State: 'New York'
   },
   {
     Community_ID: '11',
-    Name: 'Ladies halaqa 4',
-    President_Name: 'Sayara'
+    Name: 'Sisters halaqa 4',
+    President_Name: 'Sayara',
+    City: 'San Francisco',
+    State: 'California'
   }
 ];
 
