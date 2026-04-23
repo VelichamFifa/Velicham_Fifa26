@@ -465,7 +465,7 @@ export default function DashboardPage() {
             <div className="space-y-6 animate-in fade-in zoom-in duration-500 ">
               <div className="card hover:shadow-lg transition-all border border-kerala-blue-50 ">
                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center justify-between">
-                  <span>Crowd Consensus</span>
+                  <span>Prediction Trend</span>
                   <span className="bg-kerala-blue-50 text-kerala-blue-600 px-2 py-1 rounded-md text-[10px]">{analytics.totalPredictions} Predictions</span>
                 </h3>
                 <div className="h-60 w-full mb-4">
