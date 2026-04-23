@@ -1,82 +1,88 @@
 import { Response } from 'express';
-import { AuthRequest } from '../middleware/auth';
-import { User, Community } from '../models';
-import { generateToken, hashPassword, comparePasswords } from '../utils/auth';
+import { Prisma } from '@prisma/client';
 import { OAuth2Client } from 'google-auth-library';
+import { AuthRequest } from '../middleware/auth';
+import { prisma } from '../lib/prisma';
+import { generateToken, hashPassword, comparePasswords } from '../utils/auth';
 import { capitalizeProperNoun } from '../utils/stringUtils';
+import { findExistingCommunityForRequest } from '../utils/communityLookup';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const register = async (req: AuthRequest, res: Response) => {
   try {
-    const { email, firstName, lastName, password, city, state, country, communityId1, communityId2, phoneNumber, requestedCommunity } = req.body;
+    const {
+      email,
+      firstName,
+      lastName,
+      password,
+      city,
+      state,
+      country,
+      communityId1,
+      communityId2,
+      phoneNumber,
+      requestedCommunity,
+    } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: 'Email already registered' });
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) return res.status(400).json({ error: 'Email already registered' });
+
+    let rc = requestedCommunity ? { ...requestedCommunity } : undefined;
+    if (rc?.name && rc?.shortName) {
+      const existingCommunity = await findExistingCommunityForRequest(rc.name, rc.shortName);
+      if (existingCommunity) rc = { ...rc, existingCommunityId: existingCommunity.communityId };
     }
 
-    // Check if the requested community already exists
-    if (requestedCommunity) {
-      const existingCommunity = await Community.findOne({
-        $or: [
-          { name: { $regex: new RegExp(`^${requestedCommunity.name.trim()}$`, 'i') } },
-          { name: { $regex: new RegExp(`^${requestedCommunity.shortName.trim()}$`, 'i') } },
-          { fullName: { $regex: new RegExp(`^${requestedCommunity.name.trim()}$`, 'i') } },
-          { fullName: { $regex: new RegExp(`^${requestedCommunity.shortName.trim()}$`, 'i') } }
-        ]
-      });
-
-      if (existingCommunity) {
-        requestedCommunity.existingCommunityId = existingCommunity.communityId;
-      }
-    }
-
-    // Registration is allowed with no community
-
-    // Validate communities exist if provided
     if (communityId1) {
-      const community1 = await Community.findOne({ communityId: communityId1 });
-      if (!community1) {
-        return res.status(400).json({ error: 'Community 1 not found' });
-      }
+      const c1 = await prisma.community.findUnique({ where: { communityId: communityId1 } });
+      if (!c1) return res.status(400).json({ error: 'Community 1 not found' });
     }
-
     if (communityId2) {
       if (communityId1 === communityId2) {
         return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });
       }
-      const community2 = await Community.findOne({ communityId: communityId2 });
-      if (!community2) {
-        return res.status(400).json({ error: 'Community 2 not found' });
-      }
+      const c2 = await prisma.community.findUnique({ where: { communityId: communityId2 } });
+      if (!c2) return res.status(400).json({ error: 'Community 2 not found' });
     }
 
     const hashedPassword = await hashPassword(password);
     const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    const user = new User({
-      userId,
-      email,
-      firstName: capitalizeProperNoun(firstName),
-      lastName: capitalizeProperNoun(lastName),
-      password: hashedPassword,
-      city: capitalizeProperNoun(city),
-      state: capitalizeProperNoun(state),
-      country: capitalizeProperNoun(country),
-      communityId1,
-      communityId2,
-      phoneNumber,
-      requestedCommunity,
-      status: 'active',
-      isActive: true,
-      role: 'user', // Default role
+    await prisma.user.create({
+      data: {
+        userId,
+        email,
+        firstName: capitalizeProperNoun(firstName),
+        lastName: capitalizeProperNoun(lastName),
+        password: hashedPassword,
+        city: capitalizeProperNoun(city),
+        state: capitalizeProperNoun(state),
+        country: capitalizeProperNoun(country),
+        communityId1,
+        communityId2,
+        phoneNumber,
+        status: 'active',
+        isActive: true,
+        role: 'user',
+        communityRequest:
+          rc && rc.name
+            ? {
+                create: {
+                  name: rc.name,
+                  shortName: rc.shortName ?? '',
+                  description: rc.description ?? '',
+                  isOnline: !!rc.isOnline,
+                  city: rc.city ?? '',
+                  state: rc.state ?? '',
+                  existingCommunityId: rc.existingCommunityId,
+                },
+              }
+            : undefined,
+      },
     });
 
-    await user.save();
-
-    const token = generateToken(userId, email, user.role);
-
+    const token = generateToken(userId, email, 'user');
     res.status(201).json({
       message: 'User registered successfully',
       token,
@@ -90,7 +96,7 @@ export const register = async (req: AuthRequest, res: Response) => {
         country,
         communityId1,
         communityId2,
-        role: user.role,
+        role: 'user',
       },
     });
   } catch (error) {
@@ -102,21 +108,13 @@ export const register = async (req: AuthRequest, res: Response) => {
 export const login = async (req: AuthRequest, res: Response) => {
   try {
     const { email, password } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || !user.password) return res.status(401).json({ error: 'Invalid email or password' });
 
-    const user = await User.findOne({ email }).select('+password');
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    const passwordMatch = await comparePasswords(password, user.password || '');
-    if (!passwordMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    // Community requirement removed
+    const ok = await comparePasswords(password, user.password);
+    if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
 
     const token = generateToken(user.userId, user.email, user.role);
-
     res.json({
       message: 'Login successful',
       token,
@@ -142,6 +140,7 @@ export const login = async (req: AuthRequest, res: Response) => {
 export const googleLogin = async (req: AuthRequest, res: Response) => {
   try {
     const { credential } = req.body;
+    if (!credential) return res.status(400).json({ error: 'Missing Google credential' });
 
     const ticket = await client.verifyIdToken({
       idToken: credential,
@@ -149,47 +148,43 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
     });
 
     const payload = ticket.getPayload();
-    if (!payload) {
-      return res.status(401).json({ error: 'Invalid Google token' });
-    }
+    if (!payload) return res.status(401).json({ error: 'Invalid Google token' });
 
     const { email, given_name, family_name, sub, picture } = payload;
+    if (!email) return res.status(401).json({ error: 'Invalid Google token' });
 
-    let user = await User.findOne({ email });
+    let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      // Generate a placeholder user for missing required fields.
       const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const hashedPassword = await hashPassword(Math.random().toString(36).slice(-10)); // dummy password
-
-      user = new User({
-        userId,
-        email,
-        firstName: given_name || 'Google',
-        lastName: family_name || 'User',
-        password: hashedPassword,
-        googleId: sub,
-        profileImage: picture,
-        status: 'active',
-        isActive: true,
-        city: 'Not Set',
-        state: 'Not Set',
-        country: 'Not Set',
+      const hashedPassword = await hashPassword(Math.random().toString(36).slice(-10));
+      user = await prisma.user.create({
+        data: {
+          userId,
+          email,
+          firstName: given_name || 'Google',
+          lastName: family_name || 'User',
+          password: hashedPassword,
+          googleId: sub,
+          profileImage: picture,
+          status: 'active',
+          isActive: true,
+          city: 'Not Set',
+          state: 'Not Set',
+          country: 'Not Set',
+        },
       });
-      await user.save();
     } else {
-      // If user exists but hasn't linked googleId, update it
-      if (!user.googleId) {
-        user.googleId = sub;
-      }
-      if (!user.profileImage && picture) {
-        user.profileImage = picture;
-      }
-      await user.save();
+      user = await prisma.user.update({
+        where: { userId: user.userId },
+        data: {
+          googleId: user.googleId ?? sub,
+          profileImage: user.profileImage ?? picture ?? undefined,
+        },
+      });
     }
 
     const token = generateToken(user.userId, user.email, user.role);
-
     res.json({
       message: 'Google login successful',
       token,
@@ -208,18 +203,22 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Google login error:', error);
-    res.status(500).json({ error: 'Google login failed' });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Google login error:', message, error);
+    res.status(500).json({
+      error: 'Google login failed',
+      ...(process.env.NODE_ENV === 'development' ? { details: message } : {}),
+    });
   }
 };
 
 export const getUserProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const user = await User.findOne({ userId: req.user?.userId });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    const user = await prisma.user.findUnique({
+      where: { userId: req.user?.userId },
+      include: { communityRequest: true },
+    });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
     res.json({
       userId: user.userId,
@@ -232,7 +231,17 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       communityId1: user.communityId1,
       communityId2: user.communityId2,
       phoneNumber: user.phoneNumber,
-      requestedCommunity: user.requestedCommunity,
+      requestedCommunity: user.communityRequest
+        ? {
+            name: user.communityRequest.name,
+            shortName: user.communityRequest.shortName,
+            description: user.communityRequest.description,
+            isOnline: user.communityRequest.isOnline,
+            city: user.communityRequest.city,
+            state: user.communityRequest.state,
+            existingCommunityId: user.communityRequest.existingCommunityId ?? undefined,
+          }
+        : undefined,
       role: user.role,
       status: user.status,
       isActive: user.isActive,
@@ -245,57 +254,78 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
 
 export const updateUserProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const { communityId1, communityId2, requestedCommunity } = req.body;
+    const body = (req as any).validatedBody ?? req.body;
+    const { communityId1, communityId2, requestedCommunity, phoneNumber, city, state, country } = body;
 
-    const user = await User.findOne({ userId: req.user?.userId });
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    const user = await prisma.user.findUnique({
+      where: { userId: req.user?.userId },
+      include: { communityRequest: true },
+    });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-    // Standard profile updates are now restricted to Communities Only
-    // Personal and Location details are locked after registration
+    const data: Prisma.UserUpdateInput = {};
+    if (phoneNumber !== undefined) data.phoneNumber = phoneNumber || null;
+    if (city !== undefined) data.city = city ? capitalizeProperNoun(city) : '';
+    if (state !== undefined) data.state = state ? capitalizeProperNoun(state) : '';
+    if (country !== undefined) data.country = country ? capitalizeProperNoun(country) : '';
+    if (communityId1 !== undefined) data.communityId1 = communityId1 || null;
+    if (communityId2 !== undefined) data.communityId2 = communityId2 || null;
 
-    // Explicitly handle clearing slots by checking for truthiness or allowing empty string
-    if (communityId1 !== undefined) user.communityId1 = communityId1 || undefined;
-    if (communityId2 !== undefined) user.communityId2 = communityId2 || undefined;
-
-    // Handle community request with duplicate check
     if (requestedCommunity) {
-      const existingCommunity = await Community.findOne({
-        $or: [
-          { name: { $regex: new RegExp(`^${requestedCommunity.name.trim()}$`, 'i') } },
-          { name: { $regex: new RegExp(`^${requestedCommunity.shortName.trim()}$`, 'i') } },
-          { fullName: { $regex: new RegExp(`^${requestedCommunity.name.trim()}$`, 'i') } },
-          { fullName: { $regex: new RegExp(`^${requestedCommunity.shortName.trim()}$`, 'i') } }
-        ]
-      });
-
-      if (existingCommunity) {
-        requestedCommunity.existingCommunityId = existingCommunity.communityId;
+      let rc = { ...requestedCommunity };
+      if (rc.name && rc.shortName) {
+        const existingCommunity = await findExistingCommunityForRequest(rc.name, rc.shortName);
+        if (existingCommunity) rc = { ...rc, existingCommunityId: existingCommunity.communityId };
       }
-      user.requestedCommunity = requestedCommunity;
+      data.communityRequest = {
+        upsert: {
+          create: {
+            name: rc.name,
+            shortName: rc.shortName ?? '',
+            description: rc.description ?? '',
+            isOnline: !!rc.isOnline,
+            city: rc.city ?? '',
+            state: rc.state ?? '',
+            existingCommunityId: rc.existingCommunityId,
+          },
+          update: {
+            name: rc.name,
+            shortName: rc.shortName ?? '',
+            description: rc.description ?? '',
+            isOnline: !!rc.isOnline,
+            city: rc.city ?? '',
+            state: rc.state ?? '',
+            existingCommunityId: rc.existingCommunityId,
+          },
+        },
+      };
     } else if (requestedCommunity === null) {
-      user.requestedCommunity = undefined;
+      data.communityRequest = user.communityRequest ? { delete: true } : undefined;
     }
 
-    if (user.communityId1 && user.communityId2 && user.communityId1 === user.communityId2) {
+    const nextC1 = communityId1 !== undefined ? communityId1 || null : user.communityId1;
+    const nextC2 = communityId2 !== undefined ? communityId2 || null : user.communityId2;
+    if (nextC1 && nextC2 && nextC1 === nextC2) {
       return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });
     }
 
-    await user.save();
+    await prisma.user.update({ where: { userId: user.userId }, data });
+    const updated = await prisma.user.findUnique({ where: { userId: user.userId } });
 
     res.json({
       message: 'Profile updated successfully',
       user: {
-        userId: user.userId,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        city: user.city,
-        state: user.state,
-        country: user.country,
-        communityId1: user.communityId1,
-        communityId2: user.communityId2,
+        userId: updated!.userId,
+        email: updated!.email,
+        firstName: updated!.firstName,
+        lastName: updated!.lastName,
+        phoneNumber: updated!.phoneNumber,
+        city: updated!.city,
+        state: updated!.state,
+        country: updated!.country,
+        communityId1: updated!.communityId1,
+        communityId2: updated!.communityId2,
+        role: updated!.role,
       },
     });
   } catch (error) {
@@ -303,3 +333,4 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to update profile' });
   }
 };
+

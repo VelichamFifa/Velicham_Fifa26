@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { Match } from '../models';
+import { prisma } from '../lib/prisma';
 
 export const getAllMatches = async (req: AuthRequest, res: Response) => {
   try {
@@ -10,17 +10,17 @@ export const getAllMatches = async (req: AuthRequest, res: Response) => {
     const limitNum = parseInt(limit as string, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    const filter: any = {};
-    if (status) {
-      filter.status = status;
-    }
+    const where = status ? { status: status as string } : {};
 
-    const matches = await Match.find(filter)
-      .sort({ matchTime: -1 })
-      .skip(skip)
-      .limit(limitNum);
-
-    const total = await Match.countDocuments(filter);
+    const [matches, total] = await Promise.all([
+      prisma.match.findMany({
+        where,
+        orderBy: { matchTime: 'desc' },
+        skip,
+        take: limitNum,
+      }),
+      prisma.match.count({ where }),
+    ]);
 
     res.json({
       matches,
@@ -40,7 +40,7 @@ export const getAllMatches = async (req: AuthRequest, res: Response) => {
 export const getMatchById = async (req: AuthRequest, res: Response) => {
   try {
     const { matchId } = req.params;
-    const match = await Match.findOne({ matchId });
+    const match = await prisma.match.findUnique({ where: { matchId } });
 
     if (!match) {
       return res.status(404).json({ error: 'Match not found' });
@@ -57,25 +57,25 @@ export const createMatch = async (req: AuthRequest, res: Response) => {
   try {
     const { matchId, sequence, team1, team2, matchTime, predictionsEndingTime, round, matchTag, comment } = req.body;
 
-    const existingMatch = await Match.findOne({ matchId });
+    const existingMatch = await prisma.match.findUnique({ where: { matchId } });
     if (existingMatch) {
       return res.status(400).json({ error: 'Match already exists' });
     }
 
-    const match = new Match({
-      matchId,
-      sequence,
-      team1,
-      team2,
-      matchTime: new Date(matchTime),
-      predictionsEndingTime: new Date(predictionsEndingTime),
-      round,
-      matchTag,
-      comment,
-      status: 'scheduled',
+    const match = await prisma.match.create({
+      data: {
+        matchId,
+        sequence,
+        team1,
+        team2,
+        matchTime: new Date(matchTime),
+        predictionsEndingTime: new Date(predictionsEndingTime),
+        round,
+        matchTag,
+        comment,
+        status: 'scheduled',
+      },
     });
-
-    await match.save();
 
     res.status(201).json({
       message: 'Match created successfully',
@@ -92,20 +92,23 @@ export const updateMatch = async (req: AuthRequest, res: Response) => {
     const { matchId } = req.params;
     const { team1Score, team2Score, status } = req.body;
 
-    const match = await Match.findOne({ matchId });
+    const match = await prisma.match.findUnique({ where: { matchId } });
     if (!match) {
       return res.status(404).json({ error: 'Match not found' });
     }
 
-    if (team1Score !== undefined) match.team1Score = team1Score;
-    if (team2Score !== undefined) match.team2Score = team2Score;
-    if (status) match.status = status;
-
-    await match.save();
+    const updated = await prisma.match.update({
+      where: { matchId },
+      data: {
+        ...(team1Score !== undefined ? { team1Score } : {}),
+        ...(team2Score !== undefined ? { team2Score } : {}),
+        ...(status ? { status } : {}),
+      },
+    });
 
     res.json({
       message: 'Match updated successfully',
-      match,
+      match: updated,
     });
   } catch (error) {
     console.error('Update match error:', error);

@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import { config } from '../config';
 
-import { User } from '../models';
+import { prisma } from '../lib/prisma';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -35,7 +35,7 @@ export const adminMiddleware = async (req: AuthRequest, res: Response, next: Nex
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const user = await User.findOne({ userId });
+    const user = await prisma.user.findUnique({ where: { userId } });
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
     }

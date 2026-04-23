@@ -20,16 +20,18 @@ npm install
 cp .env.example .env
 
 # Edit .env with your settings
-# - MongoDB URI
+# - DATABASE_URL (Azure SQL — see backend/.env.example)
 # - JWT Secret
-# - Redis URL
 # - OAuth credentials (optional for now)
+
+# Apply schema to the database (first time / after schema changes)
+npx prisma db push
 
 # Start backend server
 npm run dev
 ```
 
-Backend will run on `http://localhost:5000`
+Backend listens on the port in `backend/.env` (`PORT`, often **5001** on macOS because 5000 is used by AirPlay).
 
 ### 3. Frontend Setup
 
@@ -49,15 +51,19 @@ Frontend will run on `http://localhost:3000`
 ## Prerequisites
 
 ### Required Services
-1. **MongoDB**
-   - Local: `mongod` service
-   - Or MongoDB Atlas: Update `MONGODB_URI` in .env
+1. **Azure SQL Database** (or SQL Server)
+   - Set `DATABASE_URL` in `backend/.env`. Prisma uses a `sqlserver://…` URL, not JDBC.
+   - From JDBC `jdbc:sqlserver://HOST:1433;database=DB;user=USER;password=…` use:
+     `sqlserver://HOST:1433;database=DB;user=USER;password=…` and encode `@` in the username as `%40` if needed.
+   - In Azure Portal, allow your client IP (or Azure services) on the SQL server firewall.
 
-2. **Redis**
-   - Local: `redis-server` service
-   - Or Redis Cloud: Update `REDIS_URL` in .env
+2. **Node.js** (v18+)
 
-3. **Node.js** (v16+)
+### Querying the database (Azure SQL)
+
+- **Visual Studio Code:** Install the [SQL Server (mssql)](https://marketplace.visualstudio.com/items?itemName=ms-mssql.mssql) extension, add a connection to your server (`*.database.windows.net`), database, and SQL login. Microsoft recommends VS Code for SQL workflows; **Azure Data Studio was retired (February 2026)** — see [What’s happening with Azure Data Studio](https://learn.microsoft.com/sql/azure-data-studio/what-is-azure-data-studio).
+- **Prisma Studio:** From `backend`, run `npx prisma studio` to browse tables defined in your Prisma schema (uses `DATABASE_URL`).
+- **Azure Portal:** Open your database → **Query editor (preview)** for ad hoc SQL (sign in with SQL authentication).
 
 ### Optional - Social Authentication
 - Google OAuth: Get credentials from Google Cloud Console

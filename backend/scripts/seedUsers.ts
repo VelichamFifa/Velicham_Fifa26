@@ -1,37 +1,29 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { User } from '../src/models';
+import { prisma } from '../src/lib/prisma';
 import { seedUsers as seedUsersData } from './seedData/users';
 
 dotenv.config();
 
-
 async function seedUsers() {
   try {
-    const mongoUri = process.env.MONGODB_URI;
-    if (!mongoUri) {
-      throw new Error('MONGODB_URI not found in environment variables');
-    }
+    await prisma.$connect();
+    console.log('Connected to SQL Server');
 
-    await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB');
-
-    await User.deleteMany({});
+    await prisma.user.deleteMany({});
     console.log('Cleared existing users');
 
-    const result = await User.insertMany(seedUsersData);
-    console.log(`Successfully seeded ${result.length} users:`);
-    result.forEach((user) => {
-      console.log(`  - ${user.firstName} ${user.lastName} (${user.userId})`);
-    });
+    const result = await prisma.user.createMany({ data: seedUsersData as any });
+    console.log(`Successfully seeded ${result.count} users`);
 
-    await mongoose.connection.close();
+    await prisma.$disconnect();
     console.log('Database connection closed');
     process.exit(0);
   } catch (error) {
     console.error('Error seeding users:', error);
+    await prisma.$disconnect();
     process.exit(1);
   }
 }
 
 seedUsers();
+

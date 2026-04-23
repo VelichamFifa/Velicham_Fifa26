@@ -1,11 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { apiService } from '../services/apiService';
 
 const Header: React.FC = () => {
-  const { isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn, user, logout, setUser } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const didRefreshProfile = useRef(false);
+
+  // Keep the cached user (localStorage) in sync with backend role changes.
+  useEffect(() => {
+    if (!isLoggedIn || didRefreshProfile.current) return;
+
+    didRefreshProfile.current = true;
+    apiService
+      .getProfile()
+      .then((res) => setUser(res.data))
+      .catch(() => {
+        // Ignore: auth interceptor will handle 401s.
+      });
+  }, [isLoggedIn, setUser]);
 
   return (
     <header className="bg-primary text-white shadow-lg">

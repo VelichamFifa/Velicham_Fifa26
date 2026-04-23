@@ -3,7 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { config } from './config';
-import { connectDB } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 
 // Routes
@@ -59,9 +58,6 @@ app.use(errorHandler);
 // Initialize server
 const initializeApp = async () => {
   try {
-    // Connect to MongoDB
-    await connectDB();
-
     // Start server
     app.listen(config.server.port, () => {
       console.log(`✓ Server running on port ${config.server.port}`);

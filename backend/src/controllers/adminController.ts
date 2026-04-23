@@ -1,295 +1,213 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { User, Match, Prediction, Community, Result, TopLeader, DailyLeader } from '../models';
+import { prisma } from '../lib/prisma';
 import { processMatchResults } from '../services/scoringService';
 import { capitalizeProperNoun } from '../utils/stringUtils';
+import { findExistingCommunityForRequest } from '../utils/communityLookup';
 
-/**
- * Get all users who have requested a community during registration
- */
 export const getCommunityRequests = async (req: AuthRequest, res: Response) => {
-    try {
-        // Find users who have requested a community and don't have communityId1 set
-        const requests = await User.find({
-            'requestedCommunity.name': { $exists: true, $ne: '' }
-        }).select('userId email firstName lastName requestedCommunity city state createdAt communityId1 communityId2');
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        communityRequest: {
+          is: {
+            name: { not: { equals: '' } },
+          },
+        },
+      },
+      include: { communityRequest: true },
+      orderBy: { createdAt: 'desc' },
+    });
 
-        res.json({ requests });
-    } catch (error) {
-        console.error('Get community requests error:', error);
-        res.status(500).json({ error: 'Failed to fetch community requests' });
-    }
+    const requests = users.map((u) => ({
+      userId: u.userId,
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      city: u.city,
+      state: u.state,
+      createdAt: u.createdAt,
+      communityId1: u.communityId1,
+      communityId2: u.communityId2,
+      requestedCommunity: u.communityRequest
+        ? {
+            name: u.communityRequest.name,
+            shortName: u.communityRequest.shortName,
+            description: u.communityRequest.description,
+            isOnline: u.communityRequest.isOnline,
+            city: u.communityRequest.city,
+            state: u.communityRequest.state,
+            existingCommunityId: u.communityRequest.existingCommunityId,
+          }
+        : undefined,
+    }));
+
+    res.json({ requests });
+  } catch (error) {
+    console.error('Get community requests error:', error);
+    res.status(500).json({ error: 'Failed to fetch community requests' });
+  }
 };
 
-/**
- * Update match scores and trigger points calculation for all predictions
- */
 export const finalizeMatch = async (req: AuthRequest, res: Response) => {
-    try {
-        const { matchId, team1Score, team2Score } = req.body;
-
-        if (team1Score === undefined || team2Score === undefined) {
-            return res.status(400).json({ error: 'Both team scores are required' });
-        }
-
-        const match = await Match.findOne({ matchId });
-        if (!match) {
-            return res.status(404).json({ error: 'Match not found' });
-        }
-
-        // Update match score and status
-        match.team1Score = team1Score;
-        match.team2Score = team2Score;
-        match.status = 'completed';
-        await match.save();
-
-        // Trigger points calculation service
-        await processMatchResults(matchId);
-
-        // Automatically refresh all leaderboards to ensure Dashboard is up to date
-        try {
-            const {
-                generateTopLeaderboard,
-                generateDailyLeaderboard,
-                generateCommunityLeaderboard,
-                generateDailyCommunityLeaderboard,
-                generateMatchLeaderboard
-            } = require('../services/leaderboardService');
-
-            await Promise.all([
-                generateTopLeaderboard(),
-                generateDailyLeaderboard(),
-                generateCommunityLeaderboard(),
-                generateDailyCommunityLeaderboard()
-            ]);
-            console.log('✓ All leaderboards refreshed automatically');
-
-            // Generate snapshots for both Match and Overall Rank
-            const [matchLeaderboard, topLeaders] = await Promise.all([
-                generateMatchLeaderboard(matchId),
-                TopLeader.find({}).select('userId rank totalPoints')
-            ]);
-
-            const results = await Result.find({ matchId });
-            for (const result of results) {
-                const matchRankObj = matchLeaderboard.find((ml: any) => ml.userId === result.userId);
-                const topRankObj = topLeaders.find((tl) => tl.userId === result.userId);
-
-                if (matchRankObj || topRankObj) {
-                    await Result.updateOne(
-                        { _id: result._id },
-                        {
-                            dailyRank: matchRankObj?.rank || 0, // Match Rank
-                            finalRank: topRankObj?.rank || 0,   // Overall Rank
-                            finalPoints: topRankObj?.totalPoints || result.matchPoints // Correct Cumulative Points
-                        }
-                    );
-                }
-            }
-            console.log(`✓ Rank snapshots (Match and Overall) captured for ${results.length} results`);
-        } catch (refreshError) {
-            console.error('Leaderboard refresh error:', refreshError);
-            // Don't fail the whole request if refresh fails
-        }
-
-        res.json({
-            message: 'Match finalized and points calculated successfully',
-            match
-        });
-    } catch (error) {
-        console.error('Finalize match error:', error);
-        res.status(500).json({ error: 'Failed to finalize match' });
+  try {
+    const { matchId, team1Score, team2Score } = req.body;
+    if (team1Score === undefined || team2Score === undefined) {
+      return res.status(400).json({ error: 'Both team scores are required' });
     }
+
+    const match = await prisma.match.findUnique({ where: { matchId } });
+    if (!match) return res.status(404).json({ error: 'Match not found' });
+
+    const updated = await prisma.match.update({
+      where: { matchId },
+      data: { team1Score, team2Score, status: 'completed' },
+    });
+
+    await processMatchResults(matchId);
+
+    res.json({
+      message: 'Match finalized and points calculated successfully',
+      match: updated,
+    });
+  } catch (error) {
+    console.error('Finalize match error:', error);
+    res.status(500).json({ error: 'Failed to finalize match' });
+  }
 };
 
-/**
- * Get all users for management
- */
 export const getAllUsers = async (req: AuthRequest, res: Response) => {
-    try {
-        const users = await User.find({}).sort({ createdAt: -1 });
-        res.json({ users });
-    } catch (error) {
-        console.error('Get all users error:', error);
-        res.status(500).json({ error: 'Failed to fetch users' });
-    }
+  try {
+    const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
+    res.json({ users });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
 };
 
-/**
- * Delete a user from the system
- */
 export const deleteUser = async (req: AuthRequest, res: Response) => {
-    try {
-        const { userId } = req.params;
+  try {
+    const { userId } = req.params;
+    const user = await prisma.user.findUnique({ where: { userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.role === 'admin') return res.status(403).json({ error: 'Cannot delete an admin user' });
 
-        const user = await User.findOne({ userId });
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+    await prisma.$transaction([
+      prisma.prediction.deleteMany({ where: { userId } }),
+      prisma.result.deleteMany({ where: { userId } }),
+      prisma.topLeader.deleteMany({ where: { userId } }),
+      prisma.dailyLeader.deleteMany({ where: { userId } }),
+      prisma.user.delete({ where: { userId } }),
+    ]);
 
-        // Optional: Prevent deleting an admin
-        if (user.role === 'admin') {
-            return res.status(403).json({ error: 'Cannot delete an admin user' });
-        }
-
-        await User.deleteOne({ userId });
-        // Delete all associated data
-        await Promise.all([
-            Prediction.deleteMany({ userId }),
-            Result.deleteMany({ userId }),
-            TopLeader.deleteMany({ userId }),
-            DailyLeader.deleteMany({ userId })
-        ]);
-
-        // Refresh leaderboards automatically to remove user from rankings
-        try {
-            const {
-                generateTopLeaderboard,
-                generateDailyLeaderboard,
-                generateCommunityLeaderboard,
-                generateDailyCommunityLeaderboard
-            } = require('../services/leaderboardService');
-
-            await Promise.all([
-                generateTopLeaderboard(),
-                generateDailyLeaderboard(),
-                generateCommunityLeaderboard(),
-                generateDailyCommunityLeaderboard()
-            ]);
-            console.log(`✓ Leaderboards refreshed after deleting user ${userId}`);
-        } catch (refreshError) {
-            console.error('Leaderboard refresh error after deletion:', refreshError);
-        }
-
-        res.json({ message: 'User and all associated data deleted successfully, leaderboards refreshed' });
-    } catch (error) {
-        console.error('Delete user error:', error);
-        res.status(500).json({ error: 'Failed to delete user' });
-    }
+    res.json({ message: 'User and all associated data deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
 };
 
-/**
- * Approve a community request by assigning it to a real community ID
- */
 export const approveCommunityRequest = async (req: AuthRequest, res: Response) => {
-    try {
-        console.log('Approve community request:', req.body);
-        const { userId, communityId } = req.body;
+  try {
+    const { userId, communityId } = req.body;
 
-        const user = await User.findOne({ userId });
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+    const [user, community] = await Promise.all([
+      prisma.user.findUnique({ where: { userId }, include: { communityRequest: true } }),
+      prisma.community.findUnique({ where: { communityId } }),
+    ]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!community) return res.status(404).json({ error: 'Community not found' });
 
-        const community = await Community.findOne({ communityId });
-        if (!community) {
-            return res.status(404).json({ error: 'Community not found' });
-        }
-
-        // Assign to first available slot ONLY if not already assigned and slots are available
-        let assigned = false;
-        if (user.communityId1 === communityId || user.communityId2 === communityId) {
-            // Already assigned to one of the slots, skip assignment but we will still clear the request
-            console.log(`User ${userId} already assigned to community ${communityId}, skipping assignment`);
-        } else if (!user.communityId1) {
-            user.communityId1 = communityId;
-            assigned = true;
-        } else if (!user.communityId2) {
-            user.communityId2 = communityId;
-            assigned = true;
-        }
-
-        // ALWAYS clear requestedCommunity once handled by admin (fulfilled or skipped due to full slots)
-        (user as any).requestedCommunity = undefined;
-        await user.save();
-
-        const message = assigned 
-            ? 'Community request approved successfully' 
-            : 'Community request handled (User slots full or already assigned, request cleared)';
-
-        res.json({ message, user });
-    } catch (error) {
-        console.error('Approve community error:', error);
-        res.status(500).json({ error: 'Failed to approve community request' });
+    let assigned = false;
+    if (user.communityId1 === communityId || user.communityId2 === communityId) {
+      assigned = false;
+    } else if (!user.communityId1) {
+      await prisma.user.update({ where: { userId }, data: { communityId1: communityId } });
+      assigned = true;
+    } else if (!user.communityId2) {
+      await prisma.user.update({ where: { userId }, data: { communityId2: communityId } });
+      assigned = true;
     }
+
+    if (user.communityRequest) {
+      await prisma.userCommunityRequest.delete({ where: { userId } });
+    }
+
+    res.json({
+      message: assigned
+        ? 'Community request approved successfully'
+        : 'Community request handled (slots full or already assigned), request cleared',
+    });
+  } catch (error) {
+    console.error('Approve community error:', error);
+    res.status(500).json({ error: 'Failed to approve community request' });
+  }
 };
 
-/**
- * Create a new community and approve the user's request in one step
- */
 export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Response) => {
-    try {
-        const { userId, name, state, city, shortName, description, isOnline } = req.body;
+  try {
+    const { userId, name, fullName, state, city, address, isOnline, shortName, description } = req.body;
+    if (!name) return res.status(400).json({ error: 'Community name is required' });
 
-        if (!name) {
-            return res.status(400).json({ error: 'Community name is required' });
-        }
+    const user = await prisma.user.findUnique({ where: { userId }, include: { communityRequest: true } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-        const user = await User.findOne({ userId });
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Create new community record
-        const communityId = `comm_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-        const community = new Community({
-            communityId,
-            name: capitalizeProperNoun(shortName || name), // Short name becomes the primary name
-            fullName: capitalizeProperNoun(name),          // Original name becomes fullName
-            isOnline: !!isOnline,    // Capture online status
-            state: capitalizeProperNoun(state) || 'Unknown',
-            city: capitalizeProperNoun(city) || 'Unknown',
-            description: description || ''
-        });
-        await community.save();
-
-        // Assign user to newly created community (to first available EMPTY slot)
-        let assigned = false;
-        if (!user.communityId1) {
-            user.communityId1 = communityId;
-            assigned = true;
-        } else if (!user.communityId2) {
-            user.communityId2 = communityId;
-            assigned = true;
-        }
-
-        // ALWAYS clear requestedCommunity once handled by admin
-        (user as any).requestedCommunity = undefined;
-        await user.save();
-
-        const message = assigned
-            ? 'Community created and user assigned successfully'
-            : 'Community created (User slots full, assignment skipped, request cleared)';
-
-        res.json({ message, user, community });
-    } catch (error: any) {
-        console.error('Create and approve community error:', error);
-        if (error.code === 11000) {
-            return res.status(400).json({ error: 'A community with a similar ID or name already exists' });
-        }
-        res.status(500).json({ error: 'Failed to create and approve community' });
+    // If this community already exists (case-insensitive), reuse it
+    let communityId: string | null = null;
+    if (shortName) {
+      const existing = await findExistingCommunityForRequest(name, shortName);
+      communityId = existing?.communityId ?? null;
     }
+
+    if (!communityId) {
+      communityId = `comm_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+      await prisma.community.create({
+        data: {
+          communityId,
+          name: capitalizeProperNoun(shortName || name),
+          fullName: capitalizeProperNoun(fullName || name),
+          isOnline: !!isOnline,
+          state: capitalizeProperNoun(state || 'Unknown'),
+          city: capitalizeProperNoun(city || 'Unknown'),
+          address: address || '',
+          description: description || '',
+        },
+      });
+    }
+
+    if (user.communityId1 === communityId || user.communityId2 === communityId) {
+      // noop
+    } else if (!user.communityId1) {
+      await prisma.user.update({ where: { userId }, data: { communityId1: communityId } });
+    } else if (!user.communityId2) {
+      await prisma.user.update({ where: { userId }, data: { communityId2: communityId } });
+    }
+
+    if (user.communityRequest) {
+      await prisma.userCommunityRequest.delete({ where: { userId } });
+    }
+
+    res.json({ message: 'Community created and request approved successfully', communityId });
+  } catch (error) {
+    console.error('Create and approve community error:', error);
+    res.status(500).json({ error: 'Failed to create and approve community request' });
+  }
 };
 
-/**
- * Reject a community request (simply clears the pending request)
- */
 export const rejectCommunityRequest = async (req: AuthRequest, res: Response) => {
-    try {
-        const { userId } = req.body;
+  try {
+    const { userId } = req.body;
+    const user = await prisma.user.findUnique({ where: { userId }, include: { communityRequest: true } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-        const user = await User.findOne({ userId });
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Clear the requestedCommunity field
-        (user as any).requestedCommunity = undefined;
-        await user.save();
-
-        res.json({ message: 'Community request rejected and cleared successfully', user });
-    } catch (error) {
-        console.error('Reject community error:', error);
-        res.status(500).json({ error: 'Failed to reject community request' });
+    if (user.communityRequest) {
+      await prisma.userCommunityRequest.delete({ where: { userId } });
     }
+    res.json({ message: 'Community request rejected and cleared' });
+  } catch (error) {
+    console.error('Reject community error:', error);
+    res.status(500).json({ error: 'Failed to reject community request' });
+  }
 };
+
