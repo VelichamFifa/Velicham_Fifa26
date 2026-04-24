@@ -2,16 +2,34 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
 
+/** Rows must already be ordered best-first (e.g. rank asc, points desc). Keeps first row per key. */
+function distinctByKey<T>(rows: T[], keyOf: (row: T) => string, limit: number): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const row of rows) {
+    const key = keyOf(row);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(row);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+/** Oversample then dedupe — fixes duplicate userId/communityId rows in materialized tables. */
+const LEADERBOARD_OVERFETCH_CAP = 2500;
+
 export const getTopLeaderboard = async (req: AuthRequest, res: Response) => {
   try {
     const { limit = '30' } = req.query;
     const limitNum = parseInt(limit as string, 10);
 
-    const leaderboard = await prisma.topLeader.findMany({
-      distinct: ['userId'],
-      orderBy: { rank: 'asc' },
-      take: limitNum,
+    const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
+    const rows = await prisma.topLeader.findMany({
+      orderBy: [{ rank: 'asc' }, { totalPoints: 'desc' }, { id: 'desc' }],
+      take,
     });
+    const leaderboard = distinctByKey(rows, (r) => r.userId, limitNum);
 
     res.json({ leaderboard, source: 'database' });
   } catch (error) {
@@ -28,12 +46,13 @@ export const getDailyLeaderboard = async (req: AuthRequest, res: Response) => {
     const target = date ? new Date(date as string) : new Date();
     target.setHours(0, 0, 0, 0);
 
-    const leaderboard = await prisma.dailyLeader.findMany({
+    const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
+    const rows = await prisma.dailyLeader.findMany({
       where: { date: target },
-      distinct: ['userId'],
-      orderBy: { rank: 'asc' },
-      take: limitNum,
+      orderBy: [{ rank: 'asc' }, { totalPoints: 'desc' }, { id: 'desc' }],
+      take,
     });
+    const leaderboard = distinctByKey(rows, (r) => r.userId, limitNum);
 
     res.json({ leaderboard, source: 'database' });
   } catch (error) {
@@ -47,11 +66,12 @@ export const getCommunityLeaderboard = async (req: AuthRequest, res: Response) =
     const { limit = '30' } = req.query;
     const limitNum = parseInt(limit as string, 10);
 
-    const leaderboard = await prisma.communityLeader.findMany({
-      distinct: ['communityId'],
-      orderBy: { rank: 'asc' },
-      take: limitNum,
+    const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
+    const rows = await prisma.communityLeader.findMany({
+      orderBy: [{ rank: 'asc' }, { totalPoints: 'desc' }, { id: 'desc' }],
+      take,
     });
+    const leaderboard = distinctByKey(rows, (r) => r.communityId, limitNum);
 
     res.json({ leaderboard, source: 'database' });
   } catch (error) {
@@ -68,12 +88,13 @@ export const getDailyCommunityLeaderboard = async (req: AuthRequest, res: Respon
     const target = date ? new Date(date as string) : new Date();
     target.setHours(0, 0, 0, 0);
 
-    const leaderboard = await prisma.dailyCommunityLeader.findMany({
+    const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
+    const rows = await prisma.dailyCommunityLeader.findMany({
       where: { date: target },
-      distinct: ['communityId'],
-      orderBy: { rank: 'asc' },
-      take: limitNum,
+      orderBy: [{ rank: 'asc' }, { totalPoints: 'desc' }, { id: 'desc' }],
+      take,
     });
+    const leaderboard = distinctByKey(rows, (r) => r.communityId, limitNum);
 
     res.json({ leaderboard, source: 'database' });
   } catch (error) {
@@ -124,7 +145,7 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
 export const getCommunityUserRanking = async (req: AuthRequest, res: Response) => {
   try {
     const { communityId } = req.params;
-    const { isDaily, limit = '50' } = req.query;
+    const { isDaily, limit = '50', date } = req.query;
 
     const limitNum = parseInt(limit as string, 10);
     const dailyBool = isDaily === 'true';
@@ -141,21 +162,27 @@ export const getCommunityUserRanking = async (req: AuthRequest, res: Response) =
     }
 
     if (dailyBool) {
-      const leaders = await prisma.dailyLeader.findMany({
-        where: { userId: { in: userIds } },
-        orderBy: [{ date: 'desc' }, { rank: 'asc' }],
-        take: limitNum,
+      const day = date ? new Date(date as string) : new Date();
+      day.setHours(0, 0, 0, 0);
+      const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
+      const leadersRaw = await prisma.dailyLeader.findMany({
+        where: { userId: { in: userIds }, date: day },
+        orderBy: [{ rank: 'asc' }, { totalPoints: 'desc' }, { id: 'desc' }],
+        take,
       });
-      return res.json({ ranking: leaders, communityId, isDaily: true });
+      const ranking = distinctByKey(leadersRaw, (r) => r.userId, limitNum);
+      return res.json({ ranking, communityId, isDaily: true });
     }
 
-    const leaders = await prisma.topLeader.findMany({
+    const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
+    const leadersRaw = await prisma.topLeader.findMany({
       where: { userId: { in: userIds } },
-      orderBy: { rank: 'asc' },
-      take: limitNum,
+      orderBy: [{ rank: 'asc' }, { totalPoints: 'desc' }, { id: 'desc' }],
+      take,
     });
+    const ranking = distinctByKey(leadersRaw, (r) => r.userId, limitNum);
 
-    return res.json({ ranking: leaders, communityId, isDaily: false });
+    return res.json({ ranking, communityId, isDaily: false });
   } catch (error) {
     console.error('Get community user ranking error:', error);
     res.status(500).json({ error: 'Failed to fetch community user ranking' });

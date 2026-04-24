@@ -93,7 +93,7 @@ const RankingDrillDown: React.FC<RankingDrillDownProps> = ({
                 const isMe = item.userId === currentUserId;
                 return (
                   <div 
-                    key={item.userId} 
+                    key={`${item.userId}-${item.rank}-${item.totalPoints}`} 
                     className={`flex items-center gap-4 p-4 transition ${isMe ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`}
                   >
                     <div className="w-8 flex-shrink-0 text-center">

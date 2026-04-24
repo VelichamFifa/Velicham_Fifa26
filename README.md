@@ -213,7 +213,23 @@ cd frontend
 npm run build    # output in frontend/dist
 ```
 
-For **Azure App Service**, configure application settings for the backend (`DATABASE_URL`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `FRONTEND_URL`, `NODE_ENV`, etc.). Build the frontend with the correct `VITE_API_URL` for your API host.
+For **Azure App Service**, configure application settings for the backend (`DATABASE_URL`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `FRONTEND_URL`, `NODE_ENV`, etc.).
+
+### Azure Static Web Apps + separate App Service API
+
+If Network shows requests like `https://<your-static-app>.azurestaticapps.net/api/...`, that only works in **local dev** (Vite proxies `/api` to the backend). On Static Web Apps there is **no** proxy unless you configure one.
+
+Pick **one** approach:
+
+1. **Set the API URL at build time (typical)**  
+   Before `npm run build`, set `VITE_API_URL` to your API origin, including `/api`, for example `https://fifa26-backend-xxxx.azurewebsites.net/api`.  
+   Copy `frontend/.env.production.example` → `frontend/.env.production` or inject the same variables in your CI workflow. **Redeploy** the Static Web App after rebuilding.  
+   After this, the browser should call `fifa26-backend-….azurewebsites.net`, not the static hostname for API traffic.
+
+2. **Link the App Service to the Static Web App (no rebuild for `/api`)**  
+   On a **Standard** Static Web App plan you can [link an Azure App Service API](https://learn.microsoft.com/en-us/azure/static-web-apps/apis-app-service). Then requests to `https://<static-app>/api/*` are forwarded to the linked backend. Your Express app must still serve routes under `/api`.
+
+`frontend/public/staticwebapp.config.json` is copied next to `index.html` on `npm run build` so Azure Static Web Apps can use SPA fallback rules.
 
 ---
 

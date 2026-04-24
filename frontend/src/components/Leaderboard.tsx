@@ -36,8 +36,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ entries, type, title }) => {
               <tr
                 key={
                   type === 'user'
-                    ? `${(entry as any).userId ?? (entry as any).email ?? ''}-${entry.rank}-${entry.totalPoints}`
-                    : `${(entry as any).communityId ?? (entry as any).communityName ?? ''}-${entry.rank}-${entry.totalPoints}`
+                    ? String((entry as LeaderboardEntry).userId ?? (entry as any).email ?? `row-${entry.rank}`)
+                    : String((entry as CommunityLeaderboardEntry).communityId ?? (entry as CommunityLeaderboardEntry).communityName ?? `row-${entry.rank}`)
                 }
                 className={`border-b hover:bg-gray-50 transition ${
                   entry.rank <= 3 ? 'bg-blue-50' : ''
