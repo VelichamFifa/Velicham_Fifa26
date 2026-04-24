@@ -15,12 +15,28 @@ import adminRoutes from './routes/adminRoutes';
 
 const app: Express = express();
 
+/** Production Static Web App (browser origin) — always allow alongside `FRONTEND_URL`. */
+const AZURE_STATIC_WEB_APP_ORIGIN = 'https://blue-meadow-054418e0f.7.azurestaticapps.net';
+
 // Middleware
 app.use(helmet());
-app.use(cors({
-  origin: config.server.frontendUrl,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      const allowed = new Set<string>([config.server.frontendUrl, AZURE_STATIC_WEB_APP_ORIGIN]);
+      if (allowed.has(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(null, false);
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
