@@ -49,6 +49,13 @@ jobs:
         with:
           name: node-app
           path: .
+
+      - name: Verify downloaded artifact
+        run: |
+          echo "Downloaded files:"
+          ls -la
+          echo "Backend package.json check:"
+          test -f package.json && echo "package.json found" || (echo "package.json missing" && exit 1)
       
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
