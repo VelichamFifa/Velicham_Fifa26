@@ -1,9 +1,9 @@
 name: Azure Static Web Apps CI/CD
 
 on:
-  push:
-    branches:
-      - kerala-election26
+  #push:
+  #  branches:
+  #    - kerala-election26
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
