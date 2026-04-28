@@ -13,7 +13,6 @@
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
     "seed:communities": "tsx scripts/seedCommunities.ts",
-    "seed:users": "tsx scripts/seedUsers.ts",
     "seed:teams": "tsx scripts/seedTeams.ts",
     "seed:matches": "tsx scripts/seedMatches.ts",
     "seed:leaderboards": "node -e \"console.log('seed:leaderboards not implemented for SQL mode')\""
