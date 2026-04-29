@@ -48,7 +48,7 @@ export default function LoginPage() {
             alt="Velicham Logo"
             className="mx-auto mb-4 h-16 w-16 rounded-full object-cover"
           />
-          <h1 className="text-2xl font-bold text-green-800">Kerala Election Predictor</h1>
+          <h1 className="text-2xl font-bold text-green-800">Kerala Assembly Election 2026 Prediction</h1>
           <p className="text-sm text-gray-600 mt-2">Sign in to make your predictions</p>
         </div>
 

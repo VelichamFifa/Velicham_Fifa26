@@ -51,7 +51,7 @@ export const submitPrediction = async (req: AuthRequest, res: Response): Promise
     if (match.prediction_end_date && new Date() > match.prediction_end_date) {
       res.status(400).json({
         success: false,
-        message: 'Predictions are closed for this match.'
+        message: 'The prediction window has closed.'
       });
       return;
     }
