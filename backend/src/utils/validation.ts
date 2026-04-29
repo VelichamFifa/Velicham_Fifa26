@@ -4,8 +4,8 @@ export const schemas = {
   // Registration validation
   register: Joi.object({
     email: Joi.string().email().required(),
-    firstName: Joi.string().min(2).max(50).required(),
-    lastName: Joi.string().min(2).max(50).required(),
+    firstName: Joi.string().max(50).required(),
+    lastName: Joi.string().max(50).optional(),
     password: Joi.string().min(6).allow('', null).optional(),
     googleId: Joi.string().allow('', null).optional(),
     profileImage: Joi.string().allow('', null).optional(),
@@ -18,8 +18,8 @@ export const schemas = {
 
   // Profile update validation
   updateProfile: Joi.object({
-    firstName: Joi.string().min(2).optional(),
-    lastName: Joi.string().min(2).optional(),
+    firstName: Joi.string().optional(),
+    lastName: Joi.string().optional(),
     phoneNumber: Joi.string().allow('', null).optional(),
     city: Joi.string().allow('', null).optional(),
     state: Joi.string().allow('', null).optional(),

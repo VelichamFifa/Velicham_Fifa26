@@ -9,11 +9,11 @@ import { PieChart, Pie, BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } fro
 
 type PartyKey = 'UDF' | 'LDF' | 'NDA';
 
-const PREDICTION_END_DATE = new Date('2026-05-04T02:30:00Z');
 
 
-function calculateTimeLeft() {
-  const difference = +PREDICTION_END_DATE - +new Date();
+function calculateTimeLeft(endDate?: string | Date) {
+  if (!endDate) return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
+  const difference = +new Date(endDate) - +new Date();
   let timeLeft = {
     days: 0,
     hours: 0,
@@ -49,11 +49,16 @@ export default function DashboardPage() {
   const [halaqaMembers, setHalaqaMembers] = useState<any[]>([]);
   const [showHalaqaModal, setShowHalaqaModal] = useState(false);
   const [analytics, setAnalytics] = useState<any>(null);
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 });
 
   useEffect(() => {
+    if (!match?.prediction_end_date) return;
+
+    // Initial calculation
+    setTimeLeft(calculateTimeLeft(match.prediction_end_date));
+
     const timer = setInterval(() => {
-      const remaining = calculateTimeLeft();
+      const remaining = calculateTimeLeft(match.prediction_end_date);
       setTimeLeft(remaining);
       if (remaining.total <= 0) {
         clearInterval(timer);
@@ -61,7 +66,7 @@ export default function DashboardPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [match?.prediction_end_date]);
 
   const fetchData = React.useCallback(async () => {
     try {
@@ -260,10 +265,10 @@ export default function DashboardPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
-                  <div className="grid grid-cols-3 gap-4 sm:gap-8 items-center">
+                  <div className="grid grid-cols-3 gap-4 sm:gap-8 items-center mt-6">
                     {/* UDF */}
-                    <div className="flex flex-col items-center space-y-3">
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all bg-kerala-blue-100 border-kerala-blue-200">
+                    <div className="flex flex-col items-center space-y-8">
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all bg-kerala-blue-100 border-kerala-blue-200 select-none">
                         <span className="text-base font-black text-kerala-blue-600 uppercase tracking-tighter">UDF</span>
                       </div>
                       <input
@@ -273,14 +278,14 @@ export default function DashboardPage() {
                         value={scores.UDF || ''}
                         onChange={(e) => handleScoreChange('UDF', e.target.value)}
                         disabled={match?.IsFinalized || isClosed}
-                        className="w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-kerala-blue-800 focus:border-kerala-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
+                        className="w-full h-16 text-center text-2xl sm:text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-kerala-blue-800 focus:border-kerala-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 appearance-none outline-none"
                         placeholder="0"
                       />
                     </div>
 
                     {/* LDF */}
-                    <div className="flex flex-col items-center space-y-3">
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all bg-red-100 border-red-200">
+                    <div className="flex flex-col items-center space-y-8">
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all bg-red-100 border-red-200 select-none">
                         <span className="text-base font-black text-red-600 uppercase tracking-tighter">LDF</span>
                       </div>
                       <input
@@ -290,14 +295,14 @@ export default function DashboardPage() {
                         value={scores.LDF || ''}
                         onChange={(e) => handleScoreChange('LDF', e.target.value)}
                         disabled={match?.IsFinalized || isClosed}
-                        className="w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-red-800 focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 placeholder-gray-300"
+                        className="w-full h-16 text-center text-2xl sm:text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-red-800 focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 appearance-none outline-none placeholder-gray-300"
                         placeholder="0"
                       />
                     </div>
 
                     {/* NDA */}
-                    <div className="flex flex-col items-center space-y-3">
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all bg-orange-100 border-orange-200">
+                    <div className="flex flex-col items-center space-y-8">
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center p-2 shadow-inner border transition-all bg-orange-100 border-orange-200 select-none">
                         <span className="text-base font-black text-orange-600 uppercase tracking-tighter">NDA</span>
                       </div>
                       <input
@@ -307,7 +312,7 @@ export default function DashboardPage() {
                         value={scores.NDA || ''}
                         onChange={(e) => handleScoreChange('NDA', e.target.value)}
                         disabled={match?.IsFinalized || isClosed}
-                        className="w-full h-16 text-center text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-orange-800 focus:border-orange-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100  placeholder-gray-300"
+                        className="w-full h-16 text-center text-2xl sm:text-3xl font-black rounded-2xl border-2 transition-all shadow-sm focus:ring-0 bg-gray-50 border-gray-100 text-orange-800 focus:border-orange-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 appearance-none outline-none placeholder-gray-300"
                         placeholder="0"
                       />
                     </div>
