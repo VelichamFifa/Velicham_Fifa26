@@ -58,3 +58,19 @@
     @apply block text-sm font-bold text-gray-500 mb-1;
   }
 }
+
+@layer base {
+  input {
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
