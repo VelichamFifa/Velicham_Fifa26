@@ -67,5 +67,5 @@ jobs:
         with:
           app-name: 'ElectionAPI1'
           slot-name: 'Production'
-          package: dist
+          package: .
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_24A1BC20ED774C39B1E6D31FA87E942B }}
