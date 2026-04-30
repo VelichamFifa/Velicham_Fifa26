@@ -1,4 +1,4 @@
-# Kerala Election Predictor   2026  
+# Kerala Election Predictor    2026  
 
 A full-stack web application for predicting Kerala Assembly election results with community leaderboards and scoring system.
 
