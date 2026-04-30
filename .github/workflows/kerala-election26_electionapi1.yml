@@ -38,9 +38,9 @@ jobs:
         with:
           name: node-app
           path: |
-            backend/package.json
-            backend/package-lock.json
-            backend/dist
+            package.json
+            package-lock.json
+            dist
 
 
   deploy:
