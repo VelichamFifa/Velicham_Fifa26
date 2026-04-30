@@ -13,11 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout to.
-    defaults:
-      run:
-        working-directory: backend
-   
+      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -37,11 +33,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: |
-            package.json
-            package-lock.json
-            dist
-
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -52,14 +44,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          path: .
-
-      - name: Verify downloaded artifact
-        run: |
-          echo "Downloaded files:"
-          ls -la
-          echo "Backend package.json check:"
-          test -f package.json && echo "package.json found" || (echo "package.json missing" && exit 1)
       
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
