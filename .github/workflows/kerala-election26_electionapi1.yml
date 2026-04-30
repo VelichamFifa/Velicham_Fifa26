@@ -4,9 +4,9 @@
 name: Build and deploy Node.js app to Azure Web App - ElectionAPI1
 
 on:
-  #push:
-  #  branches:
-  #    - kerala-election26
+  push:
+    branches:
+      - kerala-election26-dev
   workflow_dispatch:
 
 jobs:
