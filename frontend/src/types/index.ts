@@ -3,14 +3,34 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  role: 'user' | 'admin';
   city: string;
   state: string;
   country: string;
   communityId1?: string;
   communityId2?: string;
-  whatsappNumber?: string;
+  phoneNumber?: string;
   status: 'active' | 'inactive' | 'suspended';
-  isActive: boolean;
+  isActive: boolean; 
+  createdAt?: string;
+  requestedCommunity?: {
+    name: string;
+    shortName: string;
+    description: string;
+    isOnline: boolean;
+    city: string;
+    state: string;
+    existingCommunityId?: string;
+  };
+}
+
+export interface Community {
+  _id: string;
+  communityId: string;
+  name: string;
+  fullName?: string;
+  state: string;
+  city: string;
 }
 
 export interface Match {
@@ -33,15 +53,18 @@ export interface Prediction {
   _id?: string;
   userId: string;
   email: string;
-  matchId: string;
+  matchId: string | Match;
   matchTag: string;
   team1Score: number;
   team2Score: number;
   submittedTime: string;
   points: number;
   comment?: string;
+  historicRank?: {
+    finalRank: number;
+    dailyRank: number;
+  } | null;
 }
-
 export interface LeaderboardEntry {
   rank: number;
   totalPoints: number;

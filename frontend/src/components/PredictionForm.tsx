@@ -4,14 +4,19 @@ import { apiService } from '../services/apiService';
 
 interface PredictionFormProps {
   match: Match;
+  initialPrediction?: {
+    team1Score: number;
+    team2Score: number;
+    comment?: string;
+  };
   onSuccess?: (prediction: Prediction) => void;
   onClose?: () => void;
 }
 
-const PredictionForm: React.FC<PredictionFormProps> = ({ match, onSuccess, onClose }) => {
-  const [team1Score, setTeam1Score] = useState(0);
-  const [team2Score, setTeam2Score] = useState(0);
-  const [comment, setComment] = useState('');
+const PredictionForm: React.FC<PredictionFormProps> = ({ match, initialPrediction, onSuccess, onClose }) => {
+  const [team1Score, setTeam1Score] = useState(initialPrediction?.team1Score ?? 0);
+  const [team2Score, setTeam2Score] = useState(initialPrediction?.team2Score ?? 0);
+  const [comment, setComment] = useState(initialPrediction?.comment ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -103,7 +108,7 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ match, onSuccess, onClo
             disabled={loading}
             className="flex-1 bg-secondary text-white py-2 rounded hover:bg-blue-600 transition font-medium disabled:opacity-50"
           >
-            {loading ? 'Submitting...' : 'Submit Prediction'}
+            {loading ? 'Submitting...' : initialPrediction ? 'Update Prediction' : 'Submit Prediction'}
           </button>
           {onClose && (
             <button

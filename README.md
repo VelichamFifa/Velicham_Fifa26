@@ -1,386 +1,266 @@
-# Fifa26Predictor - Full Stack Web Application
+# FIFA 26 Predictor
 
-A complete football prediction platform where users can make predictions on FIFA matches, compete on leaderboards individually and with communities, and earn points based on prediction accuracy.
-
-## 🏗️ Architecture Overview
-
-### Tech Stack
-- **Frontend:** React 18+, TypeScript, Tailwind CSS, Vite
-- **Backend:** Node.js, Express.js, TypeScript
-- **Database:** MongoDB with Mongoose ODM
-- **Authentication:** JWT, Google OAuth, Instagram OAuth
-
-## 📁 Project Structure
-
-```
-Fifa26Predictor/
-├── frontend/                 # React application
-│   ├── src/
-│   │   ├── components/      # Reusable components
-│   │   ├── pages/           # Page components
-│   │   ├── services/        # API client
-│   │   ├── context/         # State management (Zustand)
-│   │   ├── hooks/           # Custom hooks
-│   │   ├── types/           # TypeScript types
-│   │   └── App.tsx
-│   ├── package.json
-│   └── vite.config.ts
-│
-└── backend/                  # Express API
-    ├── src/
-    │   ├── config/          # Configuration files
-    │   ├── models/          # Mongoose schemas
-    │   ├── controllers/      # Business logic
-    │   ├── routes/          # API endpoints
-    │   ├── middleware/      # Auth, error handling
-    │   ├── services/        # Services (scoring, leaderboard)
-    │   ├── jobs/            # Background job utilities
-    │   ├── utils/           # Utilities (auth, validation)
-    │   ├── app.ts           # Express app setup
-    │   └── index.ts         # Entry point
-    ├── package.json
-    └── tsconfig.json
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js (16+)
-- MongoDB (local or Atlas)
-
-### Backend Setup
-
-1. **Navigate to backend directory:**
-   ```bash
-   cd backend
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Create .env file:**
-   ```bash
-   cp .env.example .env
-   ```
-   Update with your credentials:
-   ```env
-   MONGODB_URI=mongodb://localhost:27017/fifa26predictor
-   JWT_SECRET=your_secret_key_here
-   GOOGLE_CLIENT_ID=your_google_id
-   GOOGLE_CLIENT_SECRET=your_google_secret
-   INSTAGRAM_CLIENT_ID=your_instagram_id
-   INSTAGRAM_CLIENT_SECRET=your_instagram_secret
-   PORT=5000
-   FRONTEND_URL=http://localhost:3000
-   ```
-
-4. **Start the backend:**
-   ```bash
-   npm run dev
-   ```
-
-### Frontend Setup
-
-1. **Navigate to frontend directory:**
-   ```bash
-   cd frontend
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-
-   The app will be available at `http://localhost:3000`
-
-## 📊 Database Models
-
-### User
-- User ID, Email, First Name, Last Name
-- Location (City, State, Country)
-- Community affiliations (max 2)
-- Social auth IDs (Google, Instagram)
-- Status tracking (active/inactive/suspended)
-
-### Match
-- Match ID, Sequence, Team 1/2
-- Match time, Prediction deadline
-- Round number, Status (scheduled/ongoing/completed)
-- Final scores (when completed)
-
-### Prediction
-- User ID, Match ID
-- Predicted Team 1/2 scores
-- Submission timestamp
-- Points earned
-
-### Result
-- User ID, Match ID
-- Match result, Points earned
-- Community affiliations
-- Ranking data
-
-### Community
-- Community ID, Name
-- Location (State, City, Address)
-- Member tracking
-
-### Leaderboard Views
-- **TopLeader:** All-time rankings (materialized view)
-- **DailyLeader:** Daily rankings (updated daily)
-- **CommunityLeader:** Community rankings
-- **DailyCommunityLeader:** Daily community rankings
-
-## 📋 Scoring System
-
-Points are calculated based on prediction accuracy:
-- **Correct Result:** 5 points (predicted win/loss/draw correctly)
-- **Correct Team 1 Score:** 2 points
-- **Correct Team 2 Score:** 2 points
-- **Correct Goal Difference:** 1 point
-- **Maximum per prediction:** 10 points
-
-Community score is the **average of all member predictions**.
-
-## 🔐 Authentication
-
-### JWT Authentication
-- Token-based auth with 7-day expiration
-- Stored in localStorage (frontend)
-- Sent via Authorization header in all requests
-
-### Social Authentication (Planned)
-- Google OAuth 2.0
-- Instagram OAuth 2.0
-- Seamless account linking
-
-## 🏆 Leaderboard Features
-
-### Individual Leaderboards
-1. **Top Leaders:** All-time rankings of top 30 users
-2. **Daily Leaders:** Today's top 30 performers
-3. **Fresh Data:** Queried directly from MongoDB on each request
-
-### Community Leaderboards
-1. **Community Leaders:** Rankings of communities
-2. **Community Score Calculation:** Average of member points
-3. **Support for user affiliation with 2 communities**
-
-## ⚙️ Background Job Processing
-
-### Score Calculation
-- Processes completed matches
-- Calculates user points
-- Updates Result collection
-- Triggers leaderboard refresh
-
-### Leaderboard Generation
-- Generates Top, Daily, and Community leaderboards
-- Updates materialized views in database
-- Queried on demand from MongoDB
-
-## 🚀 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/profile` - Get user profile (protected)
-- `PUT /api/auth/profile` - Update user profile (protected)
-
-### Matches
-- `GET /api/matches` - List matches (pagination, filtering)
-- `GET /api/matches/:matchId` - Get match details
-- `POST /api/matches` - Create match (admin)
-- `PUT /api/matches/:matchId` - Update match (admin)
-
-### Predictions
-- `POST /api/predictions` - Submit prediction (protected)
-- `GET /api/predictions` - Get user predictions (protected)
-- `PUT /api/predictions/:predictionId` - Update prediction (protected)
-- `DELETE /api/predictions/:predictionId` - Delete prediction (protected)
-
-### Leaderboard
-- `GET /api/leaderboard/top` - Top 30 all-time leaders
-- `GET /api/leaderboard/daily` - Top 30 daily leaders
-- `GET /api/leaderboard/community` - Community rankings
-- `GET /api/leaderboard/stats` - User's ranking stats (protected)
-
-## 📱 Frontend Features
-
-### Pages
-1. **Home** - Landing page with feature overview
-2. **Login/Register** - Authentication with social options
-3. **Dashboard** - User's predictions and match list
-4. **Leaderboard** - Multiple leaderboard views
-5. **Profile** - User information and settings
-
-### Components
-- **Header** - Navigation and auth status
-- **MatchCard** - Match display with prediction button
-- **Leaderboard** - Reusable leaderboard table
-- **PredictionForm** - Modal prediction submission form
-
-### State Management
-- **Zustand** for auth state (token, user info)
-- **Axios** for API requests with auth interceptors
-- **LocalStorage** for token persistence
-
-## 🔒 Security Features
-
-### Input Validation
-- Joi schema validation on backend
-- Email format validation
-- Score range validation (0-20)
-
-### Authentication
-- JWT with secret key
-- Password hashing (bcryptjs)
-- Protected routes with auth middleware
-
-### Rate Limiting
-- 100 requests per 15 minutes
-- Applies to all API endpoints
-- Prevents brute force attacks
-
-### Error Handling
-- Centralized error middleware
-- User-friendly error messages
-- Request validation before processing
-
-## 📈 Performance Optimization
-
-### Database Optimization
-- Indexes on frequently queried fields
-- Compound indexes (userId, matchId)
-- Aggregation pipelines for leaderboard calculations
-- MongoDB materialized views (TopLeader, DailyLeader collections)
-
-### Frontend Optimization
-- Code splitting with React Router
-- Vite for fast development and builds
-- Lazy loading of components
-
-## 📝 Environment Variables
-
-### Backend (.env)
-```env
-# MongoDB
-MONGODB_URI=mongodb://localhost:27017/fifa26predictor
-
-# JWT
-JWT_SECRET=your_jwt_secret_key_here_change_in_production
-JWT_EXPIRE=7d
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-
-# Instagram OAuth
-INSTAGRAM_CLIENT_ID=your_instagram_client_id
-INSTAGRAM_CLIENT_SECRET=your_instagram_client_secret
-
-# Server
-PORT=5000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:3000
-
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
-```
-
-## 🧪 Testing
-
-### Backend Testing (To be implemented)
-```bash
-npm run test
-```
-
-### Frontend Testing (To be implemented)
-```bash
-npm run test
-```
-
-## 📦 Build & Deployment
-
-### Backend
-```bash
-npm run build
-npm start
-```
-
-### Frontend
-```bash
-npm run build
-npm run preview
-```
-
-## 🐛 Troubleshooting
-
-### MongoDB Connection Error
-- Ensure MongoDB is running locally or Atlas connection is valid
-- Check `MONGODB_URI` in .env
-
-### CORS Error
-- Verify `FRONTEND_URL` in backend .env matches actual frontend URL
-- Check CORS middleware in app.ts
-
-### Token Expired
-- Frontend automatically redirects to login on 401 response
-- Clear localStorage and re-login if issues persist
-
-## 🔄 Future Enhancements
-
-1. **Social Features**
-   - User profiles and follow system
-   - Prediction comments and discussions
-   - Match replays and analysis
-
-2. **Advanced Scoring**
-   - Custom scoring rules per tournament
-   - Bonus points for streaks
-   - Season-based competitions
-
-3. **Mobile App**
-   - React Native version
-   - Push notifications
-   - Offline predictions
-
-4. **Analytics**
-   - Prediction accuracy statistics
-   - Performance trends
-   - Community insights
-
-5. **Admin Dashboard**
-   - User management
-   - Match management
-   - Leaderboard management
-   - Analytics and reports
-
-## 📄 License
-
-MIT License - feel free to use this project for personal or commercial purposes.
-
-## 👥 Contributing
-
-Contributions are welcome! Please follow these guidelines:
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## 💡 Support
-
-For issues, questions, or suggestions, please open an issue on the repository.
+Full-stack web app for FIFA match predictions: users submit scores, earn points from a fixed rubric, and appear on individual and community leaderboards.
 
 ---
 
-**Built with ❤️ for football enthusiasts worldwide**
+## Tech stack
+
+| Layer        | Technology |
+| ------------ | ---------- |
+| Frontend     | React 18, TypeScript, Tailwind CSS, Vite |
+| Backend      | Node.js 18+, Express, TypeScript |
+| Database     | **Azure SQL Database** (or SQL Server) via **Prisma** |
+| Auth         | JWT, Google Sign-In (credential flow) |
+
+---
+
+## Repository layout
+
+```
+Velicham_Fifa26/
+├── frontend/
+│   ├── src/
+│   │   ├── components/    # UI components
+│   │   ├── pages/         # Route pages
+│   │   ├── services/      # API client (axios)
+│   │   ├── hooks/         # e.g. useAuth
+│   │   ├── store/         # Zustand auth store
+│   │   └── types/
+│   ├── vite.config.ts     # Dev proxy: /api → backend
+│   └── package.json
+│
+└── backend/
+    ├── prisma/
+    │   └── schema.prisma  # SQL schema + Prisma models
+    ├── scripts/           # Seed scripts (tsx)
+    ├── src/
+    │   ├── config/
+    │   ├── controllers/
+    │   ├── routes/
+    │   ├── middleware/
+    │   ├── services/      # Scoring, etc.
+    │   ├── lib/           # Prisma client singleton
+    │   ├── utils/
+    │   ├── app.ts
+    │   └── index.ts
+    └── package.json
+```
+
+---
+
+## Prerequisites
+
+- **Node.js** 18 or newer  
+- **Azure SQL Database** (or compatible SQL Server) and a SQL login the app can use  
+- **Google Cloud** project (optional, for Google Sign-In): OAuth client ID for a Web application  
+
+---
+
+## Azure SQL and Prisma
+
+1. **Create** an Azure SQL server and database, create a **SQL authentication** user (or use an existing login with rights on the database).
+
+2. **Firewall**: In the Azure portal, on the SQL server, allow:
+   - your development machine’s IP for local dev, and  
+   - **Azure services** (or the specific outbound IPs of your App Service) for production.
+
+3. **`DATABASE_URL`** (Prisma `sqlserver` provider): use a URL like the one in `backend/.env.example`. It is **not** a JDBC string. If you have JDBC, map it to:
+   - `sqlserver://HOST:1433;database=DB_NAME;user=USER;password=...`  
+   Encode special characters in the password and use `%40` for `@` in usernames when needed.
+
+4. **Pooling / timeouts** (recommended for Azure, especially App Service): the example URL includes parameters such as `connectionLimit`, `poolTimeout`, and `connectTimeout`. Tune them if you see pool timeouts under load.
+
+5. **Apply schema** (from `backend/`):
+
+   ```bash
+   npx prisma db push
+   ```
+
+   Use **Prisma Migrate** (`prisma migrate dev` / deploy) when you want versioned migrations instead of `db push`.
+
+6. **Inspect data**: `npx prisma studio` (uses `DATABASE_URL` from `backend/.env`).
+
+Schema and table definitions live in `backend/prisma/schema.prisma`.
+
+---
+
+## Backend setup
+
+```bash
+cd backend
+npm install
+cp .env.example .env
+# Edit .env: DATABASE_URL, JWT_SECRET, GOOGLE_*, FRONTEND_URL, PORT (default 5001 in example)
+npx prisma db push
+npm run dev
+```
+
+Default dev **port** in `.env.example` is **5001** (avoids macOS AirPlay on 5000).
+
+Useful **npm scripts** (see `backend/package.json`):
+
+- `npm run dev` — watch mode with `tsx`  
+- `npm run build` — TypeScript compile to `dist/`  
+- `npm start` — run `node dist/index.js`  
+- `npm run seed:communities` / `seed:teams` / `seed:matches` / `seed:users` — optional data seeds  
+
+**Health check:** `GET http://localhost:5001/health`
+
+---
+
+## Frontend setup
+
+```bash
+cd frontend
+npm install
+# Optional: create .env with VITE_GOOGLE_CLIENT_ID=... and VITE_API_URL if not using the dev proxy
+npm run dev
+```
+
+- Dev server: **http://localhost:3000**  
+- **`VITE_API_URL`**: if unset, the client uses **`/api`**. Vite proxies `/api` to the backend (see `frontend/vite.config.ts`), so local dev should target the same port as `PORT` in the backend `.env` (e.g. 5001).  
+- **Production**: set `VITE_API_URL` to your public API base (e.g. `https://your-api.azurewebsites.net/api`) before `npm run build`.
+
+---
+
+## Scoring (summary)
+
+Points per prediction are derived from result and score accuracy (exact rules are implemented in `backend/src/services/scoringService.ts`). Community scoring aggregates member performance for leaderboard views.
+
+---
+
+## API overview
+
+Base path: **`/api`** (except health: **`/health`**).
+
+### Auth (`/api/auth`)
+
+| Method | Path | Notes |
+| ------ | ---- | ----- |
+| POST | `/register` | Email/password registration |
+| POST | `/login` | Email/password login |
+| POST | `/google` | Google ID token (`credential`) |
+| GET | `/profile` | JWT required |
+| PUT | `/profile` | JWT required — profile / communities |
+
+### Matches (`/api/matches`)
+
+| Method | Path | Notes |
+| ------ | ---- | ----- |
+| GET | `/` | List matches |
+| GET | `/:matchId` | Match detail |
+| POST | `/` | Admin |
+| PUT | `/:matchId` | Admin |
+
+### Predictions (`/api/predictions`)
+
+| Method | Path | Notes |
+| ------ | ---- | ----- |
+| POST | `/` | JWT |
+| GET | `/` | JWT |
+| PUT | `/:predictionId` | JWT |
+| DELETE | `/:predictionId` | JWT |
+
+### Leaderboard (`/api/leaderboard`)
+
+| Method | Path | Notes |
+| ------ | ---- | ----- |
+| GET | `/top` | All-time |
+| GET | `/daily` | Daily |
+| GET | `/community` | Communities |
+| GET | `/community/daily` | Daily community |
+| GET | `/ranking/community/:communityId` | Drill-down |
+| GET | `/stats` | JWT — user stats |
+
+### Communities (`/api/communities`)
+
+| Method | Path |
+| ------ | ---- |
+| GET | `/` |
+| GET | `/:communityId` |
+
+### Admin (`/api/admin`)
+
+JWT + admin role. Includes community request approval, match finalization, user listing/deletion, etc. See `backend/src/routes/adminRoutes.ts` for exact paths.
+
+---
+
+## Security and configuration (high level)
+
+- **CORS**: driven by `FRONTEND_URL` in backend config — set it to your deployed frontend origin in production.  
+- **JWT**: `JWT_SECRET` and `JWT_EXPIRE` in `.env`.  
+- **Rate limiting**: applied under `/api/` (see `backend/src/app.ts`).  
+- **Validation**: Joi on selected routes.  
+- **Never commit** `backend/.env` or real passwords; use `.env.example` as a template only.
+
+---
+
+## Build and production
+
+**Backend**
+
+```bash
+cd backend
+npm install   # runs prisma generate + build via postinstall
+npm start
+```
+
+**Frontend**
+
+```bash
+cd frontend
+npm run build    # output in frontend/dist
+```
+
+For **Azure App Service**, configure application settings for the backend (`DATABASE_URL`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `FRONTEND_URL`, `NODE_ENV`, etc.).
+
+### Azure Static Web Apps + separate App Service API
+
+If Network shows requests like `https://<your-static-app>.azurestaticapps.net/api/...`, that only works in **local dev** (Vite proxies `/api` to the backend). On Static Web Apps there is **no** proxy unless you configure one.
+
+Pick **one** approach:
+
+1. **Set the API URL at build time (typical)**  
+   Before `npm run build`, set `VITE_API_URL` to your API origin, including `/api`, for example `https://fifa26-backend-xxxx.azurewebsites.net/api`.  
+   Copy `frontend/.env.production.example` → `frontend/.env.production` or inject the same variables in your CI workflow. **Redeploy** the Static Web App after rebuilding.  
+   After this, the browser should call `fifa26-backend-….azurewebsites.net`, not the static hostname for API traffic.
+
+2. **Link the App Service to the Static Web App (no rebuild for `/api`)**  
+   On a **Standard** Static Web App plan you can [link an Azure App Service API](https://learn.microsoft.com/en-us/azure/static-web-apps/apis-app-service). Then requests to `https://<static-app>/api/*` are forwarded to the linked backend. Your Express app must still serve routes under `/api`.
+
+`frontend/public/staticwebapp.config.json` is copied next to `index.html` on `npm run build` so Azure Static Web Apps can use SPA fallback rules.
+
+---
+
+## Troubleshooting
+
+| Issue | What to check |
+| ----- | ------------- |
+| Cannot connect to Azure SQL | Firewall rules, correct server name, database name, user/password, `encrypt=true` in URL |
+| Prisma pool / timeout errors | Lower concurrency or tune `connectionLimit` / `poolTimeout` / `connectTimeout` in `DATABASE_URL` |
+| Frontend calls wrong API | `VITE_API_URL` at build time, or dev proxy `target` in `vite.config.ts` vs `PORT` in backend `.env` |
+| CORS errors | `FRONTEND_URL` must match the browser origin exactly (scheme + host + port) |
+| Google login fails | Client ID matches backend `GOOGLE_CLIENT_ID`; authorized JavaScript origins include your frontend URL |
+
+---
+
+## Testing
+
+Automated test suites are not wired in this README; add `npm test` when implemented.
+
+---
+
+## License
+
+MIT — use for personal or commercial projects according to the license file in the repo (if present).
+
+---
+
+## Contributing
+
+1. Fork or branch from the main development branch  
+2. Make focused commits  
+3. Open a pull request with a short description of behavior and any DB or env changes  
+
+For step-by-step local installation (Azure SQL, Prisma, seeds, troubleshooting), see **`SETUP.md`**. For a concise list of variables, see **`backend/.env.example`**.
