@@ -17,6 +17,16 @@ const app: Express = express();
 
 /** Production Static Web App (browser origin) — always allow alongside `FRONTEND_URL`. */
 const AZURE_STATIC_WEB_APP_ORIGIN = 'https://blue-meadow-054418e0f.7.azurestaticapps.net';
+const DEV_LOCAL_ORIGINS = new Set<string>([
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+  'http://localhost:3003',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://127.0.0.1:3002',
+  'http://127.0.0.1:3003',
+]);
 
 // Middleware
 app.use(helmet());
@@ -28,6 +38,9 @@ app.use(
         return;
       }
       const allowed = new Set<string>([config.server.frontendUrl, AZURE_STATIC_WEB_APP_ORIGIN]);
+      if (config.server.nodeEnv !== 'production') {
+        for (const devOrigin of DEV_LOCAL_ORIGINS) allowed.add(devOrigin);
+      }
       if (allowed.has(origin)) {
         callback(null, true);
         return;
