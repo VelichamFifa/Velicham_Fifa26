@@ -1,220 +1,64 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { Result, CommunityResult, User } from '../src/models';
-import { seedUsers } from './seedData/users';
-import {
-  generateTopLeaderboard,
-  generateDailyLeaderboard,
-  generateCommunityLeaderboard,
-  generateDailyCommunityLeaderboard,
-} from '../src/services/leaderboardService';
+import { prisma } from '../src/lib/prisma';
 
 dotenv.config();
 
-const results = [
-  {
-    userId: 'U001',
-    userName: 'Avi Nair',
-    matchId: 'MATCH001',
-    matchTag: 'Group A',
-    result: 'win',
-    matchPoints: 8,
-    finalPoints: 8,
-    communityId1: 'Velicham',
-    communityId2: 'MMNJ',
-    dailyRank: 1,
-    finalRank: 2,
-  },
-  {
-    userId: 'U001',
-    userName: 'Avi Nair',
-    matchId: 'MATCH002',
-    matchTag: 'Group C',
-    result: 'loss',
-    matchPoints: 3,
-    finalPoints: 11,
-    communityId1: 'Velicham',
-    communityId2: 'MMNJ',
-  },
-  {
-    userId: 'U002',
-    userName: 'Meera Iyer',
-    matchId: 'MATCH001',
-    matchTag: 'Group A',
-    result: 'draw',
-    matchPoints: 6,
-    finalPoints: 6,
-    communityId1: 'GSO',
-    dailyRank: 2,
-    finalRank: 4,
-  },
-  {
-    userId: 'U002',
-    userName: 'Meera Iyer',
-    matchId: 'MATCH003',
-    matchTag: 'Group B',
-    result: 'win',
-    matchPoints: 7,
-    finalPoints: 13,
-    communityId1: 'GSO',
-  },
-  {
-    userId: 'U003',
-    userName: 'Arun Pillai',
-    matchId: 'MATCH004',
-    matchTag: 'Group D',
-    result: 'loss',
-    matchPoints: 4,
-    finalPoints: 4,
-    communityId1: 'NANMA',
-    dailyRank: 4,
-    finalRank: 6,
-  },
-  {
-    userId: 'U003',
-    userName: 'Arun Pillai',
-    matchId: 'MATCH005',
-    matchTag: 'Group A',
-    result: 'win',
-    matchPoints: 9,
-    finalPoints: 13,
-    communityId1: 'NANMA',
-  },
-  {
-    userId: 'U004',
-    userName: 'Nisha Menon',
-    matchId: 'MATCH006',
-    matchTag: 'Group B',
-    result: 'draw',
-    matchPoints: 5,
-    finalPoints: 5,
-    communityId1: 'MMNJ',
-    dailyRank: 5,
-    finalRank: 7,
-  },
-  {
-    userId: 'U004',
-    userName: 'Nisha Menon',
-    matchId: 'MATCH007',
-    matchTag: 'Group C',
-    result: 'win',
-    matchPoints: 7,
-    finalPoints: 12,
-    communityId1: 'MMNJ',
-  },
-  {
-    userId: 'U005',
-    userName: 'Vikram Shah',
-    matchId: 'MATCH008',
-    matchTag: 'Group D',
-    result: 'win',
-    matchPoints: 10,
-    finalPoints: 10,
-    communityId1: 'Velicham',
-    communityId2: 'GSO',
-    dailyRank: 1,
-    finalRank: 1,
-  },
-  {
-    userId: 'U006',
-    userName: 'Anita Varma',
-    matchId: 'MATCH003',
-    matchTag: 'Group B',
-    result: 'loss',
-    matchPoints: 2,
-    finalPoints: 2,
-    communityId1: 'GSO',
-    communityId2: 'NANMA',
-    dailyRank: 6,
-    finalRank: 8,
-  },
-];
-
-const communityResults = [
-  {
-    communityId: 'Velicham',
-    communityWeightagePoint: 1,
-    matchId: 'MATCH001',
-    matchTag: 'Group A',
-    communityMatchPoint: 12,
-    totalCommunityPoint: 12,
-    dailyRank: 1,
-    finalRank: 1,
-  },
-  {
-    communityId: 'GSO',
-    communityWeightagePoint: 1,
-    matchId: 'MATCH003',
-    matchTag: 'Group B',
-    communityMatchPoint: 10,
-    totalCommunityPoint: 10,
-    dailyRank: 2,
-    finalRank: 2,
-  },
-  {
-    communityId: 'NANMA',
-    communityWeightagePoint: 1,
-    matchId: 'MATCH005',
-    matchTag: 'Group A',
-    communityMatchPoint: 8,
-    totalCommunityPoint: 8,
-    dailyRank: 3,
-    finalRank: 3,
-  },
-  {
-    communityId: 'MMNJ',
-    communityWeightagePoint: 1,
-    matchId: 'MATCH007',
-    matchTag: 'Group C',
-    communityMatchPoint: 7,
-    totalCommunityPoint: 7,
-    dailyRank: 4,
-    finalRank: 4,
-  },
-];
-
-async function seedLeaderboards() {
+async function seedCommunityLeaderboards() {
   try {
-    const mongoUri = process.env.MONGODB_URI;
-    if (!mongoUri) {
-      throw new Error('MONGODB_URI not found in environment variables');
+    await prisma.$connect();
+    console.log('Connected to database');
+
+    const communities = await prisma.community.findMany({
+      orderBy: { communityId: 'asc' },
+      select: { communityId: true, name: true },
+    });
+
+    if (communities.length === 0) {
+      console.log('No communities found. Run seed:communities first.');
+      await prisma.$disconnect();
+      process.exit(0);
     }
 
-    await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB');
+    await prisma.dailyCommunityLeader.deleteMany();
+    await prisma.communityLeader.deleteMany();
+    console.log('Cleared existing community leaderboard rows');
 
-    const bulkOps = seedUsers.map((user) => ({
-      updateOne: {
-        filter: { userId: user.userId },
-        update: { $setOnInsert: user },
-        upsert: true,
-      },
+    const overallRows = communities.map((community, index) => ({
+      rank: index + 1,
+      totalPoints: (communities.length - index) * 50,
+      communityName: community.name,
+      communityId: community.communityId,
     }));
 
-    await User.bulkWrite(bulkOps);
-    console.log('Ensured seed users exist');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    await Result.deleteMany({});
-    await CommunityResult.deleteMany({});
-    console.log('Cleared existing results');
+    const dailyRows = communities.map((community, index) => ({
+      rank: index + 1,
+      totalPoints: (communities.length - index) * 12,
+      communityName: community.name,
+      communityId: community.communityId,
+      date: today,
+    }));
 
-    await Result.insertMany(results);
-    await CommunityResult.insertMany(communityResults);
-    console.log('Seeded results and community results');
+    const overallResult = await prisma.communityLeader.createMany({ data: overallRows });
+    const dailyResult = await prisma.dailyCommunityLeader.createMany({ data: dailyRows });
 
-    await generateTopLeaderboard(30);
-    await generateDailyLeaderboard(30);
-    await generateCommunityLeaderboard(30);
-    await generateDailyCommunityLeaderboard(30);
-    console.log('Generated leaderboard collections');
+    console.log(`Seeded ${overallResult.count} rows into mv_community_leaders`);
+    console.log(`Seeded ${dailyResult.count} rows into mv_daily_community_leaders`);
 
-    await mongoose.connection.close();
+    overallRows.forEach((row) => {
+      console.log(`  #${row.rank} ${row.communityName} (${row.communityId}) - ${row.totalPoints} pts`);
+    });
+
+    await prisma.$disconnect();
     console.log('Database connection closed');
     process.exit(0);
   } catch (error) {
-    console.error('Error seeding leaderboards:', error);
+    console.error('Error seeding community leaderboards:', error);
+    await prisma.$disconnect();
     process.exit(1);
   }
 }
 
-seedLeaderboards();
+seedCommunityLeaderboards();

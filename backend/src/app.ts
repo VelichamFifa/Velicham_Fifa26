@@ -3,7 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { config } from './config';
-import { connectDB } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 
 // Routes
@@ -12,15 +11,45 @@ import matchRoutes from './routes/matchRoutes';
 import predictionRoutes from './routes/predictionRoutes';
 import leaderboardRoutes from './routes/leaderboardRoutes';
 import communityRoutes from './routes/communityRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 const app: Express = express();
 
+/** Production Static Web App (browser origin) — always allow alongside `FRONTEND_URL`. */
+const AZURE_STATIC_WEB_APP_ORIGIN = 'https://blue-meadow-054418e0f.7.azurestaticapps.net';
+const DEV_LOCAL_ORIGINS = new Set<string>([
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+  'http://localhost:3003',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://127.0.0.1:3002',
+  'http://127.0.0.1:3003',
+]);
+
 // Middleware
 app.use(helmet());
-app.use(cors({
-  origin: config.server.frontendUrl,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      const allowed = new Set<string>([config.server.frontendUrl, AZURE_STATIC_WEB_APP_ORIGIN]);
+      if (config.server.nodeEnv !== 'production') {
+        for (const devOrigin of DEV_LOCAL_ORIGINS) allowed.add(devOrigin);
+      }
+      if (allowed.has(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(null, false);
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
@@ -45,6 +74,7 @@ app.use('/api/matches', matchRoutes);
 app.use('/api/predictions', predictionRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/communities', communityRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -57,9 +87,6 @@ app.use(errorHandler);
 // Initialize server
 const initializeApp = async () => {
   try {
-    // Connect to MongoDB
-    await connectDB();
-
     // Start server
     app.listen(config.server.port, () => {
       console.log(`✓ Server running on port ${config.server.port}`);
