@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://fifa-aps-dpbpdfgjdycdhcbe.eastus-01.azurewebsites.net/api';
 
 class ApiService {
   private client: AxiosInstance;
