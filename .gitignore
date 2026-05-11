@@ -10,6 +10,7 @@ frontend/dist/
 **/.env.*
 !.env.example
 !frontend/.env.production.example
+!frontend/.env.qa
 
 # Logs
 npm-debug.log*
