@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { OAuth2Client } from 'google-auth-library';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
+import { logger } from '../lib/logger';
 import { generateToken, hashPassword, comparePasswords } from '../utils/auth';
 import { capitalizeProperNoun } from '../utils/stringUtils';
 import { findExistingCommunityForRequest } from '../utils/communityLookup';
@@ -112,8 +113,12 @@ export const register = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Registration failed' });
+    const errorDetails = logger.error('register', error, {
+      method: req.method,
+      path: req.path,
+      email: req.body?.email,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Registration failed' });
   }
 };
 
@@ -144,8 +149,12 @@ export const login = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+    const errorDetails = logger.error('login', error, {
+      method: req.method,
+      path: req.path,
+      email: req.body?.email,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Login failed' });
   }
 };
 
@@ -218,11 +227,14 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('Google login error:', message, error);
-    res.status(500).json({
+    const errorDetails = logger.error('googleLogin', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({
       error: 'Google login failed',
-      ...(process.env.NODE_ENV === 'development' ? { details: message } : {}),
+      ...(process.env.NODE_ENV === 'development' ? { details: errorDetails.message } : {}),
     });
   }
 };
@@ -262,8 +274,12 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       isActive: user.isActive,
     });
   } catch (error) {
-    console.error('Get profile error:', error);
-    res.status(500).json({ error: 'Failed to get profile' });
+    const errorDetails = logger.error('getUserProfile', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to get profile' });
   }
 };
 
@@ -344,8 +360,12 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
+    const errorDetails = logger.error('updateUserProfile', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update profile' });
   }
 };
 

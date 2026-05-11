@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { logger } from '../lib/logger';
 
 export const getCommunities = async (req: Request, res: Response) => {
   try {
@@ -9,7 +10,11 @@ export const getCommunities = async (req: Request, res: Response) => {
     });
     res.json(communities);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch communities' });
+    const errorDetails = logger.error('getCommunities', error, {
+      method: req.method,
+      path: req.path,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch communities' });
   }
 };
 
@@ -24,6 +29,11 @@ export const getCommunityById = async (req: Request, res: Response) => {
     
     res.json(community);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch community' });
+    const errorDetails = logger.error('getCommunityById', error, {
+      method: req.method,
+      path: req.path,
+      communityId: req.params.communityId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch community' });
   }
 };

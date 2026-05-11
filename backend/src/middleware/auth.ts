@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import { config } from '../config';
-
+import { logger } from '../lib/logger';
 import { prisma } from '../lib/prisma';
 
 export interface AuthRequest extends Request {
@@ -24,6 +24,11 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
     req.user = decoded;
     next();
   } catch (error) {
+    const errorDetails = logger.error('authMiddleware', error, {
+      method: req.method,
+      path: req.path,
+      ip: req.ip,
+    });
     res.status(401).json({ error: 'Invalid token' });
   }
 };
@@ -42,7 +47,11 @@ export const adminMiddleware = async (req: AuthRequest, res: Response, next: Nex
 
     next();
   } catch (error) {
-    console.error('Admin middleware error:', error);
-    res.status(500).json({ error: 'Server error during authorization' });
+    const errorDetails = logger.error('adminMiddleware', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Server error during authorization' });
   }
 };

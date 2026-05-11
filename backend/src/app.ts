@@ -80,7 +80,8 @@ const initializeApp = async () => {
       console.log(`✓ Environment: ${config.server.nodeEnv}`);
     });
   } catch (error) {
-    console.error('Failed to initialize app:', error);
+    const logger = require('./lib/logger').logger;
+    logger.error('initializeApp', error);
     process.exit(1);
   }
 };

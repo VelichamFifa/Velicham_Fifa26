@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../lib/logger';
 
 export interface ValidationError {
   field: string;
@@ -11,7 +12,11 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.error('Error:', err);
+  const errorDetails = logger.error('errorHandler', err, {
+    method: req.method,
+    path: req.path,
+    ip: req.ip,
+  });
 
   if (err.name === 'ValidationError') {
     return res.status(400).json({

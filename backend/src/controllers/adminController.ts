@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
+import { logger } from '../lib/logger';
 import { processMatchResults } from '../services/scoringService';
 import { capitalizeProperNoun } from '../utils/stringUtils';
 import { findExistingCommunityForRequest } from '../utils/communityLookup';
@@ -44,8 +45,12 @@ export const getCommunityRequests = async (req: AuthRequest, res: Response) => {
 
     res.json({ requests });
   } catch (error) {
-    console.error('Get community requests error:', error);
-    res.status(500).json({ error: 'Failed to fetch community requests' });
+    const errorDetails = logger.error('getCommunityRequests', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch community requests' });
   }
 };
 
@@ -71,8 +76,13 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
       match: updated,
     });
   } catch (error) {
-    console.error('Finalize match error:', error);
-    res.status(500).json({ error: 'Failed to finalize match' });
+    const errorDetails = logger.error('finalizeMatch', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      matchId: req.body?.matchId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to finalize match' });
   }
 };
 
@@ -81,8 +91,12 @@ export const getAllUsers = async (req: AuthRequest, res: Response) => {
     const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
     res.json({ users });
   } catch (error) {
-    console.error('Get all users error:', error);
-    res.status(500).json({ error: 'Failed to fetch users' });
+    const errorDetails = logger.error('getAllUsers', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch users' });
   }
 };
 
@@ -103,8 +117,13 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'User and all associated data deleted successfully' });
   } catch (error) {
-    console.error('Delete user error:', error);
-    res.status(500).json({ error: 'Failed to delete user' });
+    const errorDetails = logger.error('deleteUser', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      targetUserId: req.params.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to delete user' });
   }
 };
 
@@ -140,8 +159,13 @@ export const approveCommunityRequest = async (req: AuthRequest, res: Response) =
         : 'Community request handled (slots full or already assigned), request cleared',
     });
   } catch (error) {
-    console.error('Approve community error:', error);
-    res.status(500).json({ error: 'Failed to approve community request' });
+    const errorDetails = logger.error('approveCommunityRequest', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      targetUserId: req.body?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to approve community request' });
   }
 };
 
@@ -190,8 +214,13 @@ export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Re
 
     res.json({ message: 'Community created and request approved successfully', communityId });
   } catch (error) {
-    console.error('Create and approve community error:', error);
-    res.status(500).json({ error: 'Failed to create and approve community request' });
+    const errorDetails = logger.error('createAndApproveCommunityRequest', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      targetUserId: req.body?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to create and approve community request' });
   }
 };
 
@@ -206,8 +235,13 @@ export const rejectCommunityRequest = async (req: AuthRequest, res: Response) =>
     }
     res.json({ message: 'Community request rejected and cleared' });
   } catch (error) {
-    console.error('Reject community error:', error);
-    res.status(500).json({ error: 'Failed to reject community request' });
+    const errorDetails = logger.error('rejectCommunityRequest', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      targetUserId: req.body?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to reject community request' });
   }
 };
 

@@ -2,8 +2,9 @@
 import './config/loadEnv';
 
 import { initializeApp } from './app';
+import { logger } from './lib/logger';
 
 initializeApp().catch((error) => {
-  console.error('Failed to start application:', error);
+  logger.error('initializeApp', error);
   process.exit(1);
 });

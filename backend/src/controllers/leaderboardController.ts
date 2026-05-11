@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
+import { logger } from '../lib/logger';
 
 /** Rows must already be ordered best-first (e.g. rank asc, points desc). Keeps first row per key. */
 function distinctByKey<T>(rows: T[], keyOf: (row: T) => string, limit: number): T[] {
@@ -33,8 +34,12 @@ export const getTopLeaderboard = async (req: AuthRequest, res: Response) => {
 
     res.json({ leaderboard, source: 'database' });
   } catch (error) {
-    console.error('Get top leaderboard error:', error);
-    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    const errorDetails = logger.error('getTopLeaderboard', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch leaderboard' });
   }
 };
 
@@ -56,8 +61,12 @@ export const getDailyLeaderboard = async (req: AuthRequest, res: Response) => {
 
     res.json({ leaderboard, source: 'database' });
   } catch (error) {
-    console.error('Get daily leaderboard error:', error);
-    res.status(500).json({ error: 'Failed to fetch daily leaderboard' });
+    const errorDetails = logger.error('getDailyLeaderboard', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch daily leaderboard' });
   }
 };
 
@@ -75,8 +84,12 @@ export const getCommunityLeaderboard = async (req: AuthRequest, res: Response) =
 
     res.json({ leaderboard, source: 'database' });
   } catch (error) {
-    console.error('Get community leaderboard error:', error);
-    res.status(500).json({ error: 'Failed to fetch community leaderboard' });
+    const errorDetails = logger.error('getCommunityLeaderboard', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch community leaderboard' });
   }
 };
 
@@ -98,8 +111,12 @@ export const getDailyCommunityLeaderboard = async (req: AuthRequest, res: Respon
 
     res.json({ leaderboard, source: 'database' });
   } catch (error) {
-    console.error('Get daily community leaderboard error:', error);
-    res.status(500).json({ error: 'Failed to fetch daily community leaderboard' });
+    const errorDetails = logger.error('getDailyCommunityLeaderboard', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch daily community leaderboard' });
   }
 };
 
@@ -137,8 +154,12 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
       communities: communityRanks,
     });
   } catch (error) {
-    console.error('Get user stats error:', error);
-    res.status(500).json({ error: 'Failed to fetch user stats' });
+    const errorDetails = logger.error('getUserStats', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch user stats' });
   }
 };
 
@@ -184,8 +205,13 @@ export const getCommunityUserRanking = async (req: AuthRequest, res: Response) =
 
     return res.json({ ranking, communityId, isDaily: false });
   } catch (error) {
-    console.error('Get community user ranking error:', error);
-    res.status(500).json({ error: 'Failed to fetch community user ranking' });
+    const errorDetails = logger.error('getCommunityUserRanking', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      communityId: req.params.communityId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch community user ranking' });
   }
 };
 

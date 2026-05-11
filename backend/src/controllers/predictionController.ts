@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
+import { logger } from '../lib/logger';
 
 export const submitPrediction = async (req: AuthRequest, res: Response) => {
   try {
@@ -62,8 +63,13 @@ export const submitPrediction = async (req: AuthRequest, res: Response) => {
       prediction,
     });
   } catch (error) {
-    console.error('Submit prediction error:', error);
-    res.status(500).json({ error: 'Failed to submit prediction' });
+    const errorDetails = logger.error('submitPrediction', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      email: req.user?.email,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to submit prediction' });
   }
 };
 
@@ -126,8 +132,12 @@ export const getUserPredictions = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Get predictions error:', error);
-    res.status(500).json({ error: 'Failed to fetch predictions' });
+    const errorDetails = logger.error('getUserPredictions', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch predictions' });
   }
 };
 
@@ -165,8 +175,13 @@ export const updatePrediction = async (req: AuthRequest, res: Response) => {
       prediction: updated,
     });
   } catch (error) {
-    console.error('Update prediction error:', error);
-    res.status(500).json({ error: 'Failed to update prediction' });
+    const errorDetails = logger.error('updatePrediction', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      predictionId: req.params.predictionId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update prediction' });
   }
 };
 
@@ -193,7 +208,12 @@ export const deletePrediction = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Prediction deleted successfully' });
   } catch (error) {
-    console.error('Delete prediction error:', error);
-    res.status(500).json({ error: 'Failed to delete prediction' });
+    const errorDetails = logger.error('deletePrediction', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      predictionId: req.params.predictionId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to delete prediction' });
   }
 };

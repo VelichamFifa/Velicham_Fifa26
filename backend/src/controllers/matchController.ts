@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
+import { logger } from '../lib/logger';
 
 export const getAllMatches = async (req: AuthRequest, res: Response) => {
   try {
@@ -32,8 +33,12 @@ export const getAllMatches = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Get matches error:', error);
-    res.status(500).json({ error: 'Failed to fetch matches' });
+    const errorDetails = logger.error('getAllMatches', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch matches' });
   }
 };
 
@@ -48,8 +53,13 @@ export const getMatchById = async (req: AuthRequest, res: Response) => {
 
     res.json(match);
   } catch (error) {
-    console.error('Get match error:', error);
-    res.status(500).json({ error: 'Failed to fetch match' });
+    const errorDetails = logger.error('getMatchById', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      matchId: req.params.matchId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch match' });
   }
 };
 
@@ -82,8 +92,12 @@ export const createMatch = async (req: AuthRequest, res: Response) => {
       match,
     });
   } catch (error) {
-    console.error('Create match error:', error);
-    res.status(500).json({ error: 'Failed to create match' });
+    const errorDetails = logger.error('createMatch', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to create match' });
   }
 };
 
@@ -111,7 +125,12 @@ export const updateMatch = async (req: AuthRequest, res: Response) => {
       match: updated,
     });
   } catch (error) {
-    console.error('Update match error:', error);
-    res.status(500).json({ error: 'Failed to update match' });
+    const errorDetails = logger.error('updateMatch', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      matchId: req.params.matchId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update match' });
   }
 };
