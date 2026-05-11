@@ -7,6 +7,7 @@ interface LogContext {
   method?: string;
   path?: string;
   ip?: string;
+  [key: string]: unknown;
 }
 
 interface ErrorDetails {
