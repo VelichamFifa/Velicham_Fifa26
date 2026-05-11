@@ -2,6 +2,9 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { User, Community } from '../models';
 import { generateToken, hashPassword, comparePasswords } from '../utils/auth';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const register = async (req: AuthRequest, res: Response) => {
   try {
@@ -105,6 +108,79 @@ export const login = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
+  }
+};
+
+export const googleLogin = async (req: AuthRequest, res: Response) => {
+  try {
+    const { credential } = req.body;
+
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+      return res.status(401).json({ error: 'Invalid Google token' });
+    }
+
+    const { email, given_name, family_name, sub, picture } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Generate a placeholder user for missing required fields.
+      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const hashedPassword = await hashPassword(Math.random().toString(36).slice(-10)); // dummy password
+
+      user = new User({
+        userId,
+        email,
+        firstName: given_name || 'Google',
+        lastName: family_name || 'User',
+        password: hashedPassword,
+        googleId: sub,
+        profileImage: picture,
+        status: 'active',
+        isActive: true,
+        city: 'Not Set',
+        state: 'Not Set',
+        country: 'Not Set',
+      });
+      await user.save();
+    } else {
+      // If user exists but hasn't linked googleId, update it
+      if (!user.googleId) {
+        user.googleId = sub;
+      }
+      if (!user.profileImage && picture) {
+        user.profileImage = picture;
+      }
+      await user.save();
+    }
+
+    const token = generateToken(user.userId, user.email);
+
+    res.json({
+      message: 'Google login successful',
+      token,
+      user: {
+        userId: user.userId,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        city: user.city,
+        state: user.state,
+        country: user.country,
+        profileImage: user.profileImage,
+        communityId1: user.communityId1,
+        communityId2: user.communityId2,
+      },
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({ error: 'Google login failed' });
   }
 };
 

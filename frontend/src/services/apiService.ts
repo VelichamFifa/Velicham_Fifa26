@@ -1,6 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://fifa-aps-dpbpdfgjdycdhcbe.eastus-01.azurewebsites.net/api';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
 
 class ApiService {
   private client: AxiosInstance;
@@ -43,6 +45,10 @@ class ApiService {
 
   login(email: string, password: string) {
     return this.client.post('/auth/login', { email, password });
+  }
+
+  googleLogin(credential: string) {
+    return this.client.post('/auth/google', { credential });
   }
 
   getProfile() {
