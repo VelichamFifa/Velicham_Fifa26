@@ -7,7 +7,19 @@ import { generateToken, hashPassword, comparePasswords } from '../utils/auth';
 import { capitalizeProperNoun } from '../utils/stringUtils';
 import { findExistingCommunityForRequest } from '../utils/communityLookup';
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client();
+
+const googleAudiences = Array.from(
+  new Set(
+    [
+      process.env.GOOGLE_CLIENT_ID,
+      ...(process.env.GOOGLE_CLIENT_IDS || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ].filter(Boolean) as string[]
+  )
+);
 
 export const register = async (req: AuthRequest, res: Response) => {
   try {
@@ -141,10 +153,13 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
   try {
     const { credential } = req.body;
     if (!credential) return res.status(400).json({ error: 'Missing Google credential' });
+    if (googleAudiences.length === 0) {
+      return res.status(500).json({ error: 'Google auth is not configured on server' });
+    }
 
     const ticket = await client.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: googleAudiences,
     });
 
     const payload = ticket.getPayload();

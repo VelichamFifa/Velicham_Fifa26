@@ -177,7 +177,7 @@ model TopLeader {
   updatedAt    DateTime @updatedAt
 
   @@index([userId])
-  @@map("top_leaders")
+  @@map("mv_top_leaders")
 }
 
 model DailyLeader {
@@ -196,7 +196,7 @@ model DailyLeader {
 
   @@index([date])
   @@index([userId])
-  @@map("daily_leaders")
+  @@map("mv_daily_leaders")
 }
 
 model CommunityLeader {
@@ -209,7 +209,7 @@ model CommunityLeader {
   updatedAt      DateTime @updatedAt
 
   @@index([communityId])
-  @@map("community_leaders")
+  @@map("mv_community_leaders")
 }
 
 model DailyCommunityLeader {
@@ -224,5 +224,5 @@ model DailyCommunityLeader {
 
   @@index([date])
   @@index([communityId, date])
-  @@map("daily_community_leaders")
+  @@map("mv_daily_community_leaders")
 }

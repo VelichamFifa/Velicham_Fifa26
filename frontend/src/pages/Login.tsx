@@ -7,6 +7,7 @@ import { GoogleLogin } from '@react-oauth/google';
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   const [error, setError] = useState('');
 
@@ -49,14 +50,20 @@ const Login: React.FC = () => {
 
         <div className="space-y-4 flex flex-col items-center mt-2">
           <div className="w-full flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap
-              theme="outline"
-              size="large"
-              width="100%"
-            />
+            {googleClientId ? (
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap
+                theme="outline"
+                size="large"
+                width="100%"
+              />
+            ) : (
+              <div className="w-full text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3 text-center">
+                Google login is not configured. Set VITE_GOOGLE_CLIENT_ID in frontend env.
+              </div>
+            )}
           </div>
           <button className="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded font-medium hover:bg-gray-50 transition">
             📷 Login with Instagram
