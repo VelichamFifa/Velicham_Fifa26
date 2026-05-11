@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { config } from './config';
 import { errorHandler } from './middleware/errorHandler';
+import { logger } from './lib/logger';
 
 // Routes
 import authRoutes from './routes/authRoutes';
@@ -39,6 +40,25 @@ app.use(
 );
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Log successful API responses in one place.
+app.use((req, res, next) => {
+  const start = Date.now();
+
+  res.on('finish', () => {
+    if (req.path.startsWith('/api/') && res.statusCode < 400) {
+      logger.info('apiSuccess', 'API request completed successfully', {
+        method: req.method,
+        path: req.path,
+        statusCode: res.statusCode,
+        durationMs: Date.now() - start,
+        ip: req.ip,
+      });
+    }
+  });
+
+  next();
+});
 
 // Rate limiting
 const limiter = rateLimit({
@@ -80,7 +100,6 @@ const initializeApp = async () => {
       console.log(`✓ Environment: ${config.server.nodeEnv}`);
     });
   } catch (error) {
-    const logger = require('./lib/logger').logger;
     logger.error('initializeApp', error);
     process.exit(1);
   }
