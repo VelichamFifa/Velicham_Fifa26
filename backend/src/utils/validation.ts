@@ -6,12 +6,39 @@ export const schemas = {
     firstName: Joi.string().min(2).required(),
     lastName: Joi.string().min(2).required(),
     password: Joi.string().min(6).required(),
-    whatsappNumber: Joi.string(),
-    city: Joi.string(),
-    state: Joi.string(),
-    country: Joi.string(),
-    communityId1: Joi.string(),
-    communityId2: Joi.string(),
+    phoneNumber: Joi.string().allow('', null),
+    city: Joi.string().allow('', null),
+    state: Joi.string().allow('', null),
+    country: Joi.string().allow('', null),
+    communityId1: Joi.string().allow('', null),
+    communityId2: Joi.string().allow('', null),
+    requestedCommunity: Joi.object({
+      name: Joi.string().required(),
+      shortName: Joi.string().required(),
+      description: Joi.string().allow('', null),
+      isOnline: Joi.boolean().default(false),
+      city: Joi.string().allow('', null),
+      state: Joi.string().allow('', null),
+    }).allow(null),
+  }),
+
+  updateProfile: Joi.object({
+    firstName: Joi.string().min(2).optional(),
+    lastName: Joi.string().min(2).optional(),
+    phoneNumber: Joi.string().allow('', null).optional(),
+    city: Joi.string().allow('', null).optional(),
+    state: Joi.string().allow('', null).optional(),
+    country: Joi.string().allow('', null).optional(),
+    communityId1: Joi.string().allow('', null).optional(),
+    communityId2: Joi.string().allow('', null).optional(),
+    requestedCommunity: Joi.object({
+      name: Joi.string().required(),
+      shortName: Joi.string().required(),
+      description: Joi.string().allow('', null),
+      isOnline: Joi.boolean().default(false),
+      city: Joi.string().allow('', null),
+      state: Joi.string().allow('', null),
+    }).allow(null).optional(),
   }),
 
   login: Joi.object({
@@ -23,22 +50,12 @@ export const schemas = {
     credential: Joi.string().required(),
   }),
 
-  updateProfile: Joi.object({
-    city: Joi.string().allow(''),
-    state: Joi.string().allow(''),
-    country: Joi.string().allow(''),
-    whatsappNumber: Joi.string().allow(''),
-    communityId1: Joi.string().allow(''),
-    communityId2: Joi.string().allow(''),
-    firstName: Joi.string().allow(''),
-    lastName: Joi.string().allow(''),
-  }),
 
   prediction: Joi.object({
     matchId: Joi.string().required(),
     team1Score: Joi.number().min(0).required(),
     team2Score: Joi.number().min(0).required(),
-    comment: Joi.string(),
+    comment: Joi.string().allow('', null).optional(),
   }),
 
   match: Joi.object({

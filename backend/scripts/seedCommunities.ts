@@ -1,68 +1,36 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { Community } from '../src/models';
+import { prisma } from '../src/lib/prisma';
 
 dotenv.config();
 
 const communities = [
-  {
-    communityId: 'MMNJ',
-    name: 'MMNJ',
-    state: 'New Jersey',
-    city: 'New Jersey',
-    address: 'New Jersey, USA',
-  },
-  {
-    communityId: 'GSO',
-    name: 'GSO',
-    state: 'North Carolina',
-    city: 'Greensboro',
-    address: 'Greensboro, NC, USA',
-  },
-  {
-    communityId: 'NANMA',
-    name: 'NANMA',
-    state: 'Massachusetts',
-    city: 'Boston',
-    address: 'North America, USA',
-  },
-  {
-    communityId: 'Velicham',
-    name: 'Velicham',
-    state: 'California',
-    city: 'San Francisco',
-    address: 'California, USA',
-  },
+  { communityId: 'MMNJ', name: 'MMNJ', state: 'New Jersey', city: 'New Jersey', address: 'New Jersey, USA', isOnline: false },
+  { communityId: 'GSO', name: 'GSO', state: 'North Carolina', city: 'Greensboro', address: 'Greensboro, NC, USA', isOnline: false },
+  { communityId: 'NANMA', name: 'NANMA', state: 'Massachusetts', city: 'Boston', address: 'North America, USA', isOnline: false },
+  { communityId: 'Velicham', name: 'Velicham', state: 'California', city: 'San Francisco', address: 'California, USA', isOnline: false },
 ];
 
 async function seedCommunities() {
   try {
-    const mongoUri = process.env.MONGODB_URI;
-    if (!mongoUri) {
-      throw new Error('MONGODB_URI not found in environment variables');
-    }
+    await prisma.$connect();
+    console.log('Connected to SQL Server');
 
-    await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB');
-
-    // Clear existing communities
-    await Community.deleteMany({});
+    await prisma.community.deleteMany({});
     console.log('Cleared existing communities');
 
-    // Insert new communities
-    const result = await Community.insertMany(communities);
-    console.log(`Successfully seeded ${result.length} communities:`);
-    result.forEach((community) => {
-      console.log(`  - ${community.name} (${community.communityId})`);
-    });
+    const result = await prisma.community.createMany({ data: communities });
+    console.log(`Successfully seeded ${result.count} communities:`);
+    communities.forEach((c) => console.log(`  - ${c.name} (${c.communityId})`));
 
-    await mongoose.connection.close();
+    await prisma.$disconnect();
     console.log('Database connection closed');
     process.exit(0);
   } catch (error) {
     console.error('Error seeding communities:', error);
+    await prisma.$disconnect();
     process.exit(1);
   }
 }
 
 seedCommunities();
+

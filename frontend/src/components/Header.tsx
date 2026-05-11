@@ -1,10 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { apiService } from '../services/apiService';
 
 const Header: React.FC = () => {
-  const { isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn, user, logout, setUser } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const didRefreshProfile = useRef(false);
+
+  // Keep the cached user (localStorage) in sync with backend role changes.
+  useEffect(() => {
+    if (!isLoggedIn || didRefreshProfile.current) return;
+
+    didRefreshProfile.current = true;
+    apiService
+      .getProfile()
+      .then((res) => setUser(res.data))
+      .catch(() => {
+        // Ignore: auth interceptor will handle 401s.
+      });
+  }, [isLoggedIn, setUser]);
 
   return (
     <header className="bg-primary text-white shadow-lg">
@@ -61,19 +77,53 @@ const Header: React.FC = () => {
                 <Link to="/dashboard" className="hover:text-secondary transition">
                   Dashboard
                 </Link>
-                <div className="flex items-center gap-3">
-                  <Link to="/profile" className="text-sm hidden lg:inline hover:underline hover:text-blue-200 transition">
-                    Hi, {user?.firstName}
+                {user?.role === 'admin' && (
+                  <Link to="/admin" className="hover:text-secondary font-bold text-yellow-400 transition">
+                    Admin
                   </Link>
+                )}
+                <div className="relative">
                   <button
-                    onClick={() => {
-                      logout();
-                      window.location.href = '/';
-                    }}
-                    className="px-3 py-2 text-sm bg-danger rounded hover:bg-red-600 transition"
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-2 hover:text-secondary transition focus:outline-none"
                   >
-                    Logout
+                    <span className="text-sm font-medium">
+                      Hi, {user?.firstName}
+                    </span>
+                    <svg
+                      className={`w-4 h-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
+
+                  {userMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5 animate-in fade-in slide-in-from-top-2">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                      </div>
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        My Profile
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          logout();
+                          window.location.href = '/';
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-danger hover:bg-gray-100"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
@@ -122,13 +172,28 @@ const Header: React.FC = () => {
                 >
                   Dashboard
                 </Link>
-                <div className="pt-2 border-t border-blue-800">
+                {user?.role === 'admin' && (
                   <Link
-                    to="/profile"
-                    className="block text-sm mb-3 hover:underline hover:text-blue-200 transition"
+                    to="/admin"
+                    className="block py-2 hover:text-secondary font-bold text-yellow-400 transition"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Hi, {user?.firstName}
+                    Admin Panel
+                  </Link>
+                )}
+                <div className="pt-2 border-t border-blue-800 space-y-2">
+                  <div className="flex items-center justify-between px-2">
+                    <span className="block text-sm font-bold">
+                      Hi, {user?.firstName}
+                    </span>
+                    <span className="text-[10px] text-blue-300 truncate max-w-[150px]">{user?.email}</span>
+                  </div>
+                  <Link
+                    to="/profile"
+                    className="block py-2 hover:text-secondary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    My Profile
                   </Link>
                   <button
                     onClick={() => {
@@ -136,7 +201,7 @@ const Header: React.FC = () => {
                       window.location.href = '/';
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full px-4 py-2 bg-danger rounded hover:bg-red-600 transition"
+                    className="w-full px-4 py-2 bg-danger rounded hover:bg-red-600 transition mt-2"
                   >
                     Logout
                   </button>
