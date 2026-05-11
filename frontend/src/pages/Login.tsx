@@ -7,7 +7,9 @@ import { GoogleLogin } from '@react-oauth/google';
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const googleClientId =
+    import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+    '256211048883-phsgjqmft45dkbtdp43s202j6ep7tm25.apps.googleusercontent.com';
 
   const [error, setError] = useState('');
 
