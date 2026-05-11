@@ -1,48 +1,31 @@
 {
-  "name": "fifa26-predictor-backend",
+  "name": "election-predictor-backend",
   "version": "1.0.0",
-  "description": "Backend API for Fifa26 Prediction System",
-  "main": "src/index.ts",
-  "engines": {
-    "node": ">=18.x"
-  },
+  "description": "Backend API for election predictor",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "node -e \"require('fs').rmSync('dist',{ recursive: true, force: true })\" && tsc",
-    "postinstall": "prisma generate && npm run build",
-    "start": "node dist/index.js",
-    "lint": "eslint src --ext .ts",
-    "seed:communities": "tsx scripts/seedCommunities.ts",
-    "seed:users": "tsx scripts/seedUsers.ts",
-    "seed:teams": "tsx scripts/seedTeams.ts",
-    "seed:matches": "tsx scripts/seedMatches.ts",
-    "seed:leaderboards": "node -e \"console.log('seed:leaderboards not implemented for SQL mode')\""
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "dependencies": {
-    "@prisma/client": "^6.16.0",
-    "axios": "^1.6.2",
-    "bcryptjs": "^2.4.3",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "express-rate-limit": "^7.1.5",
-    "express-session": "^1.17.3",
-    "fifa26-predictor-backend": "file:",
     "google-auth-library": "^10.6.2",
-    "helmet": "^7.1.0",
-    "joi": "^17.11.0",
-    "jsonwebtoken": "^9.0.2",
-    "prisma": "^6.16.0"
+    "joi": "^18.1.2",
+    "mongoose": "^8.0.0",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/jsonwebtoken": "^9.0.7",
+    "@types/joi": "^17.2.2",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.10.0",
-    "@typescript-eslint/eslint-plugin": "^6.13.2",
-    "@typescript-eslint/parser": "^6.13.2",
-    "eslint": "^8.55.0",
-    "tsx": "^4.6.2",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   }
 }
