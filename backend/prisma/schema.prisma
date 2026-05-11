@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int                   @id @default(autoincrement())
+  userId           String                @unique @db.VarChar(128)
+  email            String                @unique @db.VarChar(255)
+  firstName        String                @db.VarChar(200)
+  lastName         String                @db.VarChar(200)
+  password         String?               @db.VarChar(255)
+  status           String                @default("active") @db.VarChar(20)
+  creationTime     DateTime              @default(now())
+  phoneNumber      String?               @db.VarChar(50)
+  city             String                @default("") @db.VarChar(200)
+  state            String                @default("") @db.VarChar(200)
+  country          String                @default("") @db.VarChar(200)
+  comment          String?               @db.LongText
+  communityId1     String?               @db.VarChar(128)
+  communityId2     String?               @db.VarChar(128)
+  isActive         Boolean               @default(true)
+  googleId         String?               @db.VarChar(255)
+  instagramId      String?               @db.VarChar(255)
+  profileImage     String?               @db.VarChar(500)
+  role             String                @default("user") @db.VarChar(20)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  predictions      Prediction[]
+  results          Result[]
+  communityRequest UserCommunityRequest?
+
+  @@map("users")
+}
+
+model UserCommunityRequest {
+  userId              String  @id @db.VarChar(128)
+  user                User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  name                String  @db.VarChar(500)
+  shortName           String  @default("") @db.VarChar(500)
+  description         String  @default("") @db.VarChar(2000)
+  isOnline            Boolean @default(false)
+  city                String  @default("") @db.VarChar(200)
+  state               String  @default("") @db.VarChar(200)
+  existingCommunityId String? @db.VarChar(128)
+
+  @@map("user_community_requests")
+}
+
+model Community {
+  id           Int      @id @default(autoincrement())
+  communityId  String   @unique @db.VarChar(128)
+  name         String   @db.VarChar(500)
+  fullName     String?  @db.VarChar(500)
+  isOnline     Boolean  @default(false)
+  state        String   @db.VarChar(200)
+  city         String   @db.VarChar(200)
+  address      String   @default("") @db.VarChar(500)
+  description  String?  @db.LongText
+  creationTime DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("communities")
+}
+
+model Team {
+  id          Int      @id @default(autoincrement())
+  teamId      String   @unique @db.VarChar(64)
+  teamName    String   @db.VarChar(200)
+  country     String   @db.VarChar(200)
+  coach       String?  @db.VarChar(200)
+  foundedYear Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("teams")
+}
+
+model Match {
+  id                    Int      @id @default(autoincrement())
+  matchId               String   @unique @db.VarChar(128)
+  sequence              Int
+  team1                 String   @db.VarChar(64)
+  team2                 String   @db.VarChar(64)
+  team1Score            Int?
+  team2Score            Int?
+  matchTime             DateTime
+  predictionsEndingTime DateTime
+  round                 Int
+  comment               String?  @db.LongText
+  matchTag              String   @db.VarChar(200)
+  status                String   @default("scheduled") @db.VarChar(20)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  predictions           Prediction[] @relation("MatchPredictions")
+  results               Result[]     @relation("MatchResults")
+
+  @@map("matches")
+}
+
+model Prediction {
+  id             Int      @id @default(autoincrement())
+  userId         String   @db.VarChar(128)
+  user           User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  email          String   @db.VarChar(255)
+  matchId        String   @db.VarChar(128)
+  match          Match    @relation("MatchPredictions", fields: [matchId], references: [matchId], onDelete: NoAction, onUpdate: NoAction)
+  matchTag       String   @db.VarChar(200)
+  team1Score     Int
+  team2Score     Int
+  submittedTime  DateTime @default(now())
+  points         Int      @default(0)
+  comment        String?  @db.LongText
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, matchId])
+  @@map("predictions")
+}
+
+model Result {
+  id             Int      @id @default(autoincrement())
+  userId         String   @db.VarChar(128)
+  user           User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  userName       String   @db.VarChar(400)
+  matchId        String   @db.VarChar(128)
+  match          Match    @relation("MatchResults", fields: [matchId], references: [matchId], onDelete: NoAction, onUpdate: NoAction)
+  matchTag       String   @db.VarChar(200)
+  result         String   @db.VarChar(20)
+  matchPoints    Int      @default(0)
+  finalPoints    Int      @default(0)
+  communityId1   String?  @db.VarChar(128)
+  communityId2   String?  @db.VarChar(128)
+  dailyRank      Int?
+  finalRank      Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, matchId])
+  @@index([matchId])
+  @@map("results")
+}
+
+model CommunityResult {
+  id                      Int      @id @default(autoincrement())
+  communityId             String   @db.VarChar(128)
+  communityWeightagePoint Int      @default(1)
+  matchId                 String   @db.VarChar(128)
+  matchTag                String   @db.VarChar(200)
+  communityMatchPoint     Int      @default(0)
+  totalCommunityPoint     Int      @default(0)
+  dailyRank               Int?
+  finalRank               Int?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@unique([communityId, matchId])
+  @@map("community_results")
+}
+
+model TopLeader {
+  id           Int      @id @default(autoincrement())
+  rank         Int
+  totalPoints  Int
+  name         String   @db.VarChar(400)
+  state        String   @default("") @db.VarChar(200)
+  community1   String?  @db.VarChar(500)
+  community2   String?  @db.VarChar(500)
+  userId       String   @db.VarChar(128)
+  email        String   @db.VarChar(255)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@map("top_leaders")
+}
+
+model DailyLeader {
+  id           Int      @id @default(autoincrement())
+  rank         Int
+  totalPoints  Int
+  name         String   @db.VarChar(400)
+  state        String   @default("") @db.VarChar(200)
+  community1   String?  @db.VarChar(500)
+  community2   String?  @db.VarChar(500)
+  userId       String   @db.VarChar(128)
+  email        String   @db.VarChar(255)
+  date         DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([date])
+  @@index([userId])
+  @@map("daily_leaders")
+}
+
+model CommunityLeader {
+  id             Int      @id @default(autoincrement())
+  rank           Int
+  totalPoints    Int
+  communityName  String   @db.VarChar(500)
+  communityId    String   @db.VarChar(128)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([communityId])
+  @@map("community_leaders")
+}
+
+model DailyCommunityLeader {
+  id              Int      @id @default(autoincrement())
+  rank            Int
+  totalPoints     Int
+  communityName   String   @db.VarChar(500)
+  communityId     String   @db.VarChar(128)
+  date            DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([date])
+  @@index([communityId, date])
+  @@map("daily_community_leaders")
+}

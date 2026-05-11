@@ -9,6 +9,7 @@ frontend/dist/
 **/.env
 **/.env.*
 !.env.example
+!frontend/.env.production.example
 
 # Logs
 npm-debug.log*

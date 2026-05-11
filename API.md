@@ -30,7 +30,7 @@ Create a new user account.
   "city": "New York",
   "state": "NY",
   "country": "USA",
-  "whatsappNumber": "+1234567890",
+  "phoneNumber": "+1234567890",
   "communityId1": "comm_001",
   "communityId2": "comm_002"
 }
@@ -118,7 +118,7 @@ Retrieve current user's profile information.
   "country": "USA",
   "communityId1": "comm_001",
   "communityId2": "comm_002",
-  "whatsappNumber": "+1234567890",
+  "phoneNumber": "+1234567890",
   "status": "active",
   "isActive": true
 }
@@ -140,7 +140,7 @@ Update user's profile information.
   "city": "Los Angeles",
   "state": "CA",
   "country": "USA",
-  "whatsappNumber": "+9876543210",
+  "phoneNumber": "+9876543210",
   "communityId1": "comm_002",
   "communityId2": "comm_003"
 }
