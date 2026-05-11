@@ -28,9 +28,6 @@ jobs:
           cd ./frontend
           npm install
           npm run build:qa
-        env:
-          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          VITE_API_URL: ${{ secrets.VITE_API_URL_QA }}
       - name: Deploy to Azure
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
