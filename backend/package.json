@@ -2,7 +2,7 @@
   "name": "fifa26-predictor-backend",
   "version": "1.0.0",
   "description": "Backend API for Fifa26 Prediction System",
-  "main": "dist/index.ts",
+  "main": "dist/index.js",
   "engines": {
     "node": ">=18.x"
   },
@@ -27,7 +27,6 @@
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "express-session": "^1.17.3",
-    "fifa26-predictor-backend": "file:",
     "google-auth-library": "^10.6.2",
     "helmet": "^7.1.0",
     "joi": "^17.11.0",
