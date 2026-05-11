@@ -1,8 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
 
-// Use relative `/api` by default so the Vite dev-server proxy forwards to backend (5001).
-// Override with VITE_API_URL for production / non-proxied setups.
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
 
 class ApiService {
   private client: AxiosInstance;
