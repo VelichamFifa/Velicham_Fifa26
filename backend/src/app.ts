@@ -21,7 +21,7 @@ const AZURE_STATIC_WEB_APP_ORIGIN = 'https://blue-meadow-054418e0f.7.azurestatic
 
 // Middleware
 app.use(helmet());
-app.use();
+app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
