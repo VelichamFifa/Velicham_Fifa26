@@ -241,10 +241,26 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
 
 export const getUserProfile = async (req: AuthRequest, res: Response) => {
   try {
+    const profileFetchStart = Date.now();
+    logger.info('getUserProfile', 'Starting user profile DB fetch', {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+
     const user = await prisma.user.findUnique({
       where: { userId: req.user?.userId },
       include: { communityRequest: true },
     });
+
+    logger.info('getUserProfile', 'Completed user profile DB fetch', {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      durationMs: Date.now() - profileFetchStart,
+      userFound: !!user,
+    });
+
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     res.json({
