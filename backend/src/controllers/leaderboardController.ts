@@ -133,9 +133,10 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
     const user = await prisma.user.findUnique({ where: { id: userIdNum } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const [topRank, dailyRankLatest] = await Promise.all([
+    const [topRank, dailyRankLatest, finalUserResult] = await Promise.all([
       prisma.topLeader.findFirst({ where: { userId } }),
       prisma.dailyLeader.findFirst({ where: { userId }, orderBy: { date: 'desc' } }),
+      prisma.finalUserResult.findUnique({ where: { userId: userIdNum } }),
     ]);
 
     const communityRanks: any[] = [];
@@ -159,6 +160,9 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
     res.json({
       overall: topRank || { rank: '-', totalPoints: 0 },
       daily: dailyRankLatest || { rank: '-', totalPoints: 0 },
+      final: finalUserResult
+        ? { rank: finalUserResult.finalRank ?? '-', totalPoints: finalUserResult.finalPoint }
+        : { rank: '-', totalPoints: 0 },
       communities: communityRanks,
     });
   } catch (error) {

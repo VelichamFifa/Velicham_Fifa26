@@ -16,7 +16,7 @@
     "seed:users": "tsx scripts/seedUsers.ts",
     "seed:teams": "tsx scripts/seedTeams.ts",
     "seed:matches": "tsx scripts/seedMatches.ts",
-    "seed:leaderboards": "node -e \"console.log('seed:leaderboards not implemented for SQL mode')\""
+    "seed:leaderboards": "tsx scripts/seedLeaderboards.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.0",
