@@ -4,7 +4,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
 import { logger } from '../lib/logger';
-import { generateToken, hashPassword, comparePasswords } from '../utils/auth';
+import { generateToken } from '../utils/auth';
 import { capitalizeProperNoun } from '../utils/stringUtils';
 import { findExistingCommunityForRequest } from '../utils/communityLookup';
 
@@ -28,7 +28,6 @@ export const register = async (req: AuthRequest, res: Response) => {
       email,
       firstName,
       lastName,
-      password,
       city,
       state,
       country,
@@ -55,31 +54,37 @@ export const register = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Community 1 is required' });
     }
 
-    const c1 = await prisma.community.findUnique({ where: { communityId: communityId1 } });
+    const c1IdNum = Number(communityId1);
+    if (!Number.isInteger(c1IdNum) || c1IdNum <= 0) {
+      return res.status(400).json({ error: 'Community 1 not found' });
+    }
+    const c1 = await prisma.community.findUnique({ where: { id: c1IdNum } });
     if (!c1) return res.status(400).json({ error: 'Community 1 not found' });
     if (communityId2) {
       if (communityId1 === communityId2) {
         return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });
       }
-      const c2 = await prisma.community.findUnique({ where: { communityId: communityId2 } });
+      const c2IdNum = Number(communityId2);
+      if (!Number.isInteger(c2IdNum) || c2IdNum <= 0) {
+        return res.status(400).json({ error: 'Community 2 not found' });
+      }
+      const c2 = await prisma.community.findUnique({ where: { id: c2IdNum } });
       if (!c2) return res.status(400).json({ error: 'Community 2 not found' });
     }
 
-    const hashedPassword = await hashPassword(password);
-    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const normalizedCommunityId1 = c1.id;
+    const normalizedCommunityId2 = communityId2 ? Number(communityId2) : null;
 
-    await prisma.user.create({
+    const createdUser = await prisma.user.create({
       data: {
-        userId,
         email,
         firstName: capitalizeProperNoun(firstName),
         lastName: capitalizeProperNoun(lastName),
-        password: hashedPassword,
         city: capitalizeProperNoun(city),
         state: capitalizeProperNoun(state),
         country: capitalizeProperNoun(country),
-        communityId1,
-        communityId2,
+        communityId1: normalizedCommunityId1,
+        communityId2: normalizedCommunityId2,
         phoneNumber,
         status: 'active',
         isActive: true,
@@ -101,6 +106,8 @@ export const register = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    const userId = String(createdUser.id);
+
     const token = generateToken(userId, email, 'user');
     res.status(201).json({
       message: 'User registered successfully',
@@ -113,8 +120,8 @@ export const register = async (req: AuthRequest, res: Response) => {
         city,
         state,
         country,
-        communityId1,
-        communityId2,
+        communityId1: String(normalizedCommunityId1),
+        communityId2: normalizedCommunityId2 ? String(normalizedCommunityId2) : undefined,
         role: 'user',
       },
     });
@@ -130,30 +137,7 @@ export const register = async (req: AuthRequest, res: Response) => {
 
 export const login = async (req: AuthRequest, res: Response) => {
   try {
-    const { email, password } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !user.password) return res.status(401).json({ error: 'Invalid email or password' });
-
-    const ok = await comparePasswords(password, user.password);
-    if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
-
-    const token = generateToken(user.userId, user.email, user.role);
-    res.json({
-      message: 'Login successful',
-      token,
-      user: {
-        userId: user.userId,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        city: user.city,
-        state: user.state,
-        country: user.country,
-        communityId1: user.communityId1,
-        communityId2: user.communityId2,
-        role: user.role,
-      },
-    });
+    res.status(400).json({ error: 'Password login is disabled. Please use Google login.' });
   } catch (error) {
     const errorDetails = logger.error('login', error, {
       method: req.method,
@@ -186,15 +170,11 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
     let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const hashedPassword = await hashPassword(Math.random().toString(36).slice(-10));
       user = await prisma.user.create({
         data: {
-          userId,
           email,
           firstName: given_name || 'Google',
           lastName: family_name || 'User',
-          password: hashedPassword,
           googleId: sub,
           profileImage: picture,
           status: 'active',
@@ -206,7 +186,7 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
       });
     } else {
       user = await prisma.user.update({
-        where: { userId: user.userId },
+        where: { id: user.id },
         data: {
           googleId: user.googleId ?? sub,
           profileImage: user.profileImage ?? picture ?? undefined,
@@ -214,12 +194,12 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const token = generateToken(user.userId, user.email, user.role);
+    const token = generateToken(String(user.id), user.email, user.role);
     res.json({
       message: 'Google login successful',
       token,
       user: {
-        userId: user.userId,
+        userId: String(user.id),
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -227,8 +207,8 @@ export const googleLogin = async (req: AuthRequest, res: Response) => {
         state: user.state,
         country: user.country,
         profileImage: user.profileImage,
-        communityId1: user.communityId1,
-        communityId2: user.communityId2,
+        communityId1: user.communityId1 ? String(user.communityId1) : undefined,
+        communityId2: user.communityId2 ? String(user.communityId2) : undefined,
         role: user.role,
       },
     });
@@ -254,8 +234,13 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       userId: req.user?.userId,
     });
 
+    const reqUserIdNum = Number(req.user?.userId);
+    if (!Number.isInteger(reqUserIdNum) || reqUserIdNum <= 0) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { userId: req.user?.userId },
+      where: { id: reqUserIdNum },
       include: { communityRequest: true },
     });
 
@@ -270,15 +255,15 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     res.json({
-      userId: user.userId,
+      userId: String(user.id),
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       city: user.city,
       state: user.state,
       country: user.country,
-      communityId1: user.communityId1,
-      communityId2: user.communityId2,
+      communityId1: user.communityId1 ? String(user.communityId1) : undefined,
+      communityId2: user.communityId2 ? String(user.communityId2) : undefined,
       phoneNumber: user.phoneNumber,
       requestedCommunity: user.communityRequest
         ? {
@@ -314,19 +299,47 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Phone number is required' });
     }
 
+    const reqUserIdNum = Number(req.user?.userId);
+    if (!Number.isInteger(reqUserIdNum) || reqUserIdNum <= 0) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { userId: req.user?.userId },
+      where: { id: reqUserIdNum },
       include: { communityRequest: true },
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const data: Prisma.UserUpdateInput = {};
+    const data: Prisma.UserUncheckedUpdateInput = {};
     if (phoneNumber !== undefined) data.phoneNumber = phoneNumber || null;
     if (city !== undefined) data.city = city ? capitalizeProperNoun(city) : '';
     if (state !== undefined) data.state = state ? capitalizeProperNoun(state) : '';
     if (country !== undefined) data.country = country ? capitalizeProperNoun(country) : '';
-    if (communityId1 !== undefined) data.communityId1 = communityId1 || null;
-    if (communityId2 !== undefined) data.communityId2 = communityId2 || null;
+
+    let normalizedC1: number | null =
+      communityId1 !== undefined ? (communityId1 ? Number(communityId1) : null) : user.communityId1;
+    let normalizedC2: number | null =
+      communityId2 !== undefined ? (communityId2 ? Number(communityId2) : null) : user.communityId2;
+
+    if (normalizedC1) {
+      if (!Number.isInteger(normalizedC1) || normalizedC1 <= 0) {
+        return res.status(400).json({ error: 'Community 1 not found' });
+      }
+      const c1 = await prisma.community.findUnique({ where: { id: normalizedC1 } });
+      if (!c1) return res.status(400).json({ error: 'Community 1 not found' });
+      normalizedC1 = c1.id;
+    }
+    if (normalizedC2) {
+      if (!Number.isInteger(normalizedC2) || normalizedC2 <= 0) {
+        return res.status(400).json({ error: 'Community 2 not found' });
+      }
+      const c2 = await prisma.community.findUnique({ where: { id: normalizedC2 } });
+      if (!c2) return res.status(400).json({ error: 'Community 2 not found' });
+      normalizedC2 = c2.id;
+    }
+
+    if (communityId1 !== undefined) data.communityId1 = normalizedC1;
+    if (communityId2 !== undefined) data.communityId2 = normalizedC2;
 
     if (requestedCommunity) {
       let rc = { ...requestedCommunity };
@@ -360,8 +373,8 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
       data.communityRequest = user.communityRequest ? { delete: true } : undefined;
     }
 
-    const nextC1 = communityId1 !== undefined ? communityId1 || null : user.communityId1;
-    const nextC2 = communityId2 !== undefined ? communityId2 || null : user.communityId2;
+    const nextC1 = normalizedC1;
+    const nextC2 = normalizedC2;
     if (!nextC1) {
       return res.status(400).json({ error: 'Community 1 is required' });
     }
@@ -369,13 +382,13 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });
     }
 
-    await prisma.user.update({ where: { userId: user.userId }, data });
-    const updated = await prisma.user.findUnique({ where: { userId: user.userId } });
+    await prisma.user.update({ where: { id: user.id }, data });
+    const updated = await prisma.user.findUnique({ where: { id: user.id } });
 
     res.json({
       message: 'Profile updated successfully',
       user: {
-        userId: updated!.userId,
+        userId: String(updated!.id),
         email: updated!.email,
         firstName: updated!.firstName,
         lastName: updated!.lastName,
@@ -383,8 +396,8 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
         city: updated!.city,
         state: updated!.state,
         country: updated!.country,
-        communityId1: updated!.communityId1,
-        communityId2: updated!.communityId2,
+        communityId1: updated!.communityId1 ? String(updated!.communityId1) : undefined,
+        communityId2: updated!.communityId2 ? String(updated!.communityId2) : undefined,
         role: updated!.role,
       },
     });

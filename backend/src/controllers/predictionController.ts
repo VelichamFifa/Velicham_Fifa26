@@ -7,13 +7,22 @@ export const submitPrediction = async (req: AuthRequest, res: Response) => {
   try {
     const { matchId, team1Score, team2Score, comment } = req.body;
     const userId = req.user?.userId;
-    const email = req.user?.email;
 
-    if (!userId || !email) {
+    if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const match = await prisma.match.findUnique({ where: { matchId } });
+    const userIdNum = Number(userId);
+    if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const matchIdNum = Number(matchId);
+    if (!Number.isInteger(matchIdNum) || matchIdNum <= 0) {
+      return res.status(404).json({ error: 'Match not found' });
+    }
+
+    const match = await prisma.match.findUnique({ where: { id: matchIdNum } });
     if (!match) {
       return res.status(404).json({ error: 'Match not found' });
     }
@@ -25,7 +34,7 @@ export const submitPrediction = async (req: AuthRequest, res: Response) => {
 
     // Check if user already predicted for this match - if so, update it (upsert pattern)
     const existingPrediction = await prisma.prediction.findUnique({
-      where: { userId_matchId: { userId, matchId } },
+      where: { userId_matchId: { userId: userIdNum, matchId: matchIdNum } },
     });
     if (existingPrediction) {
       const updated = await prisma.prediction.update({
@@ -47,9 +56,8 @@ export const submitPrediction = async (req: AuthRequest, res: Response) => {
 
     const prediction = await prisma.prediction.create({
       data: {
-        userId,
-        email,
-        matchId,
+        userId: userIdNum,
+        matchId: matchIdNum,
         matchTag: match.matchTag,
         team1Score,
         team2Score,
@@ -82,12 +90,22 @@ export const getUserPredictions = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
+    const userIdNum = Number(userId);
+    if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    const where: any = { userId };
-    if (matchId) where.matchId = matchId;
+    const where: any = { userId: userIdNum };
+    if (matchId) {
+      const matchIdNum = Number(matchId);
+      if (Number.isInteger(matchIdNum) && matchIdNum > 0) {
+        where.matchId = matchIdNum;
+      }
+    }
 
     const [predictions, total] = await Promise.all([
       prisma.prediction.findMany({
@@ -101,21 +119,24 @@ export const getUserPredictions = async (req: AuthRequest, res: Response) => {
     ]);
 
     const results = await prisma.result.findMany({
-      where: { userId, matchId: { in: predictions.map((p) => p.matchId) } },
+      where: { userId: userIdNum, matchId: { in: predictions.map((p) => p.matchId) } },
       select: { matchId: true, finalRank: true, dailyRank: true },
     });
 
     const resultByMatchId = new Map(results.map((r) => [r.matchId, r]));
 
     const populatedPredictions = predictions
-      .map((p) => ({
-        ...p,
-        matchId: p.match, // keep frontend shape compatibility (it expects match object sometimes)
-        match: undefined,
-        historicRank: resultByMatchId.get(p.matchId)
-          ? { finalRank: resultByMatchId.get(p.matchId)!.finalRank, dailyRank: resultByMatchId.get(p.matchId)!.dailyRank }
-          : null,
-      }))
+      .map((p) => {
+        const apiMatch = p.match ? { ...p.match, matchId: String(p.match.id) } : null;
+        return {
+          ...p,
+          matchId: apiMatch, // keep frontend shape compatibility (it expects match object sometimes)
+          match: undefined,
+          historicRank: resultByMatchId.get(p.matchId)
+            ? { finalRank: resultByMatchId.get(p.matchId)!.finalRank, dailyRank: resultByMatchId.get(p.matchId)!.dailyRank }
+            : null,
+        };
+      })
       .sort((a: any, b: any) => {
         const timeA = a.matchId?.matchTime ? new Date(a.matchId.matchTime).getTime() : 0;
         const timeB = b.matchId?.matchTime ? new Date(b.matchId.matchTime).getTime() : 0;
@@ -152,11 +173,11 @@ export const updatePrediction = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Prediction not found' });
     }
 
-    if (prediction.userId !== userId) {
+    if (prediction.userId !== Number(userId)) {
       return res.status(403).json({ error: 'Unauthorized to update this prediction' });
     }
 
-    const match = await prisma.match.findUnique({ where: { matchId: prediction.matchId } });
+    const match = await prisma.match.findUnique({ where: { id: prediction.matchId } });
     if (match && new Date() > match.predictionsEndingTime) {
       return res.status(400).json({ error: 'Cannot update prediction after deadline' });
     }
@@ -195,11 +216,11 @@ export const deletePrediction = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Prediction not found' });
     }
 
-    if (prediction.userId !== userId) {
+    if (prediction.userId !== Number(userId)) {
       return res.status(403).json({ error: 'Unauthorized to delete this prediction' });
     }
 
-    const match = await prisma.match.findUnique({ where: { matchId: prediction.matchId } });
+    const match = await prisma.match.findUnique({ where: { id: prediction.matchId } });
     if (match && new Date() > match.predictionsEndingTime) {
       return res.status(400).json({ error: 'Cannot delete prediction after deadline' });
     }

@@ -9,11 +9,9 @@ datasource db {
 
 model User {
   id               Int                   @id @default(autoincrement())
-  userId           String                @unique @db.VarChar(128)
   email            String                @unique @db.VarChar(255)
   firstName        String                @db.VarChar(200)
   lastName         String                @db.VarChar(200)
-  password         String?               @db.VarChar(255)
   status           String                @default("active") @db.VarChar(20)
   creationTime     DateTime              @default(now())
   phoneNumber      String?               @db.VarChar(50)
@@ -21,8 +19,10 @@ model User {
   state            String                @default("") @db.VarChar(200)
   country          String                @default("") @db.VarChar(200)
   comment          String?               @db.LongText
-  communityId1     String?               @db.VarChar(128)
-  communityId2     String?               @db.VarChar(128)
+  communityId1     Int?
+  communityId2     Int?
+  community1       Community?            @relation("UserCommunity1", fields: [communityId1], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  community2       Community?            @relation("UserCommunity2", fields: [communityId2], references: [id], onDelete: SetNull, onUpdate: Cascade)
   isActive         Boolean               @default(true)
   googleId         String?               @db.VarChar(255)
   instagramId      String?               @db.VarChar(255)
@@ -32,14 +32,15 @@ model User {
   updatedAt        DateTime              @updatedAt
   predictions      Prediction[]
   results          Result[]
+  finalUserResult  FinalUserResult?
   communityRequest UserCommunityRequest?
 
   @@map("users")
 }
 
 model UserCommunityRequest {
-  userId              String  @id @db.VarChar(128)
-  user                User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  userId              Int     @id
+  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   name                String  @db.VarChar(500)
   shortName           String  @default("") @db.VarChar(500)
   description         String  @default("") @db.VarChar(2000)
@@ -53,7 +54,6 @@ model UserCommunityRequest {
 
 model Community {
   id           Int      @id @default(autoincrement())
-  communityId  String   @unique @db.VarChar(128)
   name         String   @db.VarChar(500)
   fullName     String?  @db.VarChar(500)
   isOnline     Boolean  @default(false)
@@ -64,6 +64,8 @@ model Community {
   creationTime DateTime @default(now())
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  usersAsCommunity1 User[] @relation("UserCommunity1")
+  usersAsCommunity2 User[] @relation("UserCommunity2")
 
   @@map("communities")
 }
@@ -73,6 +75,7 @@ model Team {
   teamId      String   @unique @db.VarChar(64)
   teamName    String   @db.VarChar(200)
   country     String   @db.VarChar(200)
+  countryLogo String?  @db.VarChar(500)
   coach       String?  @db.VarChar(200)
   foundedYear Int?
   createdAt   DateTime @default(now())
@@ -83,7 +86,6 @@ model Team {
 
 model Match {
   id                    Int      @id @default(autoincrement())
-  matchId               String   @unique @db.VarChar(128)
   sequence              Int
   team1                 String   @db.VarChar(64)
   team2                 String   @db.VarChar(64)
@@ -91,7 +93,8 @@ model Match {
   team2Score            Int?
   matchTime             DateTime
   predictionsEndingTime DateTime
-  round                 Int
+  round                 String   @db.VarChar(100)
+  group                 String?  @map("group") @db.VarChar(100)
   comment               String?  @db.LongText
   matchTag              String   @db.VarChar(200)
   status                String   @default("scheduled") @db.VarChar(20)
@@ -105,11 +108,10 @@ model Match {
 
 model Prediction {
   id             Int      @id @default(autoincrement())
-  userId         String   @db.VarChar(128)
-  user           User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  email          String   @db.VarChar(255)
-  matchId        String   @db.VarChar(128)
-  match          Match    @relation("MatchPredictions", fields: [matchId], references: [matchId], onDelete: NoAction, onUpdate: NoAction)
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchId        Int
+  match          Match    @relation("MatchPredictions", fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   matchTag       String   @db.VarChar(200)
   team1Score     Int
   team2Score     Int
@@ -125,17 +127,16 @@ model Prediction {
 
 model Result {
   id             Int      @id @default(autoincrement())
-  userId         String   @db.VarChar(128)
-  user           User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  userName       String   @db.VarChar(400)
-  matchId        String   @db.VarChar(128)
-  match          Match    @relation("MatchResults", fields: [matchId], references: [matchId], onDelete: NoAction, onUpdate: NoAction)
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchId        Int
+  match          Match    @relation("MatchResults", fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   matchTag       String   @db.VarChar(200)
   result         String   @db.VarChar(20)
   matchPoints    Int      @default(0)
   finalPoints    Int      @default(0)
-  communityId1   String?  @db.VarChar(128)
-  communityId2   String?  @db.VarChar(128)
+  communityName1 String?  @db.VarChar(500)
+  communityName2 String?  @db.VarChar(500)
   dailyRank      Int?
   finalRank      Int?
   createdAt      DateTime @default(now())
@@ -146,11 +147,23 @@ model Result {
   @@map("results")
 }
 
+model FinalUserResult {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  finalPoint  Int      @default(0)
+  finalRank   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("final_user_results")
+}
+
 model CommunityResult {
   id                      Int      @id @default(autoincrement())
   communityId             String   @db.VarChar(128)
   communityWeightagePoint Int      @default(1)
-  matchId                 String   @db.VarChar(128)
+  matchId                 Int
   matchTag                String   @db.VarChar(200)
   communityMatchPoint     Int      @default(0)
   totalCommunityPoint     Int      @default(0)

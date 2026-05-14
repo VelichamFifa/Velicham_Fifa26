@@ -1,22 +1,90 @@
 import React, { useState, useEffect } from 'react';
 import { Match, Prediction } from '../types';
 import { format } from 'date-fns';
+
+// Helper to format date in a given IANA timezone, 12-hour format
+function formatInTZ12(date: Date, tz: string) {
+  try {
+    return date.toLocaleString('en-US', {
+      timeZone: tz,
+      hour12: true,
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return format(date, 'hh:mm a');
+  }
+}
 import { apiService } from '../services/apiService';
 
 interface MatchCardProps {
   match: Match;
   userPrediction?: Prediction;
-  onPredictionSubmit?: () => void;
+  onPredictionSubmit?: (matchId: string, team1Score: number, team2Score: number) => void;
 }
 
+// ── Countdown hook ─────────────────────────────────────────────────────────────
+function useCountdown(targetDate: string) {
+  const calc = () => {
+    const diff = new Date(targetDate).getTime() - Date.now();
+    if (diff <= 0) return null;
+    const d = Math.floor(diff / 86_400_000);
+    const h = Math.floor((diff % 86_400_000) / 3_600_000);
+    const m = Math.floor((diff % 3_600_000) / 60_000);
+    const s = Math.floor((diff % 60_000) / 1_000);
+    return { d, h, m, s };
+  };
+  const [remaining, setRemaining] = useState(calc);
+  useEffect(() => {
+    const id = setInterval(() => setRemaining(calc()), 1000);
+    return () => clearInterval(id);
+  }, [targetDate]);
+  return remaining;
+}
+
+// ── Flag image with fallback ───────────────────────────────────────────────────
+const Flag: React.FC<{ src?: string | null; alt: string }> = ({ src, alt }) => {
+  const [err, setErr] = useState(false);
+  if (!src || err) {
+    return (
+      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-xs shrink-0">
+        {alt.slice(0, 3)}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setErr(true)}
+      className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white/30 shadow-lg shrink-0"
+    />
+  );
+};
+
+// ── Single countdown unit ──────────────────────────────────────────────────────
+const CountUnit: React.FC<{ value: number; label: string }> = ({ value, label }) => (
+  <div className="flex flex-col items-center min-w-[1.8rem]">
+    <span className="text-white font-black text-base leading-none tabular-nums">
+      {String(value).padStart(2, '0')}
+    </span>
+    <span className="text-white/40 text-[8px] uppercase tracking-widest mt-0.5">{label}</span>
+  </div>
+);
+
+// ── Main component ─────────────────────────────────────────────────────────────
 const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredictionSubmit }) => {
   const isCompleted = match.status === 'completed';
+  const isOngoing   = match.status === 'ongoing';
   const isPredictionOpen = new Date(match.predictionsEndingTime) > new Date();
-  
+
   const [team1Score, setTeam1Score] = useState<number | ''>('');
   const [team2Score, setTeam2Score] = useState<number | ''>('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
+  const [submitted, setSubmitted]   = useState(false);
+
+  const countdown = useCountdown(match.predictionsEndingTime);
 
   useEffect(() => {
     if (userPrediction) {
@@ -31,133 +99,228 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
   const handleSubmit = async () => {
     if (!isPredictionOpen) return;
     if (team1Score === '' || team2Score === '') {
-      setError('Please enter both scores');
+      setError('Enter both scores');
       return;
     }
-    
     setError('');
     setLoading(true);
-
+    const nextTeam1Score = Number(team1Score);
+    const nextTeam2Score = Number(team2Score);
     try {
       await apiService.submitPrediction({
         matchId: match.matchId,
-        team1Score: Number(team1Score),
-        team2Score: Number(team2Score),
+        team1Score: nextTeam1Score,
+        team2Score: nextTeam2Score,
         comment: '',
       });
-      if (onPredictionSubmit) {
-        onPredictionSubmit();
-      }
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 2500);
+      if (onPredictionSubmit) onPredictionSubmit(match.matchId, nextTeam1Score, nextTeam2Score);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to submit prediction');
+      setError(err.response?.data?.error || 'Failed to submit');
     } finally {
       setLoading(false);
     }
   };
 
-  const getFlag = (team: string) => {
-    if (!team) return 'TBD';
-    return team.substring(0, 3).toUpperCase();
-  };
+  const t1Name = match.team1Info?.teamName ?? match.team1;
+  const t2Name = match.team2Info?.teamName ?? match.team2;
+  const roundLabel = /^\d+$/.test(match.round.trim()) ? `Round ${match.round}` : match.round;
+  const groupLabel = match.group
+    ? /^group\s+/i.test(match.group.trim())
+      ? match.group.trim()
+      : `Group ${match.group.trim()}`
+    : null;
+
+  const statusBadge = isCompleted
+    ? <span className="px-2 py-0.5 rounded-full bg-gray-500/70 text-[10px] font-bold text-white">Full Time</span>
+    : isOngoing
+    ? <span className="px-2 py-0.5 rounded-full bg-green-500/80 text-[10px] font-bold text-white animate-pulse">● Live</span>
+    : <span className="px-2 py-0.5 rounded-full bg-blue-500/70 text-[10px] font-bold text-white">Upcoming</span>;
 
   return (
-    <div 
-      className="border border-gray-200 rounded-2xl shadow-sm p-4 hover:shadow-md transition bg-cover bg-center overflow-hidden relative"
-      style={{ backgroundImage: "url('/soccer-ground.png')", backgroundColor: '#f8f9fa' }}
+    <div
+      className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-blue-900/30"
+      style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
     >
-      <div className="flex justify-between items-start mb-4 relative z-10">
-        <div className="flex -space-x-2">
-          <div className="w-8 h-8 rounded-full bg-blue-50 border border-white flex items-center justify-center text-[10px] font-bold text-gray-700 z-10 shadow-sm">
-            {getFlag(match.team1)}
-          </div>
-          <div className="w-8 h-8 rounded-full bg-red-50 border border-white flex items-center justify-center text-[10px] font-bold text-gray-700 z-0 shadow-sm">
-            {getFlag(match.team2)}
-          </div>
-        </div>
+      {/* Subtle pitch overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage:
+            'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%), ' +
+            'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,1) 28px, rgba(255,255,255,1) 29px)',
+        }}
+      />
 
-        <div className="flex-1 text-center px-1">
-          <h3 className="text-base font-bold text-gray-900 tracking-tight">
-            {match.team1} vs {match.team2}
-          </h3>
-          <p className="text-[10px] text-gray-500 font-medium">{match.matchTag || 'Group Stage'}</p>
-        </div>
-
-        <span className="px-3 py-1 bg-white text-gray-500 border border-gray-200 rounded-full text-[10px] font-medium tracking-wide shadow-sm truncate max-w-[80px]">
-          {match.status === 'scheduled' ? 'Scheduled' : match.status.charAt(0).toUpperCase() + match.status.slice(1)}
+      {/* ── Header: tag / round / status ── */}
+      <div className="relative z-10 flex items-center justify-between px-4 pt-3 pb-2">
+        <span className="text-[10px] font-semibold text-white/50 uppercase tracking-widest truncate max-w-[120px]">
+          {match.matchTag || 'Group Stage'}
         </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {groupLabel && (
+            <span className="px-2 py-0.5 rounded-full bg-indigo-500/25 text-[10px] font-semibold text-indigo-100 border border-indigo-300/25">
+              {groupLabel}
+            </span>
+          )}
+          <span className="text-[10px] text-white/30 font-medium">{roundLabel}</span>
+          {statusBadge}
+        </div>
       </div>
 
-      {error && <p className="text-red-500 text-[10px] text-center mb-2 font-medium relative z-10">{error}</p>}
+      {/* ── Teams + score ── */}
+      <div className="relative z-10 flex items-center justify-between px-4 py-3 gap-2">
+        {/* Team 1 */}
+        <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
+          <Flag src={match.team1Info?.countryLogo} alt={match.team1} />
+          <span className="text-white font-bold text-[13px] text-center leading-tight line-clamp-2 max-w-[90px]">
+            {t1Name}
+          </span>
+          <span className="text-white/30 text-[10px] font-mono tracking-wide">{match.team1}</span>
+        </div>
 
-      <div className="flex justify-center items-center gap-6 mb-5 mt-2 relative z-10">
-        {isCompleted ? (
-          <>
-            <div className="bg-white text-gray-900 text-2xl font-black rounded-lg w-16 h-12 flex items-center justify-center shadow-sm border border-gray-200">
-              {match.team1Score ?? 0}
-            </div>
-            <div className="bg-white text-gray-900 text-2xl font-black rounded-lg w-16 h-12 flex items-center justify-center shadow-sm border border-gray-200">
-              {match.team2Score ?? 0}
-            </div>
-          </>
-        ) : (
-          <>
-            <input
-              type="number"
-              min="0"
-              max="20"
-              disabled={!isPredictionOpen || loading}
-              value={team1Score}
-              onChange={(e) => setTeam1Score(e.target.value === '' ? '' : Number(e.target.value))}
-              className="bg-white text-gray-900 text-center text-2xl font-black rounded-lg w-16 h-12 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2b9348] disabled:opacity-70 shadow-sm transition-shadow"
-            />
-            <input
-              type="number"
-              min="0"
-              max="20"
-              disabled={!isPredictionOpen || loading}
-              value={team2Score}
-              onChange={(e) => setTeam2Score(e.target.value === '' ? '' : Number(e.target.value))}
-              className="bg-white text-gray-900 text-center text-2xl font-black rounded-lg w-16 h-12 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2b9348] disabled:opacity-70 shadow-sm transition-shadow"
-            />
-          </>
-        )}
+        {/* Score / Inputs */}
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1.5">
+            {isCompleted ? (
+              <>
+                <div className="w-12 h-12 bg-white/10 border border-white/20 rounded-lg flex items-center justify-center text-white font-black text-xl">
+                  {match.team1Score ?? 0}
+                </div>
+                <span className="text-white/40 font-bold text-lg">–</span>
+                <div className="w-12 h-12 bg-white/10 border border-white/20 rounded-lg flex items-center justify-center text-white font-black text-xl">
+                  {match.team2Score ?? 0}
+                </div>
+              </>
+            ) : (
+              <>
+                <input
+                  type="number" min="0" max="20"
+                  disabled={!isPredictionOpen || loading}
+                  value={team1Score}
+                  onChange={(e) => setTeam1Score(e.target.value === '' ? '' : Math.min(20, Math.max(0, Number(e.target.value))))}
+                  placeholder="–"
+                  className="w-12 h-12 bg-white/10 border border-white/25 rounded-lg text-center text-white font-black text-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60 focus:border-sky-400/40 disabled:opacity-40 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span className="text-white/30 font-bold text-lg">–</span>
+                <input
+                  type="number" min="0" max="20"
+                  disabled={!isPredictionOpen || loading}
+                  value={team2Score}
+                  onChange={(e) => setTeam2Score(e.target.value === '' ? '' : Math.min(20, Math.max(0, Number(e.target.value))))}
+                  placeholder="–"
+                  className="w-12 h-12 bg-white/10 border border-white/25 rounded-lg text-center text-white font-black text-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60 focus:border-sky-400/40 disabled:opacity-40 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              </>
+            )}
+          </div>
+          {!isCompleted && (
+            <span className="text-white/30 text-[9px] uppercase tracking-widest">
+              {isPredictionOpen ? 'Your Prediction' : 'Closed'}
+            </span>
+          )}
+          {isCompleted && (
+            <span className="text-white/30 text-[9px] uppercase tracking-widest">Final Score</span>
+          )}
+        </div>
+
+        {/* Team 2 */}
+        <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
+          <Flag src={match.team2Info?.countryLogo} alt={match.team2} />
+          <span className="text-white font-bold text-[13px] text-center leading-tight line-clamp-2 max-w-[90px]">
+            {t2Name}
+          </span>
+          <span className="text-white/30 text-[10px] font-mono tracking-wide">{match.team2}</span>
+        </div>
       </div>
 
-      <div className="mb-4 relative z-10">
+      {/* ── Error message ── */}
+      {error && (
+        <p className="relative z-10 text-red-400 text-[11px] text-center px-4 -mt-1 mb-1 font-medium">{error}</p>
+      )}
+
+      {/* ── Divider ── */}
+      <div className="relative z-10 mx-4 border-t border-white/[0.08]" />
+
+      {/* ── Match time + countdown ── */}
+      <div className="relative z-10 flex items-start justify-between px-4 py-3 gap-4">
+
+        {/* Kick-off time in multiple timezones */}
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="text-white/35 text-[9px] uppercase tracking-widest">Kick-off</span>
+          <span className="text-white/80 text-xs font-bold whitespace-nowrap">
+            {format(new Date(match.matchTime), 'MMM dd, yyyy')}
+          </span>
+          <div className="flex flex-row flex-wrap gap-2 mt-0.5">
+            <span className="text-white/50 text-[10px] font-semibold whitespace-nowrap leading-tight">{formatInTZ12(new Date(match.matchTime), 'America/New_York')} EST</span>
+            <span className="text-white/50 text-[10px] font-semibold whitespace-nowrap leading-tight">{formatInTZ12(new Date(match.matchTime), 'America/Denver')} MST</span>
+            <span className="text-white/50 text-[10px] font-semibold whitespace-nowrap leading-tight">{formatInTZ12(new Date(match.matchTime), 'America/Los_Angeles')} PST</span>
+          </div>
+        </div>
+
+        {/* Countdown or close time */}
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <span className="text-white/35 text-[9px] uppercase tracking-widest text-right">
+            {isPredictionOpen ? 'Prediction closes in' : isCompleted ? 'Match ended' : 'Prediction closed'}
+          </span>
+          {isPredictionOpen && countdown ? (
+            <div className="flex items-end gap-1">
+              {countdown.d > 0 && (
+                <>
+                  <CountUnit value={countdown.d} label="d" />
+                  <span className="text-white/30 font-bold text-sm leading-none pb-3">:</span>
+                </>
+              )}
+              <CountUnit value={countdown.h} label="h" />
+              <span className="text-white/30 font-bold text-sm leading-none pb-3">:</span>
+              <CountUnit value={countdown.m} label="m" />
+              <span className="text-white/30 font-bold text-sm leading-none pb-3">:</span>
+              <CountUnit value={countdown.s} label="s" />
+            </div>
+          ) : (
+            <span className="text-white/40 text-xs font-semibold">
+              {format(new Date(match.predictionsEndingTime), 'MMM dd, HH:mm')}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* ── Submit / status button ── */}
+      <div className="relative z-10 px-4 pb-4">
         {!isCompleted ? (
           <button
             onClick={handleSubmit}
             disabled={loading || !isPredictionOpen}
-            className={`w-full py-2.5 rounded-lg text-sm font-bold tracking-wide transition shadow-sm ${
-              isPredictionOpen 
-                ? 'bg-gradient-to-r from-[#1a2b4c] via-[#38bdf8] to-[#459a45] text-white hover:brightness-110 active:transform active:scale-[0.98]'
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            className={`w-full py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all duration-200 ${
+              submitted
+                ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                : isPredictionOpen
+                ? 'bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-500 text-white hover:brightness-110 active:scale-[0.98] shadow-lg shadow-sky-500/20'
+                : 'bg-white/8 text-white/25 cursor-not-allowed border border-white/10'
             }`}
           >
-            {loading ? 'SUBMITTING...' : isPredictionOpen ? 'SUBMIT PREDICTION' : 'PREDICTION CLOSED'}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                Submitting…
+              </span>
+            ) : submitted ? (
+              '✓ Prediction Saved!'
+            ) : isPredictionOpen ? (
+              userPrediction ? 'Update Prediction' : 'Submit Prediction'
+            ) : (
+              'Prediction Closed'
+            )}
           </button>
         ) : (
-          <button disabled className="w-full py-2.5 bg-gray-200 text-gray-500 rounded-lg text-sm font-bold tracking-wide cursor-not-allowed shadow-sm">
-            MATCH ENDED
-          </button>
+          <div className="w-full py-2.5 bg-white/5 border border-white/10 rounded-xl text-center text-white/30 text-sm font-bold tracking-wide">
+            Full Time
+          </div>
         )}
-      </div>
-
-      <div className="flex justify-between items-center text-[10px] text-gray-800 mt-2 relative z-10 font-medium">
-        <div className="flex flex-col">
-          <span>Match Time:</span>
-          <span className="font-bold whitespace-nowrap">{format(new Date(match.matchTime), 'MMM dd, HH:mm')}</span>
-        </div>
-        <span className="text-gray-900 font-black px-1 text-center text-[8px]">•</span>
-        <div className="flex flex-col text-center">
-          <span>Prediction Close:</span>
-          <span className="font-bold whitespace-nowrap">{format(new Date(match.predictionsEndingTime), 'MMM dd, HH:mm')}</span>
-        </div>
-        <span className="text-gray-900 font-black px-1 text-center text-[8px]">•</span>
-        <div className="flex flex-col text-right">
-          <span>Round:</span>
-          <span className="font-bold whitespace-nowrap">Round {match.round}</span>
-        </div>
       </div>
     </div>
   );

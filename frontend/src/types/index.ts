@@ -33,6 +33,11 @@ export interface Community {
   city: string;
 }
 
+export interface TeamInfo {
+  teamName: string;
+  countryLogo?: string | null;
+}
+
 export interface Match {
   _id?: string;
   matchId: string;
@@ -43,16 +48,18 @@ export interface Match {
   team2Score?: number;
   matchTime: string;
   predictionsEndingTime: string;
-  round: number;
+  round: string;
+  group?: string;
   comment?: string;
   matchTag: string;
   status: 'scheduled' | 'ongoing' | 'completed';
+  team1Info?: TeamInfo | null;
+  team2Info?: TeamInfo | null;
 }
 
 export interface Prediction {
   _id?: string;
   userId: string;
-  email: string;
   matchId: string | Match;
   matchTag: string;
   team1Score: number;

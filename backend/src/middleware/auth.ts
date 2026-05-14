@@ -40,7 +40,12 @@ export const adminMiddleware = async (req: AuthRequest, res: Response, next: Nex
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const user = await prisma.user.findUnique({ where: { userId } });
+    const userIdNum = Number(userId);
+    if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userIdNum } });
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
     }

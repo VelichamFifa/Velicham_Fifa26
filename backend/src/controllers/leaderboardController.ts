@@ -125,7 +125,12 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
-    const user = await prisma.user.findUnique({ where: { userId } });
+    const userIdNum = Number(userId);
+    if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userIdNum } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     const [topRank, dailyRankLatest] = await Promise.all([
@@ -134,15 +139,18 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
     ]);
 
     const communityRanks: any[] = [];
-    for (const cid of [user.communityId1, user.communityId2].filter(Boolean) as string[]) {
+    for (const cid of [user.communityId1, user.communityId2].filter((v): v is number => typeof v === 'number')) {
+      const cidStr = String(cid);
       const [community, overall, daily] = await Promise.all([
-        prisma.community.findUnique({ where: { communityId: cid }, select: { name: true } }),
-        prisma.communityLeader.findFirst({ where: { communityId: cid } }),
-        prisma.dailyCommunityLeader.findFirst({ where: { communityId: cid }, orderBy: { date: 'desc' } }),
+        Number.isInteger(cid) && cid > 0
+          ? prisma.community.findUnique({ where: { id: cid }, select: { name: true } })
+          : Promise.resolve(null),
+        prisma.communityLeader.findFirst({ where: { communityId: cidStr } }),
+        prisma.dailyCommunityLeader.findFirst({ where: { communityId: cidStr }, orderBy: { date: 'desc' } }),
       ]);
       communityRanks.push({
-        communityId: cid,
-        name: community?.name ?? cid,
+        communityId: cidStr,
+        name: community?.name ?? cidStr,
         overall: overall || { rank: '-', totalPoints: 0 },
         daily: daily || { rank: '-', totalPoints: 0 },
       });
@@ -171,13 +179,18 @@ export const getCommunityUserRanking = async (req: AuthRequest, res: Response) =
     const limitNum = parseInt(limit as string, 10);
     const dailyBool = isDaily === 'true';
 
+    const communityIdNum = Number(communityId);
+    if (!Number.isInteger(communityIdNum) || communityIdNum <= 0) {
+      return res.status(400).json({ error: 'Invalid communityId' });
+    }
+
     const users = await prisma.user.findMany({
-      where: { OR: [{ communityId1: communityId }, { communityId2: communityId }] },
-      select: { userId: true, email: true, firstName: true, lastName: true, state: true, communityId1: true, communityId2: true },
+      where: { OR: [{ communityId1: communityIdNum }, { communityId2: communityIdNum }] },
+      select: { id: true, email: true, firstName: true, lastName: true, state: true, communityId1: true, communityId2: true },
       take: limitNum,
     });
 
-    const userIds = users.map((u) => u.userId);
+    const userIds = users.map((u) => String(u.id));
     if (userIds.length === 0) {
       return res.json({ ranking: [], communityId, isDaily: dailyBool });
     }

@@ -9,7 +9,7 @@ export async function findExistingCommunityForRequest(name: string, shortName: s
   const s = shortName.trim();
   const rows = await prisma.$queryRaw<Array<{ communityId: string }>>(
     Prisma.sql`
-      SELECT communityId
+      SELECT CAST(id AS CHAR) AS communityId
       FROM communities
       WHERE
         LOWER(LTRIM(RTRIM(name))) = LOWER(${n})

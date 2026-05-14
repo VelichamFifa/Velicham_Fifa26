@@ -5,7 +5,7 @@ export const schemas = {
     email: Joi.string().email().required(),
     firstName: Joi.string().min(2).required(),
     lastName: Joi.string().min(2).required(),
-    password: Joi.string().min(6).required(),
+    password: Joi.string().min(6).optional(),
     phoneNumber: Joi.string().trim().required(),
     city: Joi.string().allow('', null),
     state: Joi.string().allow('', null),
@@ -43,7 +43,7 @@ export const schemas = {
 
   login: Joi.object({
     email: Joi.string().email().required(),
-    password: Joi.string().required(),
+    password: Joi.string().optional(),
   }),
 
   googleLogin: Joi.object({
@@ -59,13 +59,14 @@ export const schemas = {
   }),
 
   match: Joi.object({
-    matchId: Joi.string().required(),
+    matchId: Joi.string().optional(),
     sequence: Joi.number().required(),
     team1: Joi.string().required(),
     team2: Joi.string().required(),
     matchTime: Joi.date().required(),
     predictionsEndingTime: Joi.date().required(),
-    round: Joi.number().required(),
+    round: Joi.string().trim().required(),
+    group: Joi.string().trim().allow('', null).optional(),
     matchTag: Joi.string().required(),
   }),
 };

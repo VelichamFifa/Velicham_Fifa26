@@ -40,14 +40,32 @@ export const calculatePredictionPoints = (
   return points;
 };
 
-export const processMatchResults = async (matchId: string) => {
-  const match = await prisma.match.findUnique({ where: { matchId } });
+export const processMatchResults = async (matchId: number) => {
+  const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match || match.status !== 'completed') {
     throw new Error('Match not found or not completed');
   }
   if (match.team1Score === null || match.team2Score === null) {
     throw new Error('Match scores not set');
   }
+
+  const communityNameCache = new Map<number, string>();
+
+  const getCommunityName = async (communityId: number | null | undefined): Promise<string | null> => {
+    if (!communityId) return null;
+    if (communityNameCache.has(communityId)) {
+      return communityNameCache.get(communityId)!;
+    }
+
+    const community = await prisma.community.findUnique({
+      where: { id: communityId },
+      select: { name: true },
+    });
+
+    const resolved = community?.name ?? String(communityId);
+    communityNameCache.set(communityId, resolved);
+    return resolved;
+  };
 
   const predictions = await prisma.prediction.findMany({ where: { matchId } });
   const communityPointsMap = new Map<string, number>();
@@ -72,38 +90,43 @@ export const processMatchResults = async (matchId: string) => {
     if ((predictedDiff > 0 && actualDiff > 0) || (predictedDiff < 0 && actualDiff < 0)) result = 'win';
     else if (predictedDiff === 0 && actualDiff === 0) result = 'draw';
 
-    const user = await prisma.user.findUnique({ where: { userId: prediction.userId } });
+    const user = await prisma.user.findUnique({ where: { id: prediction.userId } });
     if (!user) continue;
+
+    const [communityName1, communityName2] = await Promise.all([
+      getCommunityName(user.communityId1),
+      getCommunityName(user.communityId2),
+    ]);
 
     await prisma.result.upsert({
       where: { userId_matchId: { userId: prediction.userId, matchId } },
       create: {
         userId: prediction.userId,
-        userName: `${user.firstName} ${user.lastName}`,
         matchId,
         matchTag: prediction.matchTag,
         result,
         matchPoints: points,
         finalPoints: points,
-        communityId1: user.communityId1,
-        communityId2: user.communityId2,
+        communityName1,
+        communityName2,
       },
       update: {
-        userName: `${user.firstName} ${user.lastName}`,
         matchTag: prediction.matchTag,
         result,
         matchPoints: points,
         finalPoints: points,
-        communityId1: user.communityId1,
-        communityId2: user.communityId2,
+        communityName1,
+        communityName2,
       },
     });
 
     if (user.communityId1) {
-      communityPointsMap.set(user.communityId1, (communityPointsMap.get(user.communityId1) || 0) + points);
+      const cid1 = String(user.communityId1);
+      communityPointsMap.set(cid1, (communityPointsMap.get(cid1) || 0) + points);
     }
     if (user.communityId2 && user.communityId2 !== user.communityId1) {
-      communityPointsMap.set(user.communityId2, (communityPointsMap.get(user.communityId2) || 0) + points);
+      const cid2 = String(user.communityId2);
+      communityPointsMap.set(cid2, (communityPointsMap.get(cid2) || 0) + points);
     }
   }
 

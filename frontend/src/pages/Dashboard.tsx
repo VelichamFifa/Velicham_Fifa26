@@ -46,6 +46,9 @@ const Dashboard: React.FC = () => {
     communities: [],
   });
 
+  const getPredictionMatchId = (prediction: Prediction): string =>
+    typeof prediction.matchId === 'string' ? prediction.matchId : prediction.matchId.matchId;
+
   useEffect(() => {
     if (!isLoggedIn) {
       navigate('/login');
@@ -79,20 +82,55 @@ const Dashboard: React.FC = () => {
     setShowDrillDown(true);
   };
 
+  const handlePredictionSubmit = (matchId: string, team1Score: number, team2Score: number) => {
+    const submittedTime = new Date().toISOString();
+
+    setUserPredictions((prev) => {
+      const existingIndex = prev.findIndex((p) => getPredictionMatchId(p) === matchId);
+      if (existingIndex >= 0) {
+        const next = [...prev];
+        next[existingIndex] = {
+          ...next[existingIndex],
+          matchId,
+          team1Score,
+          team2Score,
+          submittedTime,
+        };
+        return next;
+      }
+
+      const optimisticPrediction: Prediction = {
+        _id: `optimistic-${matchId}`,
+        userId: user?.userId || '',
+        matchId,
+        matchTag: '',
+        team1Score,
+        team2Score,
+        submittedTime,
+        points: 0,
+      };
+      return [optimisticPrediction, ...prev];
+    });
+
+    // Refresh ranking data in the background without triggering the page-level loading state.
+    void apiService
+      .getUserStats()
+      .then((statsRes) => setUserStats(statsRes.data))
+      .catch(() => undefined);
+  };
+
   const displayMatches = useMemo(() => {
-    const upcomingMatches = matches.filter(m => m.status === 'scheduled' || m.status === 'ongoing');
-    if (upcomingMatches.length === 0) {
-      return matches.slice(0, 5); // Fallback to some matches if none scheduled
-    }
+    // Show all scheduled/ongoing matches with resilient status handling.
+    const activeMatches = matches.filter((m) => {
+      const normalizedStatus = String(m.status || '').trim().toLowerCase();
+      return normalizedStatus === 'scheduled' || normalizedStatus === 'ongoing';
+    });
 
-    // Sort by match time
-    const sortedUpcoming = [...upcomingMatches].sort((a, b) => new Date(a.matchTime).getTime() - new Date(b.matchTime).getTime());
+    const toSorted = (list: Match[]) =>
+      [...list].sort((a, b) => new Date(a.matchTime).getTime() - new Date(b.matchTime).getTime());
 
-    // Get the earliest day
-    const earliestMatchDateStr = new Date(sortedUpcoming[0].matchTime).toDateString();
-
-    // Filter matches that happen on the same day
-    return sortedUpcoming.filter(m => new Date(m.matchTime).toDateString() === earliestMatchDateStr);
+    // Fallback to all matches if upstream status values are inconsistent.
+    return activeMatches.length > 0 ? toSorted(activeMatches) : toSorted(matches);
   }, [matches]);
 
   return (
@@ -106,67 +144,7 @@ const Dashboard: React.FC = () => {
         {/* Main Content: Matches to Predict */}
         <div className="lg:col-span-2">
           {/* Leaderboard Highlights Banner */}
-          <div
-            className="relative rounded-2xl border border-gray-500/50 p-6 h-64 sm:h-72 mb-8 flex flex-col justify-center items-center overflow-hidden shadow-2xl bg-cover bg-center"
-            style={{ backgroundImage: "linear-gradient(rgba(10, 15, 25, 0.3), rgba(20, 30, 50, 0.4)), url('/stadium-bg.jpg')" }}
-          >
-
-            {/* Top Left Title */}
-            <div className="absolute top-4 left-6 z-20">
-              <h2 className="text-white font-bold text-lg md:text-xl drop-shadow-md tracking-wide">Leaderboard Highlights</h2>
-            </div>
-
-            {/* Left Trophy Image */}
-            <div className="absolute bottom-0 left-2 sm:left-12 flex items-end z-10">
-              <img src="/trophy.png" alt="Trophy" className="h-32 sm:h-48 object-contain drop-shadow-2xl" />
-            </div>
-
-            {/* Right Trophy Image */}
-            <div className="absolute bottom-0 right-2 sm:right-12 flex items-end z-10">
-              <img src="/trophy.png" alt="Trophy" className="h-32 sm:h-48 object-contain drop-shadow-2xl" />
-            </div>
-
-            {/* Center Content */}
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
-              <div className="flex flex-col items-center mt-6">
-                <span className="text-white text-3xl md:text-5xl font-bold mb-0 drop-shadow-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-wide leading-none">
-                  Your Rank
-                </span>
-
-                <div className="flex items-center justify-center">
-                  {/* Metallic hash */}
-                  <span
-                    className="text-[5rem] md:text-[8rem] font-black text-transparent bg-clip-text bg-gradient-to-b from-[#f8f9fa] via-[#ced4da] to-[#6c757d] drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] leading-none"
-                    style={{ WebkitTextStroke: '2px #b0a07a' }}
-                  >
-                    #
-                  </span>
-
-                  {/* Soccer Rank number */}
-                  <span
-                    className="text-[6rem] md:text-[9rem] font-black drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] leading-none ml-1"
-                    style={{
-                      backgroundImage: "url('/soccer-pattern.png')",
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      color: 'transparent',
-                      WebkitTextStroke: '2px #b0a07a'
-                    }}
-                  >
-                    {userStats.overall.rank === '-' ? '-' : userStats.overall.rank}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Subtle background glow */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-          </div>
-
           <h2 className="text-xl sm:text-2xl font-bold text-primary mb-4">Matches to Predict</h2>
-
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-secondary"></div>
@@ -176,15 +154,13 @@ const Dashboard: React.FC = () => {
             <div className="grid sm:grid-cols-2 gap-4">
               {displayMatches.length > 0 ? (
                 displayMatches.map((match) => {
-                  const userPrediction = userPredictions.find(p =>
-                    (typeof p.matchId === 'string' ? p.matchId : (p.matchId as any).matchId) === match.matchId
-                  );
+                  const userPrediction = userPredictions.find((p) => getPredictionMatchId(p) === match.matchId);
                   return (
                     <MatchCard
-                      key={match._id}
+                      key={match.matchId}
                       match={match}
                       userPrediction={userPrediction}
-                      onPredictionSubmit={loadDashboardData}
+                      onPredictionSubmit={handlePredictionSubmit}
                     />
                   );
                 })
