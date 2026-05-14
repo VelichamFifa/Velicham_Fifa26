@@ -27,7 +27,7 @@ const Header: React.FC = () => {
       <nav className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold">🏆 Fifa26Predictor</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">🏆 Velicham Fifa'26 Prediction</h1>
           </Link>
 
           {/* Mobile: Show Login/Register or Menu button */}

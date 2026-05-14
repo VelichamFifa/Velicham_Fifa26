@@ -125,7 +125,7 @@ const Register: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary to-secondary flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-6 sm:p-8 max-w-md w-full my-4">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-4 sm:mb-6">
-          Join Fifa26Predictor
+          Join Velicham Fifa'26 Prediction
         </h2>
 
         {error && (
