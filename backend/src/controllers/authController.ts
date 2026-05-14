@@ -41,16 +41,22 @@ export const register = async (req: AuthRequest, res: Response) => {
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) return res.status(400).json({ error: 'Email already registered' });
 
+    if (!phoneNumber || !String(phoneNumber).trim()) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
     let rc = requestedCommunity ? { ...requestedCommunity } : undefined;
     if (rc?.name && rc?.shortName) {
       const existingCommunity = await findExistingCommunityForRequest(rc.name, rc.shortName);
       if (existingCommunity) rc = { ...rc, existingCommunityId: existingCommunity.communityId };
     }
 
-    if (communityId1) {
-      const c1 = await prisma.community.findUnique({ where: { communityId: communityId1 } });
-      if (!c1) return res.status(400).json({ error: 'Community 1 not found' });
+    if (!communityId1) {
+      return res.status(400).json({ error: 'Community 1 is required' });
     }
+
+    const c1 = await prisma.community.findUnique({ where: { communityId: communityId1 } });
+    if (!c1) return res.status(400).json({ error: 'Community 1 not found' });
     if (communityId2) {
       if (communityId1 === communityId2) {
         return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });
@@ -304,6 +310,10 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     const body = (req as any).validatedBody ?? req.body;
     const { communityId1, communityId2, requestedCommunity, phoneNumber, city, state, country } = body;
 
+    if (phoneNumber !== undefined && !String(phoneNumber).trim()) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
     const user = await prisma.user.findUnique({
       where: { userId: req.user?.userId },
       include: { communityRequest: true },
@@ -352,6 +362,9 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
 
     const nextC1 = communityId1 !== undefined ? communityId1 || null : user.communityId1;
     const nextC2 = communityId2 !== undefined ? communityId2 || null : user.communityId2;
+    if (!nextC1) {
+      return res.status(400).json({ error: 'Community 1 is required' });
+    }
     if (nextC1 && nextC2 && nextC1 === nextC2) {
       return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });
     }

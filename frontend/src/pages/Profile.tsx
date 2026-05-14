@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/apiService';
+import SearchableDropdown from '../components/SearchableDropdown';
 // import { useAuth } from '../hooks/useAuth';
 
 const Profile: React.FC = () => {
@@ -66,10 +67,7 @@ const Profile: React.FC = () => {
         }
     };
 
-
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
+    const handleDropdownChange = (name: string, value: string) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -82,6 +80,16 @@ const Profile: React.FC = () => {
 
     const handleSaveProfile = async () => {
         try {
+            if (!formData.phoneNumber.trim()) {
+                setError('Phone number is required.');
+                return;
+            }
+
+            if (formData.communityId1 && formData.communityId2 && formData.communityId1 === formData.communityId2) {
+                setError('Community 1 and Community 2 must be different.');
+                return;
+            }
+
             // Check if communities have changed
             const comm1Changed = formData.communityId1 !== (profile.communityId1 || '');
             const comm2Changed = formData.communityId2 !== (profile.communityId2 || '');
@@ -137,6 +145,12 @@ const Profile: React.FC = () => {
     const getCommunityName = (communityId: string) => {
         const community = communities.find(c => c.communityId === communityId);
         return community ? community.name : 'Unknown';
+    };
+
+    const getCommunityFullName = (communityId: string) => {
+        const community = communities.find(c => c.communityId === communityId);
+        if (!community) return '';
+        return community.fullName || community.name;
     };
 
     if (loading) {
@@ -278,17 +292,19 @@ const Profile: React.FC = () => {
                                 <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                                     <label className="block text-[9px] text-blue-400 uppercase font-black mb-1">Primary Community</label>
                                     {isEditing ? (
-                                        <select
-                                            name="communityId1"
-                                            value={formData.communityId1}
-                                            onChange={handleChange}
-                                            className="w-full px-2 py-1 text-sm border rounded bg-white font-bold text-primary"
-                                        >
-                                            <option value="">None</option>
-                                            {communities.map(c => (
-                                                <option key={c.communityId} value={c.communityId}>{c.name}</option>
-                                            ))}
-                                        </select>
+                                        <>
+                                            <SearchableDropdown
+                                                value={formData.communityId1}
+                                                onChange={(val) => handleDropdownChange('communityId1', val)}
+                                                options={communities
+                                                    .filter((c) => c.communityId !== formData.communityId2)
+                                                    .map(c => ({ id: c.communityId, label: c.name }))}
+                                                placeholder="Search community..."
+                                            />
+                                            <p className="mt-2 text-xs text-blue-700 font-medium min-h-[1rem]">
+                                                {formData.communityId1 ? getCommunityFullName(formData.communityId1) : ''}
+                                            </p>
+                                        </>
                                     ) : (
                                         <p className="text-primary font-bold">{profile.communityId1 ? getCommunityName(profile.communityId1) : 'None assigned'}</p>
                                     )}
@@ -296,17 +312,19 @@ const Profile: React.FC = () => {
                                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                                     <label className="block text-[9px] text-gray-400 uppercase font-black mb-1">Secondary Community</label>
                                     {isEditing ? (
-                                        <select
-                                            name="communityId2"
-                                            value={formData.communityId2}
-                                            onChange={handleChange}
-                                            className="w-full px-2 py-1 text-sm border rounded bg-white font-bold text-gray-700"
-                                        >
-                                            <option value="">None</option>
-                                            {communities.map(c => (
-                                                <option key={c.communityId} value={c.communityId}>{c.name}</option>
-                                            ))}
-                                        </select>
+                                        <>
+                                            <SearchableDropdown
+                                                value={formData.communityId2}
+                                                onChange={(val) => handleDropdownChange('communityId2', val)}
+                                                options={communities
+                                                    .filter((c) => c.communityId !== formData.communityId1)
+                                                    .map(c => ({ id: c.communityId, label: c.name }))}
+                                                placeholder="Search community..."
+                                            />
+                                            <p className="mt-2 text-xs text-gray-700 font-medium min-h-[1rem]">
+                                                {formData.communityId2 ? getCommunityFullName(formData.communityId2) : ''}
+                                            </p>
+                                        </>
                                     ) : (
                                         <p className="text-gray-700 font-bold">{profile.communityId2 ? getCommunityName(profile.communityId2) : 'None assigned'}</p>
                                     )}

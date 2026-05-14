@@ -6,11 +6,11 @@ export const schemas = {
     firstName: Joi.string().min(2).required(),
     lastName: Joi.string().min(2).required(),
     password: Joi.string().min(6).required(),
-    phoneNumber: Joi.string().allow('', null),
+    phoneNumber: Joi.string().trim().required(),
     city: Joi.string().allow('', null),
     state: Joi.string().allow('', null),
     country: Joi.string().allow('', null),
-    communityId1: Joi.string().allow('', null),
+    communityId1: Joi.string().required(),
     communityId2: Joi.string().allow('', null),
     requestedCommunity: Joi.object({
       name: Joi.string().required(),
@@ -25,7 +25,7 @@ export const schemas = {
   updateProfile: Joi.object({
     firstName: Joi.string().min(2).optional(),
     lastName: Joi.string().min(2).optional(),
-    phoneNumber: Joi.string().allow('', null).optional(),
+    phoneNumber: Joi.string().trim().optional(),
     city: Joi.string().allow('', null).optional(),
     state: Joi.string().allow('', null).optional(),
     country: Joi.string().allow('', null).optional(),

@@ -8,6 +8,7 @@ interface Community {
     _id: string;
     communityId: string;
     name: string;
+    fullName?: string;
     state: string;
     city: string;
 }
@@ -75,10 +76,34 @@ const ProfileSetup: React.FC = () => {
         }));
     };
 
+    const getCommunityFullName = (communityId: string) => {
+        const community = communities.find((c) => c.communityId === communityId);
+        if (!community) return '';
+        return community.fullName || community.name;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
+
+        if (!formData.communityId1) {
+            setError('Community 1 is required.');
+            setLoading(false);
+            return;
+        }
+
+        if (!formData.phoneNumber.trim()) {
+            setError('Phone number is required.');
+            setLoading(false);
+            return;
+        }
+
+        if (formData.communityId1 && formData.communityId2 && formData.communityId1 === formData.communityId2) {
+            setError('Community 1 and Community 2 must be different.');
+            setLoading(false);
+            return;
+        }
 
         try {
             // Need an update profile endpoint if one exists
@@ -117,7 +142,7 @@ const ProfileSetup: React.FC = () => {
 
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Phone Number (Optional)
+                            Phone Number <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
@@ -126,6 +151,7 @@ const ProfileSetup: React.FC = () => {
                             onChange={handleChange}
                             placeholder="+1234567890"
                             className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+                            required
                         />
                     </div>
 
@@ -162,33 +188,51 @@ const ProfileSetup: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Country <span className="text-red-500">*</span>
                         </label>
-                        <input
-                            type="text"
+                        <select
                             name="country"
                             value={formData.country}
                             onChange={handleChange}
                             className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
                             required
-                        />
+                        >
+                            <option value="">Select Country</option>
+                            <option value="USA">USA</option>
+                            <option value="Canada">Canada</option>
+                        </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 mb-6">
-                        <SearchableDropdown
-                            label="Community 1 (Optional)"
-                            value={formData.communityId1}
-                            onChange={(val) => handleDropdownChange('communityId1', val)}
-                            options={communities.map(c => ({ id: c.communityId, label: c.name }))}
-                            placeholder="Search community..."
-                            disabled={loadingCommunities}
-                        />
-                        <SearchableDropdown
-                            label="Community 2 (Optional)"
-                            value={formData.communityId2}
-                            onChange={(val) => handleDropdownChange('communityId2', val)}
-                            options={communities.map(c => ({ id: c.communityId, label: c.name }))}
-                            placeholder="Search community..."
-                            disabled={loadingCommunities}
-                        />
+                        <div>
+                            <SearchableDropdown
+                                label="Community 1"
+                                value={formData.communityId1}
+                                onChange={(val) => handleDropdownChange('communityId1', val)}
+                                options={communities
+                                    .filter((c) => c.communityId !== formData.communityId2)
+                                    .map(c => ({ id: c.communityId, label: c.name }))}
+                                placeholder="Search community..."
+                                disabled={loadingCommunities}
+                                required
+                            />
+                            <p className="mt-2 text-xs text-blue-700 font-medium min-h-[1rem]">
+                                {formData.communityId1 ? getCommunityFullName(formData.communityId1) : ''}
+                            </p>
+                        </div>
+                        <div>
+                            <SearchableDropdown
+                                label="Community 2 (Optional)"
+                                value={formData.communityId2}
+                                onChange={(val) => handleDropdownChange('communityId2', val)}
+                                options={communities
+                                    .filter((c) => c.communityId !== formData.communityId1)
+                                    .map(c => ({ id: c.communityId, label: c.name }))}
+                                placeholder="Search community..."
+                                disabled={loadingCommunities}
+                            />
+                            <p className="mt-2 text-xs text-gray-700 font-medium min-h-[1rem]">
+                                {formData.communityId2 ? getCommunityFullName(formData.communityId2) : ''}
+                            </p>
+                        </div>
                     </div>
 
                     <button
