@@ -125,9 +125,39 @@ export const getUserPredictions = async (req: AuthRequest, res: Response) => {
 
     const resultByMatchId = new Map(results.map((r) => [r.matchId, r]));
 
+    const teamIds = Array.from(
+      new Set(
+        predictions.flatMap((p) => (p.match ? [p.match.team1, p.match.team2] : []))
+      )
+    );
+    const teams = teamIds.length
+      ? await prisma.team.findMany({
+          where: { teamId: { in: teamIds } },
+          select: { teamId: true, teamName: true, countryLogo: true },
+        })
+      : [];
+    const teamById = new Map(teams.map((t) => [t.teamId, t]));
+
     const populatedPredictions = predictions
       .map((p) => {
-        const apiMatch = p.match ? { ...p.match, matchId: String(p.match.id) } : null;
+        const apiMatch = p.match
+          ? {
+              ...p.match,
+              matchId: String(p.match.id),
+              team1Info: teamById.get(p.match.team1)
+                ? {
+                    teamName: teamById.get(p.match.team1)!.teamName,
+                    countryLogo: teamById.get(p.match.team1)!.countryLogo,
+                  }
+                : null,
+              team2Info: teamById.get(p.match.team2)
+                ? {
+                    teamName: teamById.get(p.match.team2)!.teamName,
+                    countryLogo: teamById.get(p.match.team2)!.countryLogo,
+                  }
+                : null,
+            }
+          : null;
         return {
           ...p,
           matchId: apiMatch, // keep frontend shape compatibility (it expects match object sometimes)

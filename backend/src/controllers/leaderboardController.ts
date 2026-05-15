@@ -133,36 +133,46 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
     const user = await prisma.user.findUnique({ where: { id: userIdNum } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const [topRank, dailyRankLatest, finalUserResult] = await Promise.all([
-      prisma.topLeader.findFirst({ where: { userId } }),
-      prisma.dailyLeader.findFirst({ where: { userId }, orderBy: { date: 'desc' } }),
-      prisma.finalUserResult.findUnique({ where: { userId: userIdNum } }),
-    ]);
+    const finalUserResult = await prisma.finalUserResult.findUnique({ where: { userId: userIdNum } });
+
+    const finalStats = finalUserResult
+      ? { rank: finalUserResult.finalRank ?? '-', totalPoints: finalUserResult.finalPoint }
+      : { rank: '-', totalPoints: 0 };
 
     const communityRanks: any[] = [];
     for (const cid of [user.communityId1, user.communityId2].filter((v): v is number => typeof v === 'number')) {
       const cidStr = String(cid);
-      const [community, overall, daily] = await Promise.all([
+      const [community, latestCommunityResult] = await Promise.all([
         Number.isInteger(cid) && cid > 0
           ? prisma.community.findUnique({ where: { id: cid }, select: { name: true } })
           : Promise.resolve(null),
-        prisma.communityLeader.findFirst({ where: { communityId: cidStr } }),
-        prisma.dailyCommunityLeader.findFirst({ where: { communityId: cidStr }, orderBy: { date: 'desc' } }),
+        prisma.communityResult.findFirst({
+          where: { communityId: cidStr },
+          orderBy: [{ matchId: 'desc' }, { updatedAt: 'desc' }, { id: 'desc' }],
+        }),
       ]);
+
       communityRanks.push({
         communityId: cidStr,
         name: community?.name ?? cidStr,
-        overall: overall || { rank: '-', totalPoints: 0 },
-        daily: daily || { rank: '-', totalPoints: 0 },
+        overall: latestCommunityResult
+          ? {
+              rank: latestCommunityResult.finalRank ?? '-',
+              totalPoints: latestCommunityResult.totalCommunityPoint,
+            }
+          : { rank: '-', totalPoints: 0 },
+        daily: latestCommunityResult
+          ? {
+              rank: latestCommunityResult.dailyRank ?? '-',
+              totalPoints: latestCommunityResult.communityMatchPoint,
+            }
+          : { rank: '-', totalPoints: 0 },
       });
     }
 
     res.json({
-      overall: topRank || { rank: '-', totalPoints: 0 },
-      daily: dailyRankLatest || { rank: '-', totalPoints: 0 },
-      final: finalUserResult
-        ? { rank: finalUserResult.finalRank ?? '-', totalPoints: finalUserResult.finalPoint }
-        : { rank: '-', totalPoints: 0 },
+      overall: finalStats,
+      final: finalStats,
       communities: communityRanks,
     });
   } catch (error) {

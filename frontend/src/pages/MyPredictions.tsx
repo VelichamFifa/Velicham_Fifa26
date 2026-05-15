@@ -33,7 +33,7 @@ const MyPredictions: React.FC = () => {
         }
         const isPredictionOpen = new Date(match.predictionsEndingTime || '') > new Date();
         return isPredictionOpen ?
-            <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">Open</span> :
+            <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">Scheduled</span> :
             <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded">Closed</span>;
     };
 
@@ -74,10 +74,12 @@ const MyPredictions: React.FC = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {predictions.map((prediction) => {
                                     const match = prediction.matchId as Match;
+                                    const team1Name = match.team1Info?.teamName || match.team1;
+                                    const team2Name = match.team2Info?.teamName || match.team2;
                                     return (
                                         <tr key={prediction._id}>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-bold text-gray-900">{match.team1} vs {match.team2}</div>
+                                                <div className="text-sm font-bold text-gray-900">{team1Name} vs {team2Name}</div>
                                                 <div className="text-xs text-gray-500">{format(new Date(match.matchTime), 'MMM dd, HH:mm')}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">

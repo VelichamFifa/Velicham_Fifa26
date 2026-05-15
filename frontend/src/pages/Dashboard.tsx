@@ -149,7 +149,7 @@ const Dashboard: React.FC = () => {
             <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/15 blur-md" />
             <div className="relative flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-black uppercase tracking-wider text-white/80">My Final Rank</p>
+                <p className="text-[11px] font-black tracking-wider text-white/80">My Final Rank</p>
                 <div className="mt-1 flex items-baseline gap-2">
                   <span className="text-3xl font-black text-white">
                     {userStats.final.rank === '-' ? '–' : `#${userStats.final.rank}`}
@@ -257,7 +257,7 @@ const Dashboard: React.FC = () => {
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                   </svg>
                 </span>
-                <h3 className="text-sm font-extrabold tracking-wide text-white">My Communities</h3>
+                <h3 className="text-sm font-extrabold tracking-wide text-white">My Community Rank</h3>
               </div>
              
             </div>
@@ -272,7 +272,7 @@ const Dashboard: React.FC = () => {
                         onClick={() => handleDrillDown(comm.communityId, false, `${comm.name} — Overall`)}
                         className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-left hover:bg-sky-400/20 hover:border-sky-300/45 transition-all"
                       >
-                        <span className="block text-[10px] font-bold uppercase tracking-wider text-white/55">Overall Rank</span>
+                        <span className="block text-[10px] font-bold tracking-wider text-white/55">Final Rank</span>
                         <span className="mt-1 block text-lg font-black text-sky-200">
                           {comm.overall.rank === '-' ? '–' : `#${comm.overall.rank}`}
                         </span>
@@ -281,7 +281,7 @@ const Dashboard: React.FC = () => {
                         onClick={() => handleDrillDown(comm.communityId, true, `${comm.name} — Daily`)}
                         className="rounded-lg border border-emerald-300/25 bg-emerald-400/10 px-3 py-2 text-left hover:bg-emerald-400/20 hover:border-emerald-300/45 transition-all"
                       >
-                        <span className="block text-[10px] font-bold uppercase tracking-wider text-white/55">Daily Rank</span>
+                        <span className="block text-[10px] font-bold  tracking-wider text-white/55">Last Match Rank</span>
                         <span className="mt-1 block text-lg font-black text-emerald-200">
                           {comm.daily.rank === '-' ? '–' : `#${comm.daily.rank}`}
                         </span>
