@@ -274,7 +274,7 @@ const Dashboard: React.FC = () => {
                       >
                         <span className="block text-[10px] font-bold tracking-wider text-white/55">Final Rank</span>
                         <span className="mt-1 block text-lg font-black text-sky-200">
-                          {comm.overall.rank === '-' ? '–' : `#${comm.overall.rank}`}
+                          {comm.overall?.rank === '-' ? '–' : `#${comm.overall?.rank}`}
                         </span>
                       </button>
                       <button
@@ -283,7 +283,7 @@ const Dashboard: React.FC = () => {
                       >
                         <span className="block text-[10px] font-bold  tracking-wider text-white/55">Last Match Rank</span>
                         <span className="mt-1 block text-lg font-black text-emerald-200">
-                          {comm.daily.rank === '-' ? '–' : `#${comm.daily.rank}`}
+                          {comm.daily?.rank === '-' ? '–' : `#${comm.daily?.rank}`}
                         </span>
                       </button>
                     </div>
