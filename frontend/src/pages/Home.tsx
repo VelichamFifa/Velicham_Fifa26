@@ -30,6 +30,15 @@ const Home: React.FC = () => {
                   Predict Today
                 </Link>
               )}
+                {isLoggedIn && (
+                  <Link
+                    to="/dashboard"
+                    className="px-6 sm:px-8 py-3 bg-secondary text-white font-bold rounded-lg hover:bg-blue-600 transition text-center inline-flex items-center justify-center gap-2"
+                  >
+                    <span aria-hidden="true">📊</span>
+                    View Dashboard
+                  </Link>
+                )}
             </div>
         </div>
 
