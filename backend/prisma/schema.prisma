@@ -139,7 +139,7 @@ model Result {
   communityName2         String?  @db.VarChar(500)
   team1PredictedScore    Int?
   team2PredictedScore    Int?
-  dailyRank              Int?
+  matchRank              Int?
   finalRank              Int?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt

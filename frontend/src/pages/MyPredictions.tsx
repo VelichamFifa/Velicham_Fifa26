@@ -95,9 +95,9 @@ const MyPredictions: React.FC = () => {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                {match?.status === 'completed' && prediction.dailyRank ? (
+                                                {match?.status === 'completed' && prediction.matchRank ? (
                                                     <span className="text-sm font-black text-primary">
-                                                        #{prediction.dailyRank}
+                                                        #{prediction.matchRank}
                                                     </span>
                                                 ) : (
                                                     <span className="text-gray-400 text-xs">TBD</span>

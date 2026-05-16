@@ -120,7 +120,7 @@ export const getUserPredictions = async (req: AuthRequest, res: Response) => {
 
     const results = await prisma.result.findMany({
       where: { userId: userIdNum, matchId: { in: predictions.map((p) => p.matchId) } },
-      select: { matchId: true, finalRank: true, dailyRank: true },
+      select: { matchId: true, finalRank: true, matchRank: true },
     });
 
     const resultByMatchId = new Map(results.map((r) => [r.matchId, r]));
@@ -163,7 +163,7 @@ export const getUserPredictions = async (req: AuthRequest, res: Response) => {
           matchId: apiMatch, // keep frontend shape compatibility (it expects match object sometimes)
           match: undefined,
           historicRank: resultByMatchId.get(p.matchId)
-            ? { finalRank: resultByMatchId.get(p.matchId)!.finalRank, dailyRank: resultByMatchId.get(p.matchId)!.dailyRank }
+            ? { finalRank: resultByMatchId.get(p.matchId)!.finalRank, matchRank: resultByMatchId.get(p.matchId)!.matchRank }
             : null,
         };
       })
@@ -303,7 +303,7 @@ export const getUserPredictionsFromResults = async (req: AuthRequest, res: Respo
           communityName2: true,
           team1PredictedScore: true,
           team2PredictedScore: true,
-          dailyRank: true,
+          matchRank: true,
           finalRank: true,
           createdAt: true,
           updatedAt: true,
@@ -366,7 +366,7 @@ export const getUserPredictionsFromResults = async (req: AuthRequest, res: Respo
         communityName2: result.communityName2,
         team1PredictedScore: result.team1PredictedScore,
         team2PredictedScore: result.team2PredictedScore,
-        dailyRank: result.dailyRank,
+        matchRank: result.matchRank,
         finalRank: result.finalRank,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,
