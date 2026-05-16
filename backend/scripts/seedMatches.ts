@@ -92,7 +92,7 @@ async function main() {
       round: f.round,
       group: f.group,
       matchTag: `#${f.team1}_${f.team2}`,
-      status: 'scheduled' as const,
+      status: 'OnBoarded' as const,
       comment: null,
       team1Score: null,
       team2Score: null,
