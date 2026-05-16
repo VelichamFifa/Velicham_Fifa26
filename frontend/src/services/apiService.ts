@@ -86,6 +86,10 @@ class ApiService {
     return this.client.put(`/matches/${matchId}`, data);
   }
 
+  deleteMatch(matchId: string) {
+    return this.client.delete(`/matches/${matchId}`);
+  }
+
   // Prediction endpoints
   submitPrediction(data: any) {
     return this.client.post('/predictions', data);

@@ -225,6 +225,23 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+    const handleDeleteMatch = async (matchId: string) => {
+        const match = [...onboardedMatches, ...scheduledMatches, ...completedMatches].find(m => m.matchId === matchId);
+        const matchName = match ? `${getTeamDisplayName(match, 'team1')} vs ${getTeamDisplayName(match, 'team2')}` : 'this match';
+
+        if (!window.confirm(`Are you sure you want to delete ${matchName}? This will remove all predictions and results.`)) {
+            return;
+        }
+
+        try {
+            await apiService.deleteMatch(matchId);
+            setSuccess('Match deleted successfully');
+            fetchInitialData();
+        } catch (err) {
+            setError('Failed to delete match');
+        }
+    };
+
     const handleCreateMatchEntry = async (event: React.FormEvent) => {
         event.preventDefault();
 
