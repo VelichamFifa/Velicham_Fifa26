@@ -1,4 +1,4 @@
-# FIFA 26 Predictor — Setup and installation
+# FIFA 26 Predictor — Setup and installation Test
 
 This guide matches the **Azure SQL + Prisma** stack. There is **no MongoDB** and **no Redis** in this project.
 
