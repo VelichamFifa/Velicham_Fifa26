@@ -67,7 +67,8 @@ export const schemas = {
     predictionsEndingTime: Joi.date().required(),
     round: Joi.string().trim().required(),
     group: Joi.string().trim().allow('', null).optional(),
-    matchTag: Joi.string().required(),
+    matchTag: Joi.string().allow('', null).optional(),
+    comment: Joi.string().allow('', null).optional(),
   }),
 };
 
