@@ -20,6 +20,14 @@ function distinctByKey<T>(rows: T[], keyOf: (row: T) => string, limit: number): 
 /** Oversample then dedupe — fixes duplicate userId/communityId rows in materialized tables. */
 const LEADERBOARD_OVERFETCH_CAP = 2500;
 
+function getDayRange(date: Date): { startOfDay: Date; endOfDay: Date } {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(startOfDay);
+  endOfDay.setDate(endOfDay.getDate() + 1);
+  return { startOfDay, endOfDay };
+}
+
 export const getTopLeaderboard = async (req: AuthRequest, res: Response) => {
   try {
     const { limit = '30' } = req.query;
@@ -45,15 +53,12 @@ export const getTopLeaderboard = async (req: AuthRequest, res: Response) => {
 
 export const getDailyLeaderboard = async (req: AuthRequest, res: Response) => {
   try {
-    const { limit = '30', date } = req.query;
-    const limitNum = parseInt(limit as string, 10);
-
-    const target = date ? new Date(date as string) : new Date();
-    target.setHours(0, 0, 0, 0);
+    const { limit = '30' } = req.query;
+    const parsedLimit = parseInt(limit as string, 10);
+    const limitNum = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 30;
 
     const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
     const rows = await prisma.dailyLeader.findMany({
-      where: { date: target },
       orderBy: [{ rank: 'asc' }, { totalPoints: 'desc' }, { id: 'desc' }],
       take,
     });
@@ -95,15 +100,29 @@ export const getCommunityLeaderboard = async (req: AuthRequest, res: Response) =
 
 export const getDailyCommunityLeaderboard = async (req: AuthRequest, res: Response) => {
   try {
-    const { limit = '30', date } = req.query;
-    const limitNum = parseInt(limit as string, 10);
+    const { limit = '30' } = req.query;
+    const parsedLimit = parseInt(limit as string, 10);
+    const limitNum = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 30;
 
-    const target = date ? new Date(date as string) : new Date();
-    target.setHours(0, 0, 0, 0);
+    const latestDaily = await prisma.dailyCommunityLeader.findFirst({
+      orderBy: [{ date: 'desc' }, { id: 'desc' }],
+      select: { date: true },
+    });
+
+    if (!latestDaily) {
+      return res.json({ leaderboard: [], source: 'database' });
+    }
+
+    const { startOfDay, endOfDay } = getDayRange(latestDaily.date);
 
     const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
     const rows = await prisma.dailyCommunityLeader.findMany({
-      where: { date: target },
+      where: {
+        date: {
+          gte: startOfDay,
+          lt: endOfDay,
+        },
+      },
       orderBy: [{ rank: 'asc' }, { totalPoints: 'desc' }, { id: 'desc' }],
       take,
     });
@@ -188,7 +207,7 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
 export const getCommunityUserRanking = async (req: AuthRequest, res: Response) => {
   try {
     const { communityId } = req.params;
-    const { isDaily, limit = '50', date } = req.query;
+    const { isDaily, limit = '50' } = req.query;
 
     const limitNum = parseInt(limit as string, 10);
     const dailyBool = isDaily === 'true';
@@ -210,11 +229,26 @@ export const getCommunityUserRanking = async (req: AuthRequest, res: Response) =
     }
 
     if (dailyBool) {
-      const day = date ? new Date(date as string) : new Date();
-      day.setHours(0, 0, 0, 0);
+      const latestDaily = await prisma.dailyLeader.findFirst({
+        where: { userId: { in: userIds } },
+        orderBy: [{ date: 'desc' }, { id: 'desc' }],
+        select: { date: true },
+      });
+
+      if (!latestDaily) {
+        return res.json({ ranking: [], communityId, isDaily: true });
+      }
+
+      const { startOfDay, endOfDay } = getDayRange(latestDaily.date);
       const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
       const leadersRaw = await prisma.dailyLeader.findMany({
-        where: { userId: { in: userIds }, date: day },
+        where: {
+          userId: { in: userIds },
+          date: {
+            gte: startOfDay,
+            lt: endOfDay,
+          },
+        },
         orderBy: [{ rank: 'asc' }, { totalPoints: 'desc' }, { id: 'desc' }],
         take,
       });
