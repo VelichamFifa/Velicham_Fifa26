@@ -17,7 +17,7 @@ const MyPredictions: React.FC = () => {
     const fetchPredictions = async (page: number) => {
         try {
             setLoading(true);
-            const response = await apiService.getUserPredictions(page, 10);
+            const response = await apiService.getUserPredictionsFromResults(page, 10);
             setPredictions(response.data.predictions);
             setPagination(response.data.pagination);
         } catch (error) {
@@ -25,16 +25,6 @@ const MyPredictions: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const getStatusBadge = (match: Match) => {
-        if (match.status === 'completed') {
-            return <span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-0.5 rounded">Completed</span>;
-        }
-        const isPredictionOpen = new Date(match.predictionsEndingTime || '') > new Date();
-        return isPredictionOpen ?
-            <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">Scheduled</span> :
-            <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded">Closed</span>;
     };
 
     const handleEditSuccess = () => {
@@ -72,53 +62,57 @@ const MyPredictions: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {predictions.map((prediction) => {
-                                    const match = prediction.matchId as Match;
-                                    const team1Name = match.team1Info?.teamName || match.team1;
-                                    const team2Name = match.team2Info?.teamName || match.team2;
+                                {predictions.map((prediction: any) => {
+                                    const match = prediction.matchId;
+                                    const team1Name = match?.team1Info?.teamName || match?.team1 || 'Unknown';
+                                    const team2Name = match?.team2Info?.teamName || match?.team2 || 'Unknown';
                                     return (
-                                        <tr key={prediction._id}>
+                                        <tr key={prediction.id}>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-bold text-gray-900">{team1Name} vs {team2Name}</div>
-                                                <div className="text-xs text-gray-500">{format(new Date(match.matchTime), 'MMM dd, HH:mm')}</div>
+                                                <div className="text-xs text-gray-500">{match?.matchTime ? format(new Date(match.matchTime), 'MMM dd, HH:mm') : '-'}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {getStatusBadge(match)}
+                                                {match?.status === 'completed' ? (
+                                                    <span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-0.5 rounded">Completed</span>
+                                                ) : (
+                                                    <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded">Scheduled</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className="font-mono bg-blue-50 px-2 py-1 rounded text-blue-700 font-bold">
-                                                    {prediction.team1Score} - {prediction.team2Score}
-                                                </span>
+                                                <div className="font-mono bg-blue-50 px-2 py-1 rounded text-blue-700 font-bold">
+                                                    <div>{prediction.result}</div>
+                                                    <div className="text-xs text-gray-600">{prediction.team1PredictedScore} - {prediction.team2PredictedScore}</div>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                {match.status === 'completed' ? (
+                                                {match?.status === 'completed' ? (
                                                     <span className="font-mono bg-gray-50 px-2 py-1 rounded text-gray-700 font-bold">
-                                                        {match.team1Score} - {match.team2Score}
+                                                        {match?.team1Score} - {match?.team2Score}
                                                     </span>
                                                 ) : (
                                                     <span className="text-gray-400 text-xs">-</span>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                {match.status === 'completed' && prediction.historicRank ? (
+                                                {match?.status === 'completed' && prediction.dailyRank ? (
                                                     <span className="text-sm font-black text-primary">
-                                                        #{prediction.historicRank.dailyRank}
+                                                        #{prediction.dailyRank}
                                                     </span>
                                                 ) : (
                                                     <span className="text-gray-400 text-xs">TBD</span>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                {match.status === 'completed' && prediction.historicRank && prediction.historicRank.finalRank > 0 ? (
+                                                {match?.status === 'completed' && prediction.finalRank && prediction.finalRank > 0 ? (
                                                     <div className="flex flex-col items-center">
-                                                        <span className="text-xs font-black text-secondary">#{prediction.historicRank.finalRank}</span>
+                                                        <span className="text-xs font-black text-secondary">#{prediction.finalRank}</span>
                                                         <span className="text-[10px] text-gray-500">Overall</span>
                                                     </div>
                                                 ) : (
                                                     <span className="text-gray-400 text-xs">-</span>
                                                 )}
                                             </td>
-                                           
                                         </tr>
                                     );
                                 })}

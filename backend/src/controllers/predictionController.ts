@@ -268,3 +268,126 @@ export const deletePrediction = async (req: AuthRequest, res: Response) => {
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to delete prediction' });
   }
 };
+
+export const getUserPredictionsFromResults = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const { page = '1', limit = '10' } = req.query;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const userIdNum = Number(userId);
+    if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Fetch results for this user with match info
+    const [results, total] = await Promise.all([
+      prisma.result.findMany({
+        where: { userId: userIdNum },
+        select: {
+          id: true,
+          userId: true,
+          matchId: true,
+          matchTag: true,
+          result: true,
+          matchPoints: true,
+          finalPoints: true,
+          communityName1: true,
+          communityName2: true,
+          team1PredictedScore: true,
+          team2PredictedScore: true,
+          dailyRank: true,
+          finalRank: true,
+          createdAt: true,
+          updatedAt: true,
+          match: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limitNum,
+      }),
+      prisma.result.count({ where: { userId: userIdNum } }),
+    ]);
+
+    // Get team info for all matches
+    const teamIds = Array.from(
+      new Set(results.flatMap((r) => (r.match ? [r.match.team1, r.match.team2] : [])))
+    );
+    const teams = teamIds.length
+      ? await prisma.team.findMany({
+          where: { teamId: { in: teamIds } },
+          select: { teamId: true, teamName: true, countryLogo: true },
+        })
+      : [];
+    const teamById = new Map(teams.map((t) => [t.teamId, t]));
+
+    // Format response data
+    const populatedResults = results.map((result) => {
+      const apiMatch = result.match
+        ? {
+            matchId: String(result.match.id),
+            team1: result.match.team1,
+            team2: result.match.team2,
+            team1Score: result.match.team1Score,
+            team2Score: result.match.team2Score,
+            matchTime: result.match.matchTime,
+            predictionsEndingTime: result.match.predictionsEndingTime,
+            status: result.match.status,
+            matchTag: result.match.matchTag,
+            team1Info: teamById.get(result.match.team1)
+              ? {
+                  teamName: teamById.get(result.match.team1)!.teamName,
+                  countryLogo: teamById.get(result.match.team1)!.countryLogo,
+                }
+              : null,
+            team2Info: teamById.get(result.match.team2)
+              ? {
+                  teamName: teamById.get(result.match.team2)!.teamName,
+                  countryLogo: teamById.get(result.match.team2)!.countryLogo,
+                }
+              : null,
+          }
+        : null;
+
+      return {
+        id: result.id,
+        matchId: apiMatch,
+        result: result.result,
+        matchPoints: result.matchPoints,
+        finalPoints: result.finalPoints,
+        communityName1: result.communityName1,
+        communityName2: result.communityName2,
+        team1PredictedScore: result.team1PredictedScore,
+        team2PredictedScore: result.team2PredictedScore,
+        dailyRank: result.dailyRank,
+        finalRank: result.finalRank,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+      };
+    });
+
+    res.json({
+      predictions: populatedResults,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error) {
+    const errorDetails = logger.error('getUserPredictionsFromResults', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch prediction results' });
+  }
+};

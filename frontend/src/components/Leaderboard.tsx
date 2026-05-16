@@ -5,9 +5,11 @@ interface LeaderboardProps {
   entries: LeaderboardEntry[] | CommunityLeaderboardEntry[];
   type: 'user' | 'community';
   title: string;
+  showCommunityUnderName?: boolean;
+  hideState?: boolean;
 }
 
-const Leaderboard: React.FC<LeaderboardProps> = ({ entries, type, title }) => {
+const Leaderboard: React.FC<LeaderboardProps> = ({ entries, type, title, showCommunityUnderName = false, hideState = false }) => {
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="bg-primary text-white p-4">
@@ -24,8 +26,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ entries, type, title }) => {
               </th>
               {type === 'user' && (
                 <>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">State</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Communities</th>
+                  {!hideState && (
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">State</th>
+                  )}
+                  {!showCommunityUnderName && (
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Communities</th>
+                  )}
                 </>
               )}
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">Points</th>
@@ -55,20 +61,34 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ entries, type, title }) => {
                   <p className="font-medium text-gray-900">
                     {type === 'user' ? (entry as LeaderboardEntry).name : (entry as CommunityLeaderboardEntry).communityName}
                   </p>
+                  {showCommunityUnderName && type === 'user' && (
+                    <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                      {(entry as LeaderboardEntry).community1 && (
+                        <div>{(entry as LeaderboardEntry).community1}</div>
+                      )}
+                      {(entry as LeaderboardEntry).community2 && (
+                        <div>{(entry as LeaderboardEntry).community2}</div>
+                      )}
+                    </div>
+                  )}
                 </td>
                 {type === 'user' && (
                   <>
-                    <td className="px-6 py-4 text-gray-600">
-                      {(entry as LeaderboardEntry).state || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {(entry as LeaderboardEntry).community1 && (
-                        <span className="block">{(entry as LeaderboardEntry).community1}</span>
-                      )}
-                      {(entry as LeaderboardEntry).community2 && (
-                        <span className="block">{(entry as LeaderboardEntry).community2}</span>
-                      )}
-                    </td>
+                    {!hideState && (
+                      <td className="px-6 py-4 text-gray-600">
+                        {(entry as LeaderboardEntry).state || '-'}
+                      </td>
+                    )}
+                    {!showCommunityUnderName && (
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {(entry as LeaderboardEntry).community1 && (
+                          <span className="block">{(entry as LeaderboardEntry).community1}</span>
+                        )}
+                        {(entry as LeaderboardEntry).community2 && (
+                          <span className="block">{(entry as LeaderboardEntry).community2}</span>
+                        )}
+                      </td>
+                    )}
                   </>
                 )}
                 <td className="px-6 py-4 text-right font-bold text-secondary">

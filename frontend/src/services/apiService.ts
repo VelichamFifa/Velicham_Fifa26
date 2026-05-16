@@ -101,6 +101,12 @@ class ApiService {
     });
   }
 
+  getUserPredictionsFromResults(page?: number, limit?: number) {
+    return this.client.get('/predictions/results/list', {
+      params: { page, limit },
+    });
+  }
+
   updatePrediction(predictionId: string, data: any) {
     return this.client.put(`/predictions/${predictionId}`, data);
   }

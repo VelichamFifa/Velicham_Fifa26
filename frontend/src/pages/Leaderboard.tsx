@@ -96,6 +96,8 @@ const LeaderboardPage: React.FC = () => {
               entries={topLeaderboard}
               type="user"
               title="All-Time Top Leaders"
+              showCommunityUnderName={true}
+              hideState={true}
             />
           )}
           {activeTab === 'daily' && (
@@ -103,6 +105,8 @@ const LeaderboardPage: React.FC = () => {
               entries={dailyLeaderboard}
               type="user"
               title="Today's Leaders"
+              showCommunityUnderName={true}
+              hideState={true}
             />
           )}
           {activeTab === 'community' && (

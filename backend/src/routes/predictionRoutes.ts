@@ -8,6 +8,7 @@ const router = Router();
 // Protected routes
 router.post('/', authMiddleware, validateRequest(schemas.prediction), predictionController.submitPrediction);
 router.get('/', authMiddleware, predictionController.getUserPredictions);
+router.get('/results/list', authMiddleware, predictionController.getUserPredictionsFromResults);
 router.put('/:predictionId', authMiddleware, predictionController.updatePrediction);
 router.delete('/:predictionId', authMiddleware, predictionController.deletePrediction);
 

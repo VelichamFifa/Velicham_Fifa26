@@ -126,21 +126,23 @@ model Prediction {
 }
 
 model Result {
-  id             Int      @id @default(autoincrement())
-  userId         Int
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  matchId        Int
-  match          Match    @relation("MatchResults", fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  matchTag       String   @db.VarChar(200)
-  result         String   @db.VarChar(20)
-  matchPoints    Int      @default(0)
-  finalPoints    Int      @default(0)
-  communityName1 String?  @db.VarChar(500)
-  communityName2 String?  @db.VarChar(500)
-  dailyRank      Int?
-  finalRank      Int?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                     Int      @id @default(autoincrement())
+  userId                 Int
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchId                Int
+  match                  Match    @relation("MatchResults", fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  matchTag               String   @db.VarChar(200)
+  result                 String   @db.VarChar(20)
+  matchPoints            Int      @default(0)
+  finalPoints            Int      @default(0)
+  communityName1         String?  @db.VarChar(500)
+  communityName2         String?  @db.VarChar(500)
+  team1PredictedScore    Int?
+  team2PredictedScore    Int?
+  dailyRank              Int?
+  finalRank              Int?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   @@unique([userId, matchId])
   @@index([matchId])
