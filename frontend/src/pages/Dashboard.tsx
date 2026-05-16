@@ -64,7 +64,7 @@ const Dashboard: React.FC = () => {
     try {
       setLoading(true);
       const [matchesRes, predictionsRes, statsRes] = await Promise.all([
-        apiService.getAllMatches(undefined, 1, 50), // fetch more to ensure we get upcoming days
+        apiService.getAllMatches('scheduled', 1, 50), // only show scheduled matches for predictions
         apiService.getUserPredictions(1, 100),
         apiService.getUserStats(),
       ]);

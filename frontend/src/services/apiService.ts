@@ -74,6 +74,10 @@ class ApiService {
     return this.client.get(`/matches/${matchId}`);
   }
 
+  getTeams() {
+    return this.client.get('/matches/teams');
+  }
+
   createMatch(data: any) {
     return this.client.post('/matches', data);
   }

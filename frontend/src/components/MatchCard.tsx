@@ -177,7 +177,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
           <span className="text-white font-bold text-[13px] text-center leading-tight line-clamp-2 max-w-[90px]">
             {t1Name}
           </span>
-          <span className="text-white/30 text-[10px] font-mono tracking-wide">{match.team1}</span>
         </div>
 
         {/* Score / Inputs */}
@@ -231,7 +230,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
           <span className="text-white font-bold text-[13px] text-center leading-tight line-clamp-2 max-w-[90px]">
             {t2Name}
           </span>
-          <span className="text-white/30 text-[10px] font-mono tracking-wide">{match.team2}</span>
         </div>
       </div>
 

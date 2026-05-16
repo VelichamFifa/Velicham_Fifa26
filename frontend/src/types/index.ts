@@ -38,6 +38,12 @@ export interface TeamInfo {
   countryLogo?: string | null;
 }
 
+export interface Team {
+  teamId: string;
+  teamName: string;
+  countryLogo?: string | null;
+}
+
 export interface Match {
   _id?: string;
   matchId: string;

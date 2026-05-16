@@ -2,20 +2,94 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiService } from '../services/apiService';
-import { User, Match, Community } from '../types';
+import { User, Match, Community, Team } from '../types';
 import { format } from 'date-fns';
+
+const formatInTimeZone = (dateValue: string, timeZone: string) => {
+    try {
+        return new Date(dateValue).toLocaleString('en-US', {
+            timeZone,
+            month: 'short',
+            day: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+        });
+    } catch {
+        return format(new Date(dateValue), 'MMM dd, yyyy hh:mm a');
+    }
+};
+
+const getKickoffTimeZones = (dateValue: string) => ([
+    { label: 'UTC', value: formatInTimeZone(dateValue, 'UTC') },
+    { label: 'EST', value: formatInTimeZone(dateValue, 'America/New_York') },
+    { label: 'MST', value: formatInTimeZone(dateValue, 'America/Denver') },
+    { label: 'PST', value: formatInTimeZone(dateValue, 'America/Los_Angeles') },
+]);
 
 const AdminDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { isLoggedIn, user } = useAuth();
     const [activeTab, setActiveTab] = useState<'communities' | 'matches' | 'users'>('communities');
+    const [matchTab, setMatchTab] = useState<'onboarded' | 'scheduled' | 'completed'>('onboarded');
     const [loading, setLoading] = useState(true);
     const [communityRequests, setCommunityRequests] = useState<any[]>([]);
-    const [matches, setMatches] = useState<Match[]>([]);
+    const [teams, setTeams] = useState<Team[]>([]);
+    const [onboardedMatches, setOnboardedMatches] = useState<Match[]>([]);
+    const [scheduledMatches, setScheduledMatches] = useState<Match[]>([]);
+    const [completedMatches, setCompletedMatches] = useState<Match[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [communities, setCommunities] = useState<Community[]>([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
+    const [newMatchForm, setNewMatchForm] = useState({
+        sequence: '',
+        team1: '',
+        team2: '',
+        matchTime: '',
+        predictionsEndingTime: '',
+        round: '',
+        group: '',
+        matchTag: '',
+        comment: '',
+    });
+
+    const serializeEnteredUtcTime = (value: string) => {
+        if (!value) return value;
+        if (value.endsWith('Z')) return value;
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
+            return `${value}:00.000Z`;
+        }
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value)) {
+            return `${value}.000Z`;
+        }
+        return `${value}Z`;
+    };
+
+    const derivePredictionDeadline = (kickoffTime: string) => {
+        if (!kickoffTime) return '';
+        const kickoffUtc = new Date(serializeEnteredUtcTime(kickoffTime));
+        kickoffUtc.setUTCHours(kickoffUtc.getUTCHours() - 1);
+        return kickoffUtc.toISOString().slice(0, 16);
+    };
+
+    const buildMatchTag = (team1Id: string, team2Id: string) => {
+        if (!team1Id || !team2Id) return '';
+        return `#${team1Id}_${team2Id}`;
+    };
+
+    const syncMatchTag = (team1Id: string, team2Id: string) => {
+        const nextTag = buildMatchTag(team1Id, team2Id);
+        setNewMatchForm((prev) => ({ ...prev, team1: team1Id, team2: team2Id, matchTag: nextTag }));
+    };
+
+    const getTeamDisplayName = (match: Match, side: 'team1' | 'team2') => {
+        const teamInfo = side === 'team1' ? match.team1Info : match.team2Info;
+        const fallback = side === 'team1' ? match.team1 : match.team2;
+        return teamInfo?.teamName || fallback;
+    };
 
     useEffect(() => {
         if (!isLoggedIn) {
@@ -34,13 +108,18 @@ const AdminDashboard: React.FC = () => {
     const fetchInitialData = async () => {
         try {
             setLoading(true);
-            const [commRes, matchesRes, communitiesListRes] = await Promise.all([
+            const [commRes, allMatchesRes, teamsRes, communitiesListRes] = await Promise.all([
                 apiService.getCommunityRequests(),
-                apiService.getAllMatches(undefined, 1, 50),
+                apiService.getAllMatches(undefined, 1, 500),
+                apiService.getTeams(),
                 apiService.getCommunities()
             ]);
+            const allMatches = allMatchesRes.data.matches as Match[];
             setCommunityRequests(commRes.data.requests);
-            setMatches(matchesRes.data.matches);
+            setOnboardedMatches(allMatches.filter(match => match.status !== 'completed'));
+            setScheduledMatches(allMatches.filter(match => match.status === 'scheduled'));
+            setCompletedMatches(allMatches.filter(match => match.status === 'completed'));
+            setTeams(teamsRes.data.teams);
             setCommunities(communitiesListRes.data);
         } catch (err) {
             console.error('Failed to fetch admin data:', err);
@@ -107,8 +186,8 @@ const AdminDashboard: React.FC = () => {
     };
 
     const handleFinalizeMatch = async (matchId: string, t1: string, t2: string) => {
-        const match = matches.find(m => m.matchId === matchId);
-        const matchName = match ? `${match.team1} vs ${match.team2}` : 'this match';
+        const match = [...onboardedMatches, ...scheduledMatches, ...completedMatches].find(m => m.matchId === matchId);
+        const matchName = match ? `${getTeamDisplayName(match, 'team1')} vs ${getTeamDisplayName(match, 'team2')}` : 'this match';
 
         if (!window.confirm(`Are you sure you want to finalize ${matchName} with score ${t1}-${t2}? This will calculate points for ALL users.`)) {
             return;
@@ -129,6 +208,99 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+    const handleScheduleMatch = async (matchId: string) => {
+        const match = [...onboardedMatches, ...scheduledMatches, ...completedMatches].find(m => m.matchId === matchId);
+        const matchName = match ? `${getTeamDisplayName(match, 'team1')} vs ${getTeamDisplayName(match, 'team2')}` : 'this match';
+
+        if (!window.confirm(`Schedule ${matchName} for kickoff time ${match?.matchTime ? format(new Date(match.matchTime), 'MMM dd, HH:mm') : ''}?`)) {
+            return;
+        }
+
+        try {
+            await apiService.updateMatch(matchId, { status: 'scheduled' });
+            setSuccess('Match scheduled successfully');
+            fetchInitialData();
+        } catch (err) {
+            setError('Failed to schedule match');
+        }
+    };
+
+    const handleCreateMatchEntry = async (event: React.FormEvent) => {
+        event.preventDefault();
+
+        try {
+            if (!newMatchForm.sequence || !newMatchForm.team1 || !newMatchForm.team2 || !newMatchForm.matchTime || !newMatchForm.predictionsEndingTime || !newMatchForm.round) {
+                setError('Please fill all required match fields');
+                return;
+            }
+
+            const payload = {
+                sequence: Number(newMatchForm.sequence),
+                team1: newMatchForm.team1,
+                team2: newMatchForm.team2,
+                matchTime: serializeEnteredUtcTime(newMatchForm.matchTime),
+                predictionsEndingTime: serializeEnteredUtcTime(newMatchForm.predictionsEndingTime),
+                round: newMatchForm.round,
+                group: newMatchForm.group || undefined,
+                matchTag: newMatchForm.matchTag || buildMatchTag(newMatchForm.team1, newMatchForm.team2),
+                comment: newMatchForm.comment || undefined,
+            };
+
+            if (editingMatchId) {
+                await apiService.updateMatch(editingMatchId, payload);
+            } else {
+                await apiService.createMatch(payload);
+            }
+
+            setSuccess(editingMatchId ? 'Match updated successfully' : 'Match entry created successfully');
+            setEditingMatchId(null);
+            setNewMatchForm({
+                sequence: '',
+                team1: '',
+                team2: '',
+                matchTime: '',
+                predictionsEndingTime: '',
+                round: '',
+                group: '',
+                matchTag: '',
+                comment: '',
+            });
+            fetchInitialData();
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Failed to create match entry');
+        }
+    };
+
+    const handleEditMatch = (match: Match) => {
+        setEditingMatchId(match.matchId);
+        setNewMatchForm({
+            sequence: String(match.sequence ?? ''),
+            team1: match.team1,
+            team2: match.team2,
+            matchTime: new Date(match.matchTime).toISOString().slice(0, 16),
+            predictionsEndingTime: new Date(match.predictionsEndingTime).toISOString().slice(0, 16),
+            round: match.round || '',
+            group: match.group || '',
+            matchTag: match.matchTag || buildMatchTag(match.team1, match.team2),
+            comment: match.comment || '',
+        });
+    };
+
+    const resetMatchForm = () => {
+        setEditingMatchId(null);
+        setNewMatchForm({
+            sequence: '',
+            team1: '',
+            team2: '',
+            matchTime: '',
+            predictionsEndingTime: '',
+            round: '',
+            group: '',
+            matchTag: '',
+            comment: '',
+        });
+    };
+
     const handleDeleteUser = async (userId: string) => {
         if (!window.confirm('Are you sure you want to delete this user? This cannot be undone.')) return;
         try {
@@ -139,6 +311,13 @@ const AdminDashboard: React.FC = () => {
             setError('Failed to delete user');
         }
     };
+
+    const matchesForActiveMatchTab =
+        matchTab === 'onboarded'
+            ? onboardedMatches
+            : matchTab === 'scheduled'
+                ? scheduledMatches
+                : completedMatches;
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -162,7 +341,7 @@ const AdminDashboard: React.FC = () => {
                     className={`px-6 py-3 font-medium whitespace-nowrap ${activeTab === 'matches' ? 'border-b-2 border-secondary text-secondary' : 'text-gray-500'}`}
                     onClick={() => setActiveTab('matches')}
                 >
-                    Finalize Matches
+                    Match Management
                 </button>
                 <button
                     className={`px-6 py-3 font-medium whitespace-nowrap ${activeTab === 'users' ? 'border-b-2 border-secondary text-secondary' : 'text-gray-500'}`}
@@ -282,47 +461,180 @@ const AdminDashboard: React.FC = () => {
 
                     {activeTab === 'matches' && (
                         <div className="p-6">
-                            <h2 className="text-xl font-bold mb-4">Finalize Completed Matches</h2>
+                            {matchTab === 'onboarded' && (
+                                <form onSubmit={handleCreateMatchEntry} className="mb-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                                    <div className="mb-4 flex items-center justify-between gap-3">
+                                        <h3 className="text-lg font-bold">{editingMatchId ? 'Edit Match Entry' : 'Add Match Entry'}</h3>
+                                        {editingMatchId && (
+                                            <button type="button" onClick={resetMatchForm} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                                                Cancel Edit
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                                        <input className="border rounded px-3 py-2" type="number" placeholder="Sequence" value={newMatchForm.sequence} onChange={(e) => setNewMatchForm(prev => ({ ...prev, sequence: e.target.value }))} />
+                                        <select className="border rounded px-3 py-2" value={newMatchForm.team1} onChange={(e) => syncMatchTag(e.target.value, newMatchForm.team2)}>
+                                            <option value="">Select Team 1</option>
+                                            {teams.map((team) => (
+                                                <option key={team.teamId} value={team.teamId}>{team.teamName}</option>
+                                            ))}
+                                        </select>
+                                        <select className="border rounded px-3 py-2" value={newMatchForm.team2} onChange={(e) => syncMatchTag(newMatchForm.team1, e.target.value)}>
+                                            <option value="">Select Team 2</option>
+                                            {teams.map((team) => (
+                                                <option key={team.teamId} value={team.teamId}>{team.teamName}</option>
+                                            ))}
+                                        </select>
+                                        <div className="border rounded px-3 py-2 bg-white text-gray-600">
+                                            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Kickoff Date/Time (UTC)</div>
+                                            <input className="w-full outline-none mt-1" type="datetime-local" value={newMatchForm.matchTime} onChange={(e) => setNewMatchForm(prev => ({
+                                                ...prev,
+                                                matchTime: e.target.value,
+                                                predictionsEndingTime: derivePredictionDeadline(e.target.value),
+                                                matchTag: buildMatchTag(prev.team1, prev.team2)
+                                            }))} />
+                                        </div>
+                                        <div className="border rounded px-3 py-2 bg-white text-gray-600">
+                                            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Prediction Deadline (UTC)</div>
+                                            <input className="w-full outline-none mt-1" type="datetime-local" value={newMatchForm.predictionsEndingTime} onChange={(e) => setNewMatchForm(prev => ({ ...prev, predictionsEndingTime: e.target.value }))} />
+                                        </div>
+                                        <input className="border rounded px-3 py-2" placeholder="Round" value={newMatchForm.round} onChange={(e) => setNewMatchForm(prev => ({ ...prev, round: e.target.value }))} />
+                                        <input className="border rounded px-3 py-2" placeholder="Group" value={newMatchForm.group} onChange={(e) => setNewMatchForm(prev => ({ ...prev, group: e.target.value }))} />
+                                        <input className="border rounded px-3 py-2 md:col-span-2 xl:col-span-3" placeholder="Comment" value={newMatchForm.comment} onChange={(e) => setNewMatchForm(prev => ({ ...prev, comment: e.target.value }))} />
+                                    </div>
+                                    <div className="mt-4 flex justify-end">
+                                        <button type="submit" className="bg-secondary text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+                                            {editingMatchId ? 'Update Match Entry' : 'Add Match Entry'}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+
+                            <div className="flex flex-wrap gap-2 mb-6">
+                                <button
+                                    className={`px-4 py-2 rounded-full text-sm font-medium border ${matchTab === 'onboarded' ? 'bg-secondary text-white border-secondary' : 'bg-white text-gray-600 border-gray-300'}`}
+                                    onClick={() => setMatchTab('onboarded')}
+                                >
+                                    Onboarded Matches
+                                </button>
+                                <button
+                                    className={`px-4 py-2 rounded-full text-sm font-medium border ${matchTab === 'scheduled' ? 'bg-secondary text-white border-secondary' : 'bg-white text-gray-600 border-gray-300'}`}
+                                    onClick={() => setMatchTab('scheduled')}
+                                >
+                                    Scheduled Matches
+                                </button>
+                                <button
+                                    className={`px-4 py-2 rounded-full text-sm font-medium border ${matchTab === 'completed' ? 'bg-secondary text-white border-secondary' : 'bg-white text-gray-600 border-gray-300'}`}
+                                    onClick={() => setMatchTab('completed')}
+                                >
+                                    Completed Matches
+                                </button>
+                            </div>
+
+                            <h2 className="text-xl font-bold mb-4">
+                                {matchTab === 'onboarded'
+                                    ? 'Onboarded Matches'
+                                    : matchTab === 'scheduled'
+                                        ? 'Scheduled Matches'
+                                        : 'Completed Matches'}
+                            </h2>
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Match</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Group</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Round</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Final Score</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                {matchTab === 'onboarded' ? 'Kickoff Time Zones' : 'Final Score'}
+                                            </th>
                                             <th className="px-4 py-3"></th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                        {matches.map(match => (
+                                        {matchesForActiveMatchTab.map(match => (
                                             <tr key={match.matchId}>
                                                 <td className="px-4 py-4">
-                                                    <div className="text-sm font-bold">{match.team1} vs {match.team2}</div>
-                                                    <div className="text-xs text-gray-500">{format(new Date(match.matchTime), 'MMM dd, HH:mm')}</div>
+                                                    <div className="text-sm font-bold">{getTeamDisplayName(match, 'team1')} vs {getTeamDisplayName(match, 'team2')}</div>
+                                                </td>
+                                                <td className="px-4 py-4 text-xs text-gray-700">{match.group || '-'}</td>
+                                                <td className="px-4 py-4 text-xs text-gray-700">{match.round || '-'}</td>
+                                                <td className="px-4 py-4">
+                                                    {matchTab === 'onboarded' ? (
+                                                        <span className="text-xs px-2 py-1 rounded font-bold bg-amber-100 text-amber-700">
+                                                            ONBOARDED
+                                                        </span>
+                                                    ) : (
+                                                        <span className={`text-xs px-2 py-1 rounded font-bold ${match.status === 'completed' ? 'bg-gray-100 text-gray-600' : match.status === 'ongoing' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                                                            {match.status.toUpperCase()}
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <span className={`text-xs px-2 py-1 rounded font-bold ${match.status === 'completed' ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-700'}`}>
-                                                        {match.status.toUpperCase()}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <input type="number" id={`s1-${match.matchId}`} defaultValue={match.team1Score || 0} className="w-12 border rounded px-1 text-center" />
-                                                        <span>-</span>
-                                                        <input type="number" id={`s2-${match.matchId}`} defaultValue={match.team2Score || 0} className="w-12 border rounded px-1 text-center" />
-                                                    </div>
+                                                    {matchTab === 'onboarded' ? (
+                                                        <div className="space-y-3 text-xs text-gray-600">
+                                                            <div>
+                                                                <div className="mb-1 font-semibold uppercase tracking-wide text-gray-500">Kickoff</div>
+                                                                {getKickoffTimeZones(match.matchTime).map((entry) => (
+                                                                    <div key={`kickoff-${entry.label}`} className="flex gap-2">
+                                                                        <span className="w-10 font-semibold text-gray-500">{entry.label}</span>
+                                                                        <span>{entry.value}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            <div>
+                                                                <div className="mb-1 font-semibold uppercase tracking-wide text-gray-500">Prediction</div>
+                                                                {getKickoffTimeZones(match.predictionsEndingTime).map((entry) => (
+                                                                    <div key={`prediction-${entry.label}`} className="flex gap-2">
+                                                                        <span className="w-10 font-semibold text-gray-500">{entry.label}</span>
+                                                                        <span>{entry.value}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2">
+                                                            <input type="number" id={`s1-${match.matchId}`} defaultValue={match.team1Score || 0} className="w-12 border rounded px-1 text-center" />
+                                                            <span>-</span>
+                                                            <input type="number" id={`s2-${match.matchId}`} defaultValue={match.team2Score || 0} className="w-12 border rounded px-1 text-center" />
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-4 text-right">
-                                                    <button
-                                                        onClick={() => {
-                                                            const s1 = (document.getElementById(`s1-${match.matchId}`) as HTMLInputElement).value;
-                                                            const s2 = (document.getElementById(`s2-${match.matchId}`) as HTMLInputElement).value;
-                                                            handleFinalizeMatch(match.matchId, s1, s2);
-                                                        }}
-                                                        className="bg-secondary text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                                                    >
-                                                        {match.status === 'completed' ? 'Recalculate' : 'Finalize'}
-                                                    </button>
+                                                    {matchTab === 'onboarded' ? (
+                                                        <div className="flex justify-end gap-2">
+                                                            <button
+                                                                onClick={() => handleEditMatch(match)}
+                                                                className="border border-gray-300 bg-white px-3 py-1 rounded text-sm hover:bg-gray-50"
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleScheduleMatch(match.matchId)}
+                                                                className="bg-secondary text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                                                            >
+                                                                Schedule
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteMatch(match.matchId)}
+                                                                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => {
+                                                                const s1 = (document.getElementById(`s1-${match.matchId}`) as HTMLInputElement).value;
+                                                                const s2 = (document.getElementById(`s2-${match.matchId}`) as HTMLInputElement).value;
+                                                                handleFinalizeMatch(match.matchId, s1, s2);
+                                                            }}
+                                                            className="bg-secondary text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                                                        >
+                                                            {match.status === 'completed' ? 'Recalculate' : 'Finalize'}
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
