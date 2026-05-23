@@ -68,3 +68,5 @@ temp/
 azure_functions/local.settings.json.example
 backend/.env.example
 backend/.env.example
+backend/.env.example
+backend/.env.production

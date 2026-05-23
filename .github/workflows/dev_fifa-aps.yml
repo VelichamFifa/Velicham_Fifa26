@@ -9,6 +9,10 @@ on:
       - dev
   workflow_dispatch:
 
+concurrency:
+  group: fifa-aps-dev-deploy
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
