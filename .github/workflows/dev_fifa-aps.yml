@@ -7,6 +7,9 @@ on:
   push:
     branches:
       - dev
+    paths:
+      - backend/**
+      - .github/workflows/dev_fifa-aps.yml
   workflow_dispatch:
 
 concurrency:

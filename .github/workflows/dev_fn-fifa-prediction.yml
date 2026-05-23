@@ -8,6 +8,9 @@ on:
   push:
     branches:
       - dev
+    paths:
+      - azure_functions/**
+      - .github/workflows/dev_fn-fifa-prediction.yml
   workflow_dispatch:
 
 env:
