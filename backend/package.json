@@ -19,6 +19,7 @@
     "seed:leaderboards": "tsx scripts/seedLeaderboards.ts"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.1",
     "@azure/storage-queue": "^12.23.0",
     "@prisma/client": "^6.16.0",
     "axios": "^1.6.2",
