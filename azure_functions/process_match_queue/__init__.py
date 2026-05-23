@@ -22,6 +22,7 @@ def main(msg: func.QueueMessage) -> None:
     moving the message to the poison queue (finalize-match-queue-poison).
     """
     raw = msg.get_body()
+    logger.info("process_match_queue: message received (bytes=%s)", len(raw) if raw else 0)
 
     # The Azure Storage SDK sends messages base64-encoded; the Functions
     # runtime decodes them automatically, but handle both just in case.
@@ -29,16 +30,24 @@ def main(msg: func.QueueMessage) -> None:
         body_str = raw.decode("utf-8")
     except Exception:
         body_str = raw
+    logger.info("process_match_queue: payload decoded to string")
 
+    parsed_as_plain_json = True
     try:
         # Try plain JSON first, then base64-decoded JSON
         try:
             payload = json.loads(body_str)
         except (json.JSONDecodeError, ValueError):
+            parsed_as_plain_json = False
             payload = json.loads(base64.b64decode(body_str).decode("utf-8"))
     except Exception as exc:
         logger.error("process_match_queue: failed to parse message body: %s | raw=%r", exc, raw)
         raise
+
+    logger.info(
+        "process_match_queue: payload parsed successfully (mode=%s)",
+        "plain-json" if parsed_as_plain_json else "base64-json",
+    )
 
     match_id = payload.get("matchId")
     team1_score = payload.get("team1Score")
@@ -58,6 +67,8 @@ def main(msg: func.QueueMessage) -> None:
         logger.error("process_match_queue: non-integer values in payload: %s", exc)
         raise
 
+    logger.info("process_match_queue: payload validation complete (matchId=%s)", match_id)
+
     logger.info(
         "process_match_queue: processing matchId=%s  %s-%s",
         match_id,
@@ -66,6 +77,7 @@ def main(msg: func.QueueMessage) -> None:
     )
 
     # Reuse the finalize logic (scores predictions + rebuilds leaderboards)
+    logger.info("process_match_queue: invoking finalize workflow (matchId=%s)", match_id)
     result = _finalize(match_id, team1_score, team2_score, rebuild=True)
 
     logger.info(
@@ -75,7 +87,10 @@ def main(msg: func.QueueMessage) -> None:
     )
 
     if result.status_code != 200:
+        logger.error("process_match_queue: finalize returned non-200 (matchId=%s, status=%s)", match_id, result.status_code)
         raise RuntimeError(
             f"_finalize returned non-200 for matchId={match_id}: "
             f"status={result.status_code} body={result.get_body()}"
         )
+
+    logger.info("process_match_queue: message processed successfully (matchId=%s)", match_id)
