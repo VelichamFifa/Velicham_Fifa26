@@ -5,6 +5,7 @@ import { logger } from '../lib/logger';
 import { processMatchResults } from '../services/scoringService';
 import { capitalizeProperNoun } from '../utils/stringUtils';
 import { findExistingCommunityForRequest } from '../utils/communityLookup';
+import { isQueueConfigured, enqueueFinalizeMatch } from '../lib/queueClient';
 
 export const getCommunityRequests = async (req: AuthRequest, res: Response) => {
   try {
@@ -74,8 +75,17 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
       data: { team1Score, team2Score, status: 'completed' },
     });
 
-    await processMatchResults(matchIdNum);
+    if (isQueueConfigured()) {
+      // Async path: enqueue for Azure Function queue trigger to process
+      await enqueueFinalizeMatch(matchIdNum, team1Score, team2Score);
+      return res.status(202).json({
+        message: 'Match finalized. Scoring and leaderboard rebuild queued for async processing.',
+        match: { ...updated, matchId: String(updated.id) },
+      });
+    }
 
+    // Fallback: process synchronously (local dev without Azure Storage)
+    await processMatchResults(matchIdNum);
     res.json({
       message: 'Match finalized and points calculated successfully',
       match: { ...updated, matchId: String(updated.id) },

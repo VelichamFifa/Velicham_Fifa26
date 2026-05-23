@@ -5,9 +5,9 @@ from datetime import datetime
 
 import azure.functions as func
 
-from shared.db import connect, fetch_all
-from shared.leaderboards import rebuild_all_leaderboards
-from shared.scoring import calculate_prediction_points, prediction_outcome
+from ..shared.db import connect, fetch_all
+from ..shared.leaderboards import rebuild_all_leaderboards
+from ..shared.scoring import calculate_prediction_points, prediction_outcome
 
 
 def _community_name(cursor, community_id: int | None) -> str | None:

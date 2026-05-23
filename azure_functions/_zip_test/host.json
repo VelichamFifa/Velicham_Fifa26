@@ -1,0 +1,20 @@
+{
+  "version": "2.0",
+  "extensionBundle": {
+    "id": "Microsoft.Azure.Functions.ExtensionBundle",
+    "version": "[4.*, 5.0.0)"
+  },
+  "extensions": {
+    "http": {
+      "routePrefix": "api"
+    }
+  },
+  "cors": {
+    "allowedOrigins": [
+      "http://localhost:3000",
+      "https://blue-meadow-054418e0f.7.azurestaticapps.net"
+    ],
+    "supportCredentials": false
+  }
+}
+

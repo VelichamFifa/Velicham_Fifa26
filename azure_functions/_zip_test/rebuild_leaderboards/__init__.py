@@ -5,8 +5,8 @@ from datetime import datetime
 
 import azure.functions as func
 
-from shared.db import connect
-from shared.leaderboards import rebuild_all_leaderboards
+from ..shared.db import connect
+from ..shared.leaderboards import rebuild_all_leaderboards
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
