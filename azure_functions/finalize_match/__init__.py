@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 import json
-import logging
 from datetime import datetime
 
 import azure.functions as func
 
 from shared.db import connect, fetch_all
 from shared.leaderboards import rebuild_all_leaderboards
+from shared.logging_utils import get_logger, log_step
 from shared.scoring import calculate_prediction_points, prediction_outcome
 
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _community_name(cursor, community_id: int | None) -> str | None:
@@ -23,7 +23,7 @@ def _community_name(cursor, community_id: int | None) -> str | None:
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logger.info("finalize_match: request received")
+    log_step(logger, "request_received", function="finalize_match")
     try:
         body = req.get_json()
     except ValueError:
@@ -34,7 +34,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     team1_score = body.get("team1Score")
     team2_score = body.get("team2Score")
     rebuild = body.get("rebuildLeaderboards", False)
-    logger.info("finalize_match: payload parsed (matchId=%s, rebuild=%s)", match_id, rebuild)
+    log_step(logger, "payload_parsed", function="finalize_match", matchId=match_id, rebuild=rebuild)
 
     if not match_id:
         logger.warning("finalize_match: missing matchId")
@@ -55,7 +55,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logger.warning("finalize_match: non-integer input values")
         return func.HttpResponse(json.dumps({"error": "matchId and scores must be integers"}), status_code=400, mimetype="application/json")
 
-    logger.info("finalize_match: validation complete (matchId=%s)", match_id)
+    log_step(logger, "validation_complete", function="finalize_match", matchId=match_id)
 
     try:
         response = _finalize(
@@ -64,7 +64,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             team2_score,
             rebuild,
         )
-        logger.info("finalize_match: request completed (matchId=%s, status=%s)", match_id, response.status_code)
+        log_step(logger, "request_completed", function="finalize_match", matchId=match_id, status=response.status_code)
         return response
     except Exception as exc:
         logger.exception("finalize_match: failed (matchId=%s)", match_id)
@@ -92,7 +92,7 @@ def _finalize(
     skipped_users = 0
 
     with connect(autocommit=False) as cnxn:
-        logger.info("finalize_match: database connection opened")
+        log_step(logger, "db_connection_opened", function="finalize_match", matchId=match_id)
         cur = cnxn.cursor()
 
         cur.execute(
@@ -106,7 +106,7 @@ def _finalize(
 
         match_tag = match_row["matchTag"]
         match_time = match_row["matchTime"]
-        logger.info("finalize_match: loaded match metadata (matchId=%s, matchTag=%s)", match_id, match_tag)
+        log_step(logger, "match_metadata_loaded", function="finalize_match", matchId=match_id, matchTag=match_tag)
         match_time_iso = None
         try:
             match_time_iso = match_time.isoformat() if isinstance(match_time, datetime) else None
@@ -121,7 +121,7 @@ def _finalize(
             """,
             (team1_score, team2_score, match_id),
         )
-        logger.info("finalize_match: match row updated to completed (matchId=%s)", match_id)
+        log_step(logger, "match_updated", function="finalize_match", matchId=match_id)
 
         cur.execute(
             """
@@ -132,7 +132,7 @@ def _finalize(
             (match_id,),
         )
         predictions = fetch_all(cur)
-        logger.info("finalize_match: fetched predictions (matchId=%s, count=%s)", match_id, len(predictions))
+        log_step(logger, "predictions_fetched", function="finalize_match", matchId=match_id, count=len(predictions))
 
         community_points: dict[str, int] = {}
         community_name_cache: dict[int, str | None] = {}
@@ -223,10 +223,13 @@ def _finalize(
 
             predictions_processed += 1
 
-        logger.info(
-            "finalize_match: prediction scoring complete (processed=%s, skippedUsers=%s)",
-            predictions_processed,
-            skipped_users,
+        log_step(
+            logger,
+            "prediction_scoring_complete",
+            function="finalize_match",
+            matchId=match_id,
+            processed=predictions_processed,
+            skippedUsers=skipped_users,
         )
 
         for community_id, community_match_point in community_points.items():
@@ -244,22 +247,25 @@ def _finalize(
                 (community_id, match_id, match_tag, community_match_point),
             )
 
-        logger.info(
-            "finalize_match: community results upsert complete (communities=%s)",
-            len(community_points),
+        log_step(
+            logger,
+            "community_results_upsert_complete",
+            function="finalize_match",
+            matchId=match_id,
+            communities=len(community_points),
         )
 
         leaderboard_info = None
         if rebuild:
-            logger.info("finalize_match: leaderboard rebuild requested (matchId=%s)", match_id)
+            log_step(logger, "leaderboard_rebuild_requested", function="finalize_match", matchId=match_id)
             leaderboard_info = rebuild_all_leaderboards(
                 cur,
                 target_date=match_time if isinstance(match_time, datetime) else None,
             )
-            logger.info("finalize_match: leaderboard rebuild completed (matchId=%s)", match_id)
+            log_step(logger, "leaderboard_rebuild_completed", function="finalize_match", matchId=match_id)
 
         cnxn.commit()
-        logger.info("finalize_match: database transaction committed (matchId=%s)", match_id)
+        log_step(logger, "transaction_committed", function="finalize_match", matchId=match_id)
 
     return func.HttpResponse(
         json.dumps(

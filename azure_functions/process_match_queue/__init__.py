@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import base64
 import json
-import logging
 
 import azure.functions as func
 
 from finalize_match import _finalize
+from shared.logging_utils import get_logger, log_step
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def main(msg: func.QueueMessage) -> None:
     """Queue-triggered function that processes a finalize-match message.
-
+    log_step(logger, "Started", function="process_match_queue")
     The Express backend enqueues a base64-encoded JSON message with shape:
         { "matchId": int, "team1Score": int, "team2Score": int }
 
@@ -22,7 +22,7 @@ def main(msg: func.QueueMessage) -> None:
     moving the message to the poison queue (finalize-match-queue-poison).
     """
     raw = msg.get_body()
-    logger.info("process_match_queue: message received (bytes=%s)", len(raw) if raw else 0)
+    log_step(logger, "message_received", function="process_match_queue", bytes=len(raw) if raw else 0)
 
     # The Azure Storage SDK sends messages base64-encoded; the Functions
     # runtime decodes them automatically, but handle both just in case.
@@ -30,7 +30,7 @@ def main(msg: func.QueueMessage) -> None:
         body_str = raw.decode("utf-8")
     except Exception:
         body_str = raw
-    logger.info("process_match_queue: payload decoded to string")
+    log_step(logger, "payload_decoded", function="process_match_queue")
 
     parsed_as_plain_json = True
     try:
@@ -44,9 +44,11 @@ def main(msg: func.QueueMessage) -> None:
         logger.error("process_match_queue: failed to parse message body: %s | raw=%r", exc, raw)
         raise
 
-    logger.info(
-        "process_match_queue: payload parsed successfully (mode=%s)",
-        "plain-json" if parsed_as_plain_json else "base64-json",
+    log_step(
+        logger,
+        "payload_parsed",
+        function="process_match_queue",
+        mode="plain-json" if parsed_as_plain_json else "base64-json",
     )
 
     match_id = payload.get("matchId")
@@ -67,7 +69,7 @@ def main(msg: func.QueueMessage) -> None:
         logger.error("process_match_queue: non-integer values in payload: %s", exc)
         raise
 
-    logger.info("process_match_queue: payload validation complete (matchId=%s)", match_id)
+    log_step(logger, "validation_complete", function="process_match_queue", matchId=match_id)
 
     logger.info(
         "process_match_queue: processing matchId=%s  %s-%s",
@@ -77,7 +79,7 @@ def main(msg: func.QueueMessage) -> None:
     )
 
     # Reuse the finalize logic (scores predictions + rebuilds leaderboards)
-    logger.info("process_match_queue: invoking finalize workflow (matchId=%s)", match_id)
+    log_step(logger, "invoke_finalize", function="process_match_queue", matchId=match_id)
     result = _finalize(match_id, team1_score, team2_score, rebuild=True)
 
     logger.info(
@@ -93,4 +95,4 @@ def main(msg: func.QueueMessage) -> None:
             f"status={result.status_code} body={result.get_body()}"
         )
 
-    logger.info("process_match_queue: message processed successfully (matchId=%s)", match_id)
+    log_step(logger, "message_processed", function="process_match_queue", matchId=match_id)

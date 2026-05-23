@@ -12,6 +12,8 @@ Python Azure Functions that mirror the Node backend finalize/scoring flow agains
 - **`DATABASE_URL`**: Prisma-style MySQL URL (same as backend), e.g.  
   `mysql://user:password@host.mysql.database.azure.com:3306/dbname?sslaccept=strict`
 - **`MYSQL_URL`** (optional): overrides `DATABASE_URL`
+- **`APPLICATIONINSIGHTS_CONNECTION_STRING`**: enables telemetry and centralized logs in Application Insights
+- **`AZURE_FUNCTIONS_LOG_LEVEL`** (optional): app log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`)
 
 Passwords with special characters should be URL-encoded (`@` → `%40`). The parser also supports an unencoded `@` in the password by splitting on the last `@` before the host.
 

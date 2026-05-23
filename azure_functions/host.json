@@ -9,6 +9,21 @@
       "routePrefix": "api"
     }
   },
+  "logging": {
+    "logLevel": {
+      "default": "Information",
+      "Host.Results": "Information",
+      "Function": "Information",
+      "Host.Aggregator": "Warning"
+    },
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "excludedTypes": "Request"
+      },
+      "enableLiveMetricsFilters": true
+    }
+  },
   "cors": {
     "allowedOrigins": [
       "http://localhost:3000",
