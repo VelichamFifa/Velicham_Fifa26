@@ -81,6 +81,112 @@ export const submitPrediction = async (req: AuthRequest, res: Response) => {
   }
 };
 
+const buildPredictionsFromResults = async (
+  userIdNum: number,
+  pageNum: number,
+  limitNum: number,
+  matchIdNum?: number
+) => {
+  const skip = (pageNum - 1) * limitNum;
+  const where = {
+    userId: userIdNum,
+    ...(matchIdNum ? { matchId: matchIdNum } : {}),
+  };
+
+  const [results, total] = await Promise.all([
+    prisma.result.findMany({
+      where,
+      select: {
+        id: true,
+        userId: true,
+        matchId: true,
+        matchTag: true,
+        result: true,
+        matchPoints: true,
+        finalPoints: true,
+        communityName1: true,
+        communityName2: true,
+        team1PredictedScore: true,
+        team2PredictedScore: true,
+        matchRank: true,
+        finalRank: true,
+        createdAt: true,
+        updatedAt: true,
+        match: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limitNum,
+    }),
+    prisma.result.count({ where }),
+  ]);
+
+  const teamIds = Array.from(
+    new Set(results.flatMap((r) => (r.match ? [r.match.team1, r.match.team2] : [])))
+  );
+  const teams = teamIds.length
+    ? await prisma.team.findMany({
+        where: { teamId: { in: teamIds } },
+        select: { teamId: true, teamName: true, countryLogo: true },
+      })
+    : [];
+  const teamById = new Map(teams.map((t) => [t.teamId, t]));
+
+  const populatedResults = results.map((result) => {
+    const apiMatch = result.match
+      ? {
+          matchId: String(result.match.id),
+          team1: result.match.team1,
+          team2: result.match.team2,
+          team1Score: result.match.team1Score,
+          team2Score: result.match.team2Score,
+          matchTime: result.match.matchTime,
+          predictionsEndingTime: result.match.predictionsEndingTime,
+          status: result.match.status,
+          matchTag: result.match.matchTag,
+          team1Info: teamById.get(result.match.team1)
+            ? {
+                teamName: teamById.get(result.match.team1)!.teamName,
+                countryLogo: teamById.get(result.match.team1)!.countryLogo,
+              }
+            : null,
+          team2Info: teamById.get(result.match.team2)
+            ? {
+                teamName: teamById.get(result.match.team2)!.teamName,
+                countryLogo: teamById.get(result.match.team2)!.countryLogo,
+              }
+            : null,
+        }
+      : null;
+
+    return {
+      id: result.id,
+      matchId: apiMatch,
+      result: result.result,
+      matchPoints: result.matchPoints,
+      finalPoints: result.finalPoints,
+      communityName1: result.communityName1,
+      communityName2: result.communityName2,
+      team1PredictedScore: result.team1PredictedScore,
+      team2PredictedScore: result.team2PredictedScore,
+      matchRank: result.matchRank,
+      finalRank: result.finalRank,
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+    };
+  });
+
+  return {
+    predictions: populatedResults,
+    pagination: {
+      total,
+      page: pageNum,
+      limit: limitNum,
+      pages: Math.ceil(total / limitNum),
+    },
+  };
+};
+
 export const getUserPredictions = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
@@ -97,91 +203,16 @@ export const getUserPredictions = async (req: AuthRequest, res: Response) => {
 
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);
-    const skip = (pageNum - 1) * limitNum;
-
-    const where: any = { userId: userIdNum };
+    let matchIdNum: number | undefined;
     if (matchId) {
-      const matchIdNum = Number(matchId);
-      if (Number.isInteger(matchIdNum) && matchIdNum > 0) {
-        where.matchId = matchIdNum;
+      const parsedMatchId = Number(matchId);
+      if (Number.isInteger(parsedMatchId) && parsedMatchId > 0) {
+        matchIdNum = parsedMatchId;
       }
     }
 
-    const [predictions, total] = await Promise.all([
-      prisma.prediction.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limitNum,
-        include: { match: true },
-      }),
-      prisma.prediction.count({ where }),
-    ]);
-
-    const results = await prisma.result.findMany({
-      where: { userId: userIdNum, matchId: { in: predictions.map((p) => p.matchId) } },
-      select: { matchId: true, finalRank: true, matchRank: true },
-    });
-
-    const resultByMatchId = new Map(results.map((r) => [r.matchId, r]));
-
-    const teamIds = Array.from(
-      new Set(
-        predictions.flatMap((p) => (p.match ? [p.match.team1, p.match.team2] : []))
-      )
-    );
-    const teams = teamIds.length
-      ? await prisma.team.findMany({
-          where: { teamId: { in: teamIds } },
-          select: { teamId: true, teamName: true, countryLogo: true },
-        })
-      : [];
-    const teamById = new Map(teams.map((t) => [t.teamId, t]));
-
-    const populatedPredictions = predictions
-      .map((p) => {
-        const apiMatch = p.match
-          ? {
-              ...p.match,
-              matchId: String(p.match.id),
-              team1Info: teamById.get(p.match.team1)
-                ? {
-                    teamName: teamById.get(p.match.team1)!.teamName,
-                    countryLogo: teamById.get(p.match.team1)!.countryLogo,
-                  }
-                : null,
-              team2Info: teamById.get(p.match.team2)
-                ? {
-                    teamName: teamById.get(p.match.team2)!.teamName,
-                    countryLogo: teamById.get(p.match.team2)!.countryLogo,
-                  }
-                : null,
-            }
-          : null;
-        return {
-          ...p,
-          matchId: apiMatch, // keep frontend shape compatibility (it expects match object sometimes)
-          match: undefined,
-          historicRank: resultByMatchId.get(p.matchId)
-            ? { finalRank: resultByMatchId.get(p.matchId)!.finalRank, matchRank: resultByMatchId.get(p.matchId)!.matchRank }
-            : null,
-        };
-      })
-      .sort((a: any, b: any) => {
-        const timeA = a.matchId?.matchTime ? new Date(a.matchId.matchTime).getTime() : 0;
-        const timeB = b.matchId?.matchTime ? new Date(b.matchId.matchTime).getTime() : 0;
-        return timeB - timeA;
-      });
-
-    res.json({
-      predictions: populatedPredictions,
-      pagination: {
-        total,
-        page: pageNum,
-        limit: limitNum,
-        pages: Math.ceil(total / limitNum),
-      },
-    });
+    const responsePayload = await buildPredictionsFromResults(userIdNum, pageNum, limitNum, matchIdNum);
+    res.json(responsePayload);
   } catch (error) {
     const errorDetails = logger.error('getUserPredictions', error, {
       method: req.method,
@@ -272,7 +303,7 @@ export const deletePrediction = async (req: AuthRequest, res: Response) => {
 export const getUserPredictionsFromResults = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
-    const { page = '1', limit = '10' } = req.query;
+    const { matchId, page = '1', limit = '10' } = req.query;
 
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -285,115 +316,16 @@ export const getUserPredictionsFromResults = async (req: AuthRequest, res: Respo
 
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);
-    const skip = (pageNum - 1) * limitNum;
+    let matchIdNum: number | undefined;
+    if (matchId) {
+      const parsedMatchId = Number(matchId);
+      if (Number.isInteger(parsedMatchId) && parsedMatchId > 0) {
+        matchIdNum = parsedMatchId;
+      }
+    }
 
-    // Fetch results for this user with match info
-    const [results, total] = await Promise.all([
-      prisma.result.findMany({
-        where: { userId: userIdNum },
-        select: {
-          id: true,
-          userId: true,
-          matchId: true,
-          matchTag: true,
-          result: true,
-          matchPoints: true,
-          finalPoints: true,
-          communityName1: true,
-          communityName2: true,
-          team1PredictedScore: true,
-          team2PredictedScore: true,
-          matchRank: true,
-          finalRank: true,
-          createdAt: true,
-          updatedAt: true,
-          match: true,
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limitNum,
-      }),
-      prisma.result.count({ where: { userId: userIdNum } }),
-    ]);
-
-    // Get team info for all matches
-    const teamIds = Array.from(
-      new Set(results.flatMap((r) => (r.match ? [r.match.team1, r.match.team2] : [])))
-    );
-    const teams = teamIds.length
-      ? await prisma.team.findMany({
-          where: { teamId: { in: teamIds } },
-          select: { teamId: true, teamName: true, countryLogo: true },
-        })
-      : [];
-    const teamById = new Map(teams.map((t) => [t.teamId, t]));
-
-    const matchIds = results.map((r) => r.matchId);
-    const predictionRows = matchIds.length
-      ? await prisma.prediction.findMany({
-          where: { userId: userIdNum, matchId: { in: matchIds } },
-          select: { matchId: true, team1Score: true, team2Score: true },
-        })
-      : [];
-    const predictionByMatchId = new Map(predictionRows.map((p) => [p.matchId, p]));
-
-    // Format response data
-    const populatedResults = results.map((result) => {
-      const linkedPrediction = predictionByMatchId.get(result.matchId);
-      const apiMatch = result.match
-        ? {
-            matchId: String(result.match.id),
-            team1: result.match.team1,
-            team2: result.match.team2,
-            team1Score: result.match.team1Score,
-            team2Score: result.match.team2Score,
-            matchTime: result.match.matchTime,
-            predictionsEndingTime: result.match.predictionsEndingTime,
-            status: result.match.status,
-            matchTag: result.match.matchTag,
-            team1Info: teamById.get(result.match.team1)
-              ? {
-                  teamName: teamById.get(result.match.team1)!.teamName,
-                  countryLogo: teamById.get(result.match.team1)!.countryLogo,
-                }
-              : null,
-            team2Info: teamById.get(result.match.team2)
-              ? {
-                  teamName: teamById.get(result.match.team2)!.teamName,
-                  countryLogo: teamById.get(result.match.team2)!.countryLogo,
-                }
-              : null,
-          }
-        : null;
-
-      return {
-        id: result.id,
-        matchId: apiMatch,
-        result: result.result,
-        matchPoints: result.matchPoints,
-        finalPoints: result.finalPoints,
-        communityName1: result.communityName1,
-        communityName2: result.communityName2,
-        team1PredictedScore:
-          result.team1PredictedScore ?? linkedPrediction?.team1Score ?? null,
-        team2PredictedScore:
-          result.team2PredictedScore ?? linkedPrediction?.team2Score ?? null,
-        matchRank: result.matchRank,
-        finalRank: result.finalRank,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
-      };
-    });
-
-    res.json({
-      predictions: populatedResults,
-      pagination: {
-        total,
-        page: pageNum,
-        limit: limitNum,
-        pages: Math.ceil(total / limitNum),
-      },
-    });
+    const responsePayload = await buildPredictionsFromResults(userIdNum, pageNum, limitNum, matchIdNum);
+    res.json(responsePayload);
   } catch (error) {
     const errorDetails = logger.error('getUserPredictionsFromResults', error, {
       method: req.method,
