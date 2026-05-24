@@ -145,24 +145,49 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Main Content: Matches to Predict */}
         <div className="lg:col-span-2">
-          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-4 shadow-lg mb-4">
-            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/15 blur-md" />
-            <div className="relative flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-black tracking-wider text-white/80">My Final Rank</p>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white">
-                    {userStats.final.rank === '-' ? '–' : `#${userStats.final.rank}`}
-                  </span>
-                  <span className="rounded-md bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                    {userStats.final.totalPoints} pts
-                  </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-4 shadow-lg">
+              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/15 blur-md" />
+              <div className="relative flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-black tracking-wider text-white/80">My Final Rank</p>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-4xl sm:text-[2.75rem] leading-none font-black text-white">
+                      {userStats.final.rank === '-' ? '–' : `#${userStats.final.rank}`}
+                    </span>
+                    <span className="rounded-md bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+                      {userStats.final.totalPoints} pts
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-full bg-white/20 p-2">
+                  <svg className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M7 2h10v2h3a1 1 0 0 1 1 1v2a6 6 0 0 1-6 6h-1.1A5 5 0 0 1 13 14.9V17h3a1 1 0 0 1 1 1v2H7v-2a1 1 0 0 1 1-1h3v-2.1A5 5 0 0 1 10.1 13H9a6 6 0 0 1-6-6V5a1 1 0 0 1 1-1h3V2Zm-2 4v1a4 4 0 0 0 4 4h.3A5 5 0 0 1 7 7V6H5Zm14 0h-2v1a5 5 0 0 1-2.3 4H15a4 4 0 0 0 4-4V6Z" />
+                  </svg>
                 </div>
               </div>
-              <div className="rounded-full bg-white/20 p-2">
-                <svg className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M7 2h10v2h3a1 1 0 0 1 1 1v2a6 6 0 0 1-6 6h-1.1A5 5 0 0 1 13 14.9V17h3a1 1 0 0 1 1 1v2H7v-2a1 1 0 0 1 1-1h3v-2.1A5 5 0 0 1 10.1 13H9a6 6 0 0 1-6-6V5a1 1 0 0 1 1-1h3V2Zm-2 4v1a4 4 0 0 0 4 4h.3A5 5 0 0 1 7 7V6H5Zm14 0h-2v1a5 5 0 0 1-2.3 4H15a4 4 0 0 0 4-4V6Z" />
-                </svg>
+            </div>
+
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-sky-600 via-blue-500 to-cyan-500 p-4 shadow-lg">
+              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/15 blur-md" />
+              <div className="relative flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-black tracking-wider text-white/80">Last Match Rank</p>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-4xl sm:text-[2.75rem] leading-none font-black text-white">
+                      {userStats.daily.rank === '-' ? '–' : `#${userStats.daily.rank}`}
+                    </span>
+                    <span className="rounded-md bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+                      {userStats.daily.totalPoints} pts
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-full bg-white/20 p-2">
+                  <svg className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 8a1 1 0 0 1 1 1v3.382l2.447 1.223a1 1 0 1 1-.894 1.79l-3-1.5A1 1 0 0 1 11 14V9a1 1 0 0 1 1-1Z" />
+                    <path fillRule="evenodd" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8Z" clipRule="evenodd" />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
@@ -223,7 +248,7 @@ const Dashboard: React.FC = () => {
               </svg>
                <Link
               to="/my-predictions"
-              className="text-[10px] text-sky-200 font-bold flex items-center gap-1 group  hover:text-white transition-colors"
+                className="text-sm text-sky-200 font-bold flex items-center gap-1 group hover:text-white transition-colors"
             >
               Previous Prediction
                <svg className="w-3 h-3 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -267,24 +292,20 @@ const Dashboard: React.FC = () => {
                 userStats.communities.map((comm) => (
                   <div key={comm.communityId} className="rounded-xl border border-white/15 bg-white/5 px-3 py-3 backdrop-blur-sm">
                     <p className="mb-2 text-xs font-extrabold tracking-wide text-white/90">{comm.name}</p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 gap-2">
                       <button
                         onClick={() => handleDrillDown(comm.communityId, false, `${comm.name} — Overall`)}
                         className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-left hover:bg-sky-400/20 hover:border-sky-300/45 transition-all"
                       >
                         <span className="block text-[10px] font-bold tracking-wider text-white/55">Final Rank</span>
-                        <span className="mt-1 block text-lg font-black text-sky-200">
-                          {comm.overall?.rank === '-' ? '–' : `#${comm.overall?.rank}`}
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => handleDrillDown(comm.communityId, true, `${comm.name} — Daily`)}
-                        className="rounded-lg border border-emerald-300/25 bg-emerald-400/10 px-3 py-2 text-left hover:bg-emerald-400/20 hover:border-emerald-300/45 transition-all"
-                      >
-                        <span className="block text-[10px] font-bold  tracking-wider text-white/55">Last Match Rank</span>
-                        <span className="mt-1 block text-lg font-black text-emerald-200">
-                          {comm.daily?.rank === '-' ? '–' : `#${comm.daily?.rank}`}
-                        </span>
+                        <div className="mt-1 flex items-baseline gap-2">
+                          <span className="block text-lg font-black text-sky-200">
+                            {comm.overall?.rank === '-' ? '–' : `#${comm.overall?.rank}`}
+                          </span>
+                          <span className="rounded-md bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">
+                            {comm.overall?.totalPoints ?? 0} pts
+                          </span>
+                        </div>
                       </button>
                     </div>
                   </div>
