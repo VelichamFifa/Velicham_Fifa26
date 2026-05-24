@@ -143,6 +143,20 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
         """
     )
 
+      # Sync community_results with the rebuilt overall community leaderboard.
+      cursor.execute(
+        """
+        UPDATE community_results cr
+        INNER JOIN (
+          SELECT CAST(communityId AS UNSIGNED) AS communityId, totalPoints, `rank` AS finalRank
+          FROM mv_community_leaders
+        ) ranked ON ranked.communityId = CAST(cr.communityId AS UNSIGNED)
+        SET cr.totalCommunityPoint = ranked.totalPoints,
+          cr.finalRank = ranked.finalRank,
+          cr.updatedAt = UTC_TIMESTAMP()
+        """
+      )
+
     if target_date is not None:
         days: list[date] = [_as_date(_utc_midnight(target_date))]
     else:
@@ -253,5 +267,22 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
             """,
             (day, day),
         )
+
+          # Sync community_results daily ranks for the completed matches on this day.
+          cursor.execute(
+            """
+            UPDATE community_results cr
+            INNER JOIN matches m ON m.id = cr.matchId
+            INNER JOIN (
+              SELECT CAST(communityId AS UNSIGNED) AS communityId, `rank` AS dailyRank
+              FROM mv_daily_community_leaders
+              WHERE DATE(`date`) = %s
+            ) ranked ON ranked.communityId = CAST(cr.communityId AS UNSIGNED)
+            SET cr.dailyRank = ranked.dailyRank,
+              cr.updatedAt = UTC_TIMESTAMP()
+            WHERE DATE(m.matchTime) = %s
+            """,
+            (day, day),
+          )
 
     return {"days_rebuilt": [d.isoformat() for d in days]}

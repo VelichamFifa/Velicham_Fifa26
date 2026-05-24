@@ -202,13 +202,14 @@ def _finalize(
                 INSERT INTO community_results (
                   communityId, matchId, matchTag, communityMatchPoint, totalCommunityPoint, createdAt, updatedAt
                 )
-                VALUES (%s, %s, %s, %s, 0, UTC_TIMESTAMP(), UTC_TIMESTAMP())
+                                VALUES (%s, %s, %s, %s, %s, UTC_TIMESTAMP(), UTC_TIMESTAMP())
                 ON DUPLICATE KEY UPDATE
                   matchTag = VALUES(matchTag),
                   communityMatchPoint = VALUES(communityMatchPoint),
+                                    totalCommunityPoint = VALUES(totalCommunityPoint),
                   updatedAt = UTC_TIMESTAMP()
                 """,
-                (community_id, match_id, match_tag, community_match_point),
+                                (community_id, match_id, match_tag, community_match_point, community_match_point),
             )
 
         leaderboard_info = None

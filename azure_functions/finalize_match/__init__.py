@@ -242,6 +242,7 @@ def _finalize(
                 ON DUPLICATE KEY UPDATE
                   matchTag = VALUES(matchTag),
                   communityMatchPoint = VALUES(communityMatchPoint),
+                                    totalCommunityPoint = VALUES(totalCommunityPoint),
                   updatedAt = UTC_TIMESTAMP()
                 """,
                 (community_id, match_id, match_tag, community_match_point),

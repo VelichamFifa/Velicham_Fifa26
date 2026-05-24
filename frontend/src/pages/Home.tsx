@@ -27,7 +27,7 @@ const Home: React.FC = () => {
                   to="/login"
                   className="px-6 sm:px-8 py-3 bg-secondary text-white font-bold rounded-lg hover:bg-blue-600 transition text-center"
                 >
-                  Predict Today
+                  Login
                 </Link>
               )}
                 {isLoggedIn && (
