@@ -58,7 +58,7 @@ export interface Match {
   group?: string;
   comment?: string;
   matchTag: string;
-  status: 'scheduled' | 'ongoing' | 'completed';
+  status: 'scheduled' | 'ongoing' | 'publishing' | 'completed';
   team1Info?: TeamInfo | null;
   team2Info?: TeamInfo | null;
 }
