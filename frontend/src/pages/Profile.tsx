@@ -144,7 +144,7 @@ const Profile: React.FC = () => {
 
     const getCommunityName = (communityId: string) => {
         const community = communities.find(c => c.communityId === communityId);
-        return community ? community.name : 'Unknown';
+        return community ? (community.fullName || community.name) : 'Unknown';
     };
 
     const getCommunityFullName = (communityId: string) => {
@@ -196,7 +196,7 @@ const Profile: React.FC = () => {
                             </h2>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">Email (Private)</label>
+                                    <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">Email</label>
                                     <p className="text-gray-400 font-medium bg-gray-50 px-3 py-2 rounded">{profile.email}</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -261,14 +261,6 @@ const Profile: React.FC = () => {
                                                 className="bg-blue-50 text-blue-600 hover:bg-blue-100 text-[11px] px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 border border-blue-200"
                                             >
                                                 ✎ Edit
-                                            </button>
-                                        )}
-                                        {!profile.requestedCommunity && !showRequestForm && !isEditing && (
-                                            <button
-                                                onClick={() => setShowRequestForm(true)}
-                                                className="text-[11px] bg-gray-50 hover:bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg font-bold transition border border-gray-200"
-                                            >
-                                                + Request New Community
                                             </button>
                                         )}
                                     </div>
@@ -522,6 +514,17 @@ const Profile: React.FC = () => {
                                             Cancel Request
                                         </button>
                                     </div>
+                                </div>
+                            )}
+
+                            {!profile.requestedCommunity && !showRequestForm && !isEditing && (
+                                <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end">
+                                    <button
+                                        onClick={() => setShowRequestForm(true)}
+                                        className="text-[11px] bg-gray-50 hover:bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg font-bold transition border border-gray-200"
+                                    >
+                                        + Request New Community
+                                    </button>
                                 </div>
                             )}
                         </div>
