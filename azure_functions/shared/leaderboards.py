@@ -83,6 +83,34 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
         """
     )
 
+    # Sync per-result final ranks from overall user leaderboard.
+    cursor.execute(
+        """
+        UPDATE results r
+        INNER JOIN (
+          SELECT CAST(userId AS UNSIGNED) AS userId, `rank` AS finalRank
+          FROM mv_top_leaders
+        ) ranked ON ranked.userId = r.userId
+        SET r.finalRank = ranked.finalRank,
+            r.updatedAt = UTC_TIMESTAMP()
+        """
+    )
+
+    # Compute per-match rank in results (same rank for equal match points).
+    cursor.execute(
+        """
+        UPDATE results r
+        INNER JOIN (
+          SELECT
+            id,
+            DENSE_RANK() OVER (PARTITION BY matchId ORDER BY COALESCE(matchPoints, 0) DESC) AS matchRank
+          FROM results
+        ) ranked ON ranked.id = r.id
+        SET r.matchRank = ranked.matchRank,
+            r.updatedAt = UTC_TIMESTAMP()
+        """
+    )
+
     cursor.execute("DELETE FROM mv_community_leaders")
     cursor.execute(
         """
