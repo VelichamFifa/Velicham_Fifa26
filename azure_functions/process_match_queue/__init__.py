@@ -121,8 +121,10 @@ def main(msg: func.QueueMessage) -> None:
         else:
             body_text = str(body)
         logger.error(
-            "process_match_queue: finalize returned non-200 (matchId=%s, status=%s, body=%s)",
+            "process_match_queue: finalize returned non-200 (matchId=%s, messageId=%s, dequeueCount=%s, status=%s, body=%s)",
             match_id,
+            message_id,
+            dequeue_count,
             result.status_code,
             body_text,
         )
@@ -131,4 +133,11 @@ def main(msg: func.QueueMessage) -> None:
             f"status={result.status_code} body={result.get_body()}"
         )
 
-    log_step(logger, "message_processed", function="process_match_queue", matchId=match_id)
+    log_step(
+        logger,
+        "message_processed",
+        function="process_match_queue",
+        matchId=match_id,
+        messageId=message_id,
+        dequeueCount=dequeue_count,
+    )
