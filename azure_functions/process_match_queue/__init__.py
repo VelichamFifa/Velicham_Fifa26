@@ -27,8 +27,10 @@ def main(msg: func.QueueMessage) -> None:
     try:
         dequeue_count = msg.dequeue_count
         message_id = msg.id
+    except AttributeError:
+        logger.warning("process_match_queue: queue metadata unavailable on message object")
     except Exception:
-        pass
+        logger.exception("process_match_queue: unexpected error while reading queue metadata")
 
     log_step(
         logger,
