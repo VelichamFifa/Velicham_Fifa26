@@ -143,8 +143,9 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
         """
     )
 
-      # Sync community_results with the rebuilt overall community leaderboard.
-      cursor.execute(
+
+    # Sync community_results with the rebuilt overall community leaderboard.
+    cursor.execute(
         """
         UPDATE community_results cr
         INNER JOIN (
@@ -152,10 +153,10 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
           FROM mv_community_leaders
         ) ranked ON ranked.communityId = CAST(cr.communityId AS UNSIGNED)
         SET cr.totalCommunityPoint = ranked.totalPoints,
-          cr.finalRank = ranked.finalRank,
-          cr.updatedAt = UTC_TIMESTAMP()
+            cr.finalRank = ranked.finalRank,
+            cr.updatedAt = UTC_TIMESTAMP()
         """
-      )
+    )
 
     if target_date is not None:
         days: list[date] = [_as_date(_utc_midnight(target_date))]
