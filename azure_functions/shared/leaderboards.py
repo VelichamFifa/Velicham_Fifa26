@@ -42,7 +42,7 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
           UTC_TIMESTAMP()
         FROM (
           SELECT
-            DENSE_RANK() OVER (ORDER BY totalPoints DESC, name ASC, userId ASC) AS rk,
+            DENSE_RANK() OVER (ORDER BY totalPoints DESC) AS rk,
             totalPoints,
             name,
             state,
@@ -98,7 +98,7 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
           UTC_TIMESTAMP()
         FROM (
           SELECT
-            DENSE_RANK() OVER (ORDER BY totalPoints DESC, communityId ASC) AS rk,
+            DENSE_RANK() OVER (ORDER BY totalPoints DESC) AS rk,
             totalPoints,
             COALESCE(c.name, totals.communityId) AS communityName,
             totals.communityId AS communityId
@@ -153,7 +153,7 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
               UTC_TIMESTAMP()
             FROM (
               SELECT
-                DENSE_RANK() OVER (ORDER BY totalPoints DESC, name ASC, userId ASC) AS rk,
+                DENSE_RANK() OVER (ORDER BY totalPoints DESC) AS rk,
                 totalPoints,
                 name,
                 state,
@@ -203,7 +203,7 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
               UTC_TIMESTAMP()
             FROM (
               SELECT
-                DENSE_RANK() OVER (ORDER BY totalPoints DESC, communityId ASC) AS rk,
+                DENSE_RANK() OVER (ORDER BY totalPoints DESC) AS rk,
                 totalPoints,
                 COALESCE(c.name, totals.communityId) AS communityName,
                 totals.communityId AS communityId

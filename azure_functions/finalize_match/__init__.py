@@ -264,6 +264,15 @@ def _finalize(
             )
             log_step(logger, "leaderboard_rebuild_completed", function="finalize_match", matchId=match_id)
 
+        cur.execute("DELETE FROM predictions WHERE matchId = %s", (match_id,))
+        log_step(
+            logger,
+            "predictions_deleted",
+            function="finalize_match",
+            matchId=match_id,
+            deleted=cur.rowcount,
+        )
+
         cnxn.commit()
         log_step(logger, "transaction_committed", function="finalize_match", matchId=match_id)
 

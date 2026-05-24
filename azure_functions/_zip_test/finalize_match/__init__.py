@@ -218,6 +218,8 @@ def _finalize(
                 target_date=match_time if isinstance(match_time, datetime) else None,
             )
 
+        cur.execute("DELETE FROM predictions WHERE matchId = %s", (match_id,))
+
         cnxn.commit()
 
     return func.HttpResponse(
