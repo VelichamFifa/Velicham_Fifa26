@@ -103,6 +103,8 @@ const MyPredictions: React.FC = () => {
                                                     <td className="px-6 py-4 whitespace-nowrap text-center">
                                                         {match?.status === 'completed' ? (
                                                             <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">Completed</span>
+                                                        ) : match?.status === 'publishing' ? (
+                                                            <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">Publishing</span>
                                                         ) : (
                                                             <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full">Scheduled</span>
                                                         )}
@@ -155,6 +157,7 @@ const MyPredictions: React.FC = () => {
                                 const team1Name = match?.team1Info?.teamName || match?.team1 || 'Unknown';
                                 const team2Name = match?.team2Info?.teamName || match?.team2 || 'Unknown';
                                 const isCompleted = match?.status === 'completed';
+                                const isPublishing = match?.status === 'publishing';
                                 const pred1 =
                                     prediction.team1PredictedScore ?? prediction.team1Score;
                                 const pred2 =
@@ -185,6 +188,8 @@ const MyPredictions: React.FC = () => {
                                             <div className="flex-shrink-0">
                                                 {isCompleted ? (
                                                     <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">✓ Done</span>
+                                                ) : isPublishing ? (
+                                                    <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">⏳ Publishing</span>
                                                 ) : (
                                                     <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full">⏳ Soon</span>
                                                 )}

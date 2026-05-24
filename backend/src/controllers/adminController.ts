@@ -62,6 +62,12 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Both team scores are required' });
     }
 
+    const team1ScoreNum = Number(team1Score);
+    const team2ScoreNum = Number(team2Score);
+    if (!Number.isInteger(team1ScoreNum) || !Number.isInteger(team2ScoreNum)) {
+      return res.status(400).json({ error: 'Both team scores must be integers' });
+    }
+
     const matchIdNum = Number(matchId);
     if (!Number.isInteger(matchIdNum) || matchIdNum <= 0) {
       return res.status(404).json({ error: 'Match not found' });
@@ -70,25 +76,51 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
     const match = await prisma.match.findUnique({ where: { id: matchIdNum } });
     if (!match) return res.status(404).json({ error: 'Match not found' });
 
-    const updated = await prisma.match.update({
-      where: { id: matchIdNum },
-      data: { team1Score, team2Score, status: 'completed' },
-    });
-
     if (isQueueConfigured()) {
+      const publishingMatch = await prisma.match.update({
+        where: { id: matchIdNum },
+        data: { team1Score: team1ScoreNum, team2Score: team2ScoreNum, status: 'publishing' },
+      });
+
       // Async path: enqueue for Azure Function queue trigger to process
-      await enqueueFinalizeMatch(matchIdNum, team1Score, team2Score);
+      try {
+        await enqueueFinalizeMatch(matchIdNum, team1ScoreNum, team2ScoreNum);
+      } catch (enqueueError) {
+        // Roll back to pre-finalize state if queue enqueue fails.
+        await prisma.match.update({
+          where: { id: matchIdNum },
+          data: {
+            team1Score: match.team1Score,
+            team2Score: match.team2Score,
+            status: match.status,
+          },
+        });
+        throw enqueueError;
+      }
+
       return res.status(202).json({
-        message: 'Match finalized. Scoring and leaderboard rebuild queued for async processing.',
-        match: { ...updated, matchId: String(updated.id) },
+        message: 'Match moved to publishing. Scoring and leaderboard rebuild queued for async processing.',
+        match: { ...publishingMatch, matchId: String(publishingMatch.id) },
       });
     }
 
     // Fallback: process synchronously (local dev without Azure Storage)
+    const publishingMatch = await prisma.match.update({
+      where: { id: matchIdNum },
+      data: { team1Score: team1ScoreNum, team2Score: team2ScoreNum, status: 'publishing' },
+    });
+
     await processMatchResults(matchIdNum);
+
+    const completed = await prisma.match.update({
+      where: { id: matchIdNum },
+      data: { status: 'completed' },
+    });
+
     res.json({
-      message: 'Match finalized and points calculated successfully',
-      match: { ...updated, matchId: String(updated.id) },
+      message: 'Match publishing completed and points calculated successfully',
+      match: { ...completed, matchId: String(completed.id) },
+      publishingMatch: { ...publishingMatch, matchId: String(publishingMatch.id) },
     });
   } catch (error) {
     const errorDetails = logger.error('finalizeMatch', error, {

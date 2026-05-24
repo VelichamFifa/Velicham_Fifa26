@@ -76,6 +76,7 @@ const CountUnit: React.FC<{ value: number; label: string }> = ({ value, label })
 const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredictionSubmit }) => {
   const isCompleted = match.status === 'completed';
   const isOngoing   = match.status === 'ongoing';
+  const isPublishing = match.status === 'publishing';
   const isPredictionOpen = new Date(match.predictionsEndingTime) > new Date();
 
   const [team1Score, setTeam1Score] = useState<number | ''>('');
@@ -136,6 +137,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
     ? <span className="px-2 py-0.5 rounded-full bg-gray-500/70 text-[10px] font-bold text-white">Full Time</span>
     : isOngoing
     ? <span className="px-2 py-0.5 rounded-full bg-green-500/80 text-[10px] font-bold text-white animate-pulse">● Live</span>
+    : isPublishing
+    ? <span className="px-2 py-0.5 rounded-full bg-amber-500/80 text-[10px] font-bold text-white">Publishing</span>
     : <span className="px-2 py-0.5 rounded-full bg-blue-500/70 text-[10px] font-bold text-white">Upcoming</span>;
 
   return (

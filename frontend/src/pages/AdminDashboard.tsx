@@ -116,8 +116,8 @@ const AdminDashboard: React.FC = () => {
             ]);
             const allMatches = allMatchesRes.data.matches as Match[];
             setCommunityRequests(commRes.data.requests);
-            setOnboardedMatches(allMatches.filter(match => match.status !== 'completed'));
-            setScheduledMatches(allMatches.filter(match => match.status === 'scheduled'));
+            setOnboardedMatches(allMatches.filter(match => !['scheduled', 'publishing', 'completed'].includes((match.status || '').toLowerCase())));
+            setScheduledMatches(allMatches.filter(match => ['scheduled', 'publishing'].includes((match.status || '').toLowerCase())));
             setCompletedMatches(allMatches.filter(match => match.status === 'completed'));
             setTeams(teamsRes.data.teams);
             setCommunities(communitiesListRes.data);
@@ -203,7 +203,7 @@ const AdminDashboard: React.FC = () => {
             await apiService.finalizeMatch({ matchId, team1Score, team2Score });
             setSuccess(
               import.meta.env.VITE_FINALIZE_MATCH_URL
-                ? 'Match finalized, points calculated, and leaderboards rebuilt'
+                                ? 'Match moved to publishing. It will switch to completed after Azure Function finishes scoring and leaderboard rebuild.'
                 : 'Match finalized and points calculated'
             );
             fetchInitialData();
