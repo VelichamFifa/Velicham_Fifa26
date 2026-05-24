@@ -1,32 +1,61 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { apiService } from '../services/apiService';
-import { User, Match, Community, Team } from '../types';
-import { format } from 'date-fns';
-
-const formatInTimeZone = (dateValue: string, timeZone: string) => {
-    try {
-        return new Date(dateValue).toLocaleString('en-US', {
-            timeZone,
+// Multi-timezone display for US and UTC
+const getKickoffTimeZones = (dateValue: string) => {
+    const date = new Date(dateValue);
+    const zones = [
+        { label: 'EDT/EST', tz: 'America/New_York' },
+        { label: 'CDT/CST', tz: 'America/Chicago' },
+        { label: 'MDT/MST', tz: 'America/Denver' },
+        { label: 'PDT/PST', tz: 'America/Los_Angeles' },
+        { label: 'UTC', tz: 'UTC' },
+    ];
+    return zones.map(({ label, tz }) => {
+        const options: Intl.DateTimeFormatOptions = {
+            timeZone: tz,
             month: 'short',
             day: '2-digit',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
             hour12: true,
-        });
-    } catch {
-        return format(new Date(dateValue), 'MMM dd, yyyy hh:mm a');
-    }
+            timeZoneName: 'short',
+        };
+        const formatter = new Intl.DateTimeFormat('en-US', options);
+        const parts = formatter.formatToParts(date);
+        const abbr = parts.find(p => p.type === 'timeZoneName')?.value || '';
+        return { label, value: formatter.format(date), abbr };
+    });
+};
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { apiService } from '../services/apiService';
+import { User, Match, Community, Team } from '../types';
+
+import { format } from 'date-fns';
+// Helper to get current US Eastern time and abbreviation
+const getEasternTimeWithAbbr = () => {
+    const now = new Date();
+    // Get time in America/New_York
+    const options: Intl.DateTimeFormatOptions = {
+        timeZone: 'America/New_York',
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZoneName: 'short',
+    };
+    const formatter = new Intl.DateTimeFormat('en-US', options);
+    const parts = formatter.formatToParts(now);
+    const abbr = parts.find(p => p.type === 'timeZoneName')?.value || '';
+    const dateStr = formatter.format(now);
+    return { dateStr, abbr };
 };
 
-const getKickoffTimeZones = (dateValue: string) => ([
-    { label: 'UTC', value: formatInTimeZone(dateValue, 'UTC') },
-    { label: 'EST', value: formatInTimeZone(dateValue, 'America/New_York') },
-    { label: 'MST', value: formatInTimeZone(dateValue, 'America/Denver') },
-    { label: 'PST', value: formatInTimeZone(dateValue, 'America/Los_Angeles') },
-]);
+
+
 
 const AdminDashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -340,9 +369,21 @@ const AdminDashboard: React.FC = () => {
                 ? scheduledMatches
                 : completedMatches;
 
+
+    // Eastern time display for admins
+    const { dateStr: easternTimeStr, abbr: easternAbbr } = getEasternTimeWithAbbr();
+
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold text-primary mb-8">Admin Dashboard</h1>
+
+            {/* US Eastern Time Display */}
+            <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded flex items-center gap-4">
+                <span className="font-semibold text-blue-800">Current US Eastern Time:</span>
+                <span className="font-mono text-blue-900 text-lg">{easternTimeStr}</span>
+                <span className="ml-2 px-2 py-0.5 rounded bg-blue-200 text-blue-900 text-xs font-bold uppercase">{easternAbbr}</span>
+                <span className="ml-4 text-xs text-blue-700">(Auto-detects EDT/EST)</span>
+            </div>
 
             {error && <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg flex justify-between">
                 {error} <button onClick={() => setError('')}>×</button>
@@ -599,8 +640,9 @@ const AdminDashboard: React.FC = () => {
                                                                 <div className="mb-1 font-semibold uppercase tracking-wide text-gray-500">Kickoff</div>
                                                                 {getKickoffTimeZones(match.matchTime).map((entry) => (
                                                                     <div key={`kickoff-${entry.label}`} className="flex gap-2">
-                                                                        <span className="w-10 font-semibold text-gray-500">{entry.label}</span>
+                                                                        <span className="w-14 font-semibold text-gray-500">{entry.label}</span>
                                                                         <span>{entry.value}</span>
+                                                                        <span className="ml-2 px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-bold uppercase">{entry.abbr}</span>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -608,8 +650,9 @@ const AdminDashboard: React.FC = () => {
                                                                 <div className="mb-1 font-semibold uppercase tracking-wide text-gray-500">Prediction</div>
                                                                 {getKickoffTimeZones(match.predictionsEndingTime).map((entry) => (
                                                                     <div key={`prediction-${entry.label}`} className="flex gap-2">
-                                                                        <span className="w-10 font-semibold text-gray-500">{entry.label}</span>
+                                                                        <span className="w-14 font-semibold text-gray-500">{entry.label}</span>
                                                                         <span>{entry.value}</span>
+                                                                        <span className="ml-2 px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-bold uppercase">{entry.abbr}</span>
                                                                     </div>
                                                                 ))}
                                                             </div>
