@@ -50,18 +50,18 @@ export const register = async (req: AuthRequest, res: Response) => {
       if (existingCommunity) rc = { ...rc, existingCommunityId: existingCommunity.communityId };
     }
 
-    if (!communityId1) {
-      return res.status(400).json({ error: 'Community 1 is required' });
+    let normalizedCommunityId1: number | null = null;
+    if (communityId1) {
+      const c1IdNum = Number(communityId1);
+      if (!Number.isInteger(c1IdNum) || c1IdNum <= 0) {
+        return res.status(400).json({ error: 'Community 1 not found' });
+      }
+      const c1 = await prisma.community.findUnique({ where: { id: c1IdNum } });
+      if (!c1) return res.status(400).json({ error: 'Community 1 not found' });
+      normalizedCommunityId1 = c1.id;
     }
-
-    const c1IdNum = Number(communityId1);
-    if (!Number.isInteger(c1IdNum) || c1IdNum <= 0) {
-      return res.status(400).json({ error: 'Community 1 not found' });
-    }
-    const c1 = await prisma.community.findUnique({ where: { id: c1IdNum } });
-    if (!c1) return res.status(400).json({ error: 'Community 1 not found' });
     if (communityId2) {
-      if (communityId1 === communityId2) {
+      if (communityId1 && communityId1 === communityId2) {
         return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });
       }
       const c2IdNum = Number(communityId2);
@@ -72,7 +72,6 @@ export const register = async (req: AuthRequest, res: Response) => {
       if (!c2) return res.status(400).json({ error: 'Community 2 not found' });
     }
 
-    const normalizedCommunityId1 = c1.id;
     const normalizedCommunityId2 = communityId2 ? Number(communityId2) : null;
 
     const createdUser = await prisma.user.create({
@@ -120,7 +119,7 @@ export const register = async (req: AuthRequest, res: Response) => {
         city,
         state,
         country,
-        communityId1: String(normalizedCommunityId1),
+        communityId1: normalizedCommunityId1 ? String(normalizedCommunityId1) : undefined,
         communityId2: normalizedCommunityId2 ? String(normalizedCommunityId2) : undefined,
         role: 'user',
       },
@@ -375,9 +374,6 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
 
     const nextC1 = normalizedC1;
     const nextC2 = normalizedC2;
-    if (!nextC1) {
-      return res.status(400).json({ error: 'Community 1 is required' });
-    }
     if (nextC1 && nextC2 && nextC1 === nextC2) {
       return res.status(400).json({ error: 'Community 1 and Community 2 must be different' });
     }

@@ -10,7 +10,7 @@ export const schemas = {
     city: Joi.string().allow('', null),
     state: Joi.string().allow('', null),
     country: Joi.string().allow('', null),
-    communityId1: Joi.string().required(),
+    communityId1: Joi.string().allow('', null).optional(),
     communityId2: Joi.string().allow('', null),
     requestedCommunity: Joi.object({
       name: Joi.string().required(),

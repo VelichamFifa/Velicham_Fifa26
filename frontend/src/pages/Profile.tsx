@@ -162,33 +162,53 @@ const Profile: React.FC = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-8 text-white">
+            <div
+                className="pointer-events-none absolute inset-0 opacity-[0.04]"
+                style={{
+                    backgroundImage:
+                        'radial-gradient(ellipse 70% 50% at 50% 20%, #ffffff 0%, transparent 70%), ' +
+                        'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,1) 28px, rgba(255,255,255,1) 29px)',
+                }}
+            />
+            <div className="relative z-10 max-w-4xl mx-auto">
             {success && (
-                <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+                <div className="mb-4 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-emerald-100 shadow-lg backdrop-blur-sm relative">
                     {success}
-                    <button onClick={() => setSuccess('')} className="absolute right-2 top-2">×</button>
+                    <button onClick={() => setSuccess('')} className="absolute right-3 top-2 text-emerald-100/80 hover:text-white">×</button>
                 </div>
             )}
             {error && (
-                <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                <div className="mb-4 rounded-2xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-rose-100 shadow-lg backdrop-blur-sm relative">
                     {error}
-                    <button onClick={() => setError('')} className="absolute right-2 top-2">×</button>
+                    <button onClick={() => setError('')} className="absolute right-3 top-2 text-rose-100/80 hover:text-white">×</button>
                 </div>
             )}
 
-            <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 mb-8">
-                <div className="bg-gradient-to-r from-primary to-blue-900 px-8 py-10 text-white flex justify-between items-start">
+            <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl mb-8">
+                <div
+                    className="relative flex items-start justify-between overflow-hidden px-8 py-10 text-white"
+                    style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
+                >
+                    <div
+                        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+                        style={{
+                            backgroundImage:
+                                'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%), ' +
+                                'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,1) 28px, rgba(255,255,255,1) 29px)',
+                        }}
+                    />
                     <div>
                         <h1 className="text-3xl font-bold">{profile.firstName} {profile.lastName}</h1>
                         <p className="text-blue-200 mt-1 uppercase tracking-widest text-xs font-bold">{profile.role}</p>
                     </div>
                 </div>
 
-                <div className="p-8">
+                <div className="p-8 text-white">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Personal Details */}
-                        <div>
-                            <h2 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg">
+                            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
@@ -196,29 +216,29 @@ const Profile: React.FC = () => {
                             </h2>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">Email</label>
-                                    <p className="text-gray-400 font-medium bg-gray-50 px-3 py-2 rounded">{profile.email}</p>
+                                    <label className="block text-[10px] text-white/45 uppercase font-black mb-0.5">Email</label>
+                                    <p className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 font-medium text-white/90">{profile.email}</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">First Name</label>
-                                        <p className="text-gray-800 font-medium px-1">{profile.firstName}</p>
+                                        <label className="block text-[10px] text-white/45 uppercase font-black mb-0.5">First Name</label>
+                                        <p className="font-medium text-white/90 px-1">{profile.firstName}</p>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">Last Name</label>
-                                        <p className="text-gray-800 font-medium px-1">{profile.lastName}</p>
+                                        <label className="block text-[10px] text-white/45 uppercase font-black mb-0.5">Last Name</label>
+                                        <p className="font-medium text-white/90 px-1">{profile.lastName}</p>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">Phone Number</label>
-                                    <p className="text-gray-800 font-medium px-1">{profile.phoneNumber || 'Not provided'}</p>
+                                    <label className="block text-[10px] text-white/45 uppercase font-black mb-0.5">Phone Number</label>
+                                    <p className="font-medium text-white/90 px-1">{profile.phoneNumber || 'Not provided'}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Location */}
-                        <div>
-                            <h2 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg">
+                            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -228,27 +248,27 @@ const Profile: React.FC = () => {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">City</label>
-                                        <p className="text-gray-800 font-medium px-1">{profile.city || '-'}</p>
+                                        <label className="block text-[10px] text-white/45 uppercase font-black mb-0.5">City</label>
+                                        <p className="font-medium text-white/90 px-1">{profile.city || '-'}</p>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">State</label>
-                                        <p className="text-gray-800 font-medium px-1">{profile.state || '-'}</p>
+                                        <label className="block text-[10px] text-white/45 uppercase font-black mb-0.5">State</label>
+                                        <p className="font-medium text-white/90 px-1">{profile.state || '-'}</p>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] text-gray-400 uppercase font-black mb-0.5">Country</label>
-                                    <p className="text-gray-800 font-medium px-1">{profile.country || '-'}</p>
+                                    <label className="block text-[10px] text-white/45 uppercase font-black mb-0.5">Country</label>
+                                    <p className="font-medium text-white/90 px-1">{profile.country || '-'}</p>
                                 </div>
                             </div>
                         </div>
 
 
                         {/* Communities */}
-                        <div className="md:col-span-2 pt-6 border-t border-gray-100">
+                        <div className="md:col-span-2 pt-6 border-t border-white/10">
                             <div className="mb-6">
-                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
-                                    <h2 className="text-lg font-bold text-primary flex items-center gap-2">
+                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
+                                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                         </svg>
@@ -258,7 +278,7 @@ const Profile: React.FC = () => {
                                         {!showRequestForm && !isEditing && (
                                             <button
                                                 onClick={() => setIsEditing(true)}
-                                                className="bg-blue-50 text-blue-600 hover:bg-blue-100 text-[11px] px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 border border-blue-200"
+                                                className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-1.5 text-[11px] font-bold text-sky-100 transition hover:bg-sky-400/20 hover:border-sky-300/45 flex items-center gap-1.5"
                                             >
                                                 ✎ Edit
                                             </button>
@@ -267,22 +287,22 @@ const Profile: React.FC = () => {
                                 </div>
 
                                 {isEditing && (
-                                    <div className="mb-4 bg-amber-50 border border-amber-200 p-3 rounded-xl flex gap-3 items-center animate-in fade-in slide-in-from-top-2 shadow-sm">
-                                        <div className="bg-amber-100 p-1.5 rounded-full">
-                                            <svg className="w-4 h-4 text-amber-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <div className="mb-4 flex gap-3 items-center rounded-xl border border-amber-300/25 bg-amber-400/10 p-3 shadow-sm animate-in fade-in slide-in-from-top-2">
+                                        <div className="bg-amber-400/20 p-1.5 rounded-full">
+                                            <svg className="w-4 h-4 text-amber-200 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                             </svg>
                                         </div>
-                                        <p className="text-[11px] text-amber-900 font-medium leading-relaxed">
-                                            <span className="font-extrabold uppercase text-amber-700">Warning:</span> Changing your community will <span className="font-bold underline decoration-amber-400 underline-offset-2">not transfer</span> your previous game points to the new community. This action cannot be undone.
+                                        <p className="text-[11px] text-amber-50 font-medium leading-relaxed">
+                                            <span className="font-extrabold uppercase text-amber-200">Warning:</span> Changing your community will <span className="font-bold underline decoration-amber-300 underline-offset-2">not transfer</span> your previous game points to the new community. This action cannot be undone.
                                         </p>
                                     </div>
                                 )}
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                    <label className="block text-[9px] text-blue-400 uppercase font-black mb-1">Primary Community</label>
+                                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                                    <label className="block text-[9px] text-white/45 uppercase font-black mb-1">Primary Community</label>
                                     {isEditing ? (
                                         <>
                                             <SearchableDropdown
@@ -293,16 +313,16 @@ const Profile: React.FC = () => {
                                                     .map(c => ({ id: c.communityId, label: c.name }))}
                                                 placeholder="Search community..."
                                             />
-                                            <p className="mt-2 text-xs text-blue-700 font-medium min-h-[1rem]">
+                                            <p className="mt-2 min-h-[1rem] text-xs font-medium text-sky-200">
                                                 {formData.communityId1 ? getCommunityFullName(formData.communityId1) : ''}
                                             </p>
                                         </>
                                     ) : (
-                                        <p className="text-primary font-bold">{profile.communityId1 ? getCommunityName(profile.communityId1) : 'None assigned'}</p>
+                                        <p className="font-bold text-white">{profile.communityId1 ? getCommunityName(profile.communityId1) : 'None assigned'}</p>
                                     )}
                                 </div>
-                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                    <label className="block text-[9px] text-gray-400 uppercase font-black mb-1">Secondary Community</label>
+                                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                                    <label className="block text-[9px] text-white/45 uppercase font-black mb-1">Secondary Community</label>
                                     {isEditing ? (
                                         <>
                                             <SearchableDropdown
@@ -313,12 +333,12 @@ const Profile: React.FC = () => {
                                                     .map(c => ({ id: c.communityId, label: c.name }))}
                                                 placeholder="Search community..."
                                             />
-                                            <p className="mt-2 text-xs text-gray-700 font-medium min-h-[1rem]">
+                                            <p className="mt-2 min-h-[1rem] text-xs font-medium text-white/80">
                                                 {formData.communityId2 ? getCommunityFullName(formData.communityId2) : ''}
                                             </p>
                                         </>
                                     ) : (
-                                        <p className="text-gray-700 font-bold">{profile.communityId2 ? getCommunityName(profile.communityId2) : 'None assigned'}</p>
+                                        <p className="font-bold text-white">{profile.communityId2 ? getCommunityName(profile.communityId2) : 'None assigned'}</p>
                                     )}
                                 </div>
                             </div>
@@ -353,16 +373,16 @@ const Profile: React.FC = () => {
 
                             {/* Add Community Request Form */}
                             {showRequestForm && (
-                                <div className="mt-6 p-6 bg-blue-50 rounded-2xl border border-blue-100 animate-in fade-in slide-in-from-top-4">
+                                <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl animate-in fade-in slide-in-from-top-4">
                                     {requestError && (
-                                        <div className="mb-4 bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                                        <div className="mb-4 flex items-center gap-2 rounded-lg border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm font-bold text-rose-100 animate-in fade-in slide-in-from-top-2">
                                             <span className="text-lg">⚠️</span>
                                             {requestError}
                                         </div>
                                     )}
                                     <div className="flex justify-between items-center mb-4">
-                                        <h3 className="font-bold text-primary">New Community Request</h3>
-                                        <button onClick={() => setShowRequestForm(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                                        <h3 className="font-bold text-white">New Community Request</h3>
+                                        <button onClick={() => setShowRequestForm(false)} className="text-white/50 hover:text-white">✕</button>
                                     </div>
 
                                     <div className="flex items-center gap-2 mb-3">
@@ -372,16 +392,16 @@ const Profile: React.FC = () => {
                                             name="isOnline"
                                             checked={requestData.isOnline}
                                             onChange={handleRequestChange}
-                                            className="w-4 h-4 text-secondary focus:ring-secondary border-gray-300 rounded"
+                                            className="w-4 h-4 rounded border-white/20 text-secondary focus:ring-secondary"
                                         />
-                                        <label htmlFor="req_isOnline" className="text-xs font-bold text-gray-700 uppercase cursor-pointer">
+                                        <label htmlFor="req_isOnline" className="cursor-pointer text-xs font-bold uppercase text-white/80">
                                             This is an Online Community
                                         </label>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3 mb-3">
                                         <div>
-                                            <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                                            <label className="block text-[11px] font-bold text-white/70 uppercase mb-1">
                                                 Full Name <span className="text-red-500">*</span>
                                             </label>
                                             <input
@@ -390,11 +410,11 @@ const Profile: React.FC = () => {
                                                 value={requestData.name}
                                                 onChange={handleRequestChange}
                                                 placeholder="e.g. Mountain House Sports"
-                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                                                className="w-full rounded border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:ring-1 focus:ring-secondary"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                                            <label className="block text-[11px] font-bold text-white/70 uppercase mb-1">
                                                 Short Name / Code <span className="text-red-500">*</span>
                                             </label>
                                             <input
@@ -403,14 +423,14 @@ const Profile: React.FC = () => {
                                                 value={requestData.shortName}
                                                 onChange={handleRequestChange}
                                                 placeholder="e.g. MHS"
-                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                                                className="w-full rounded border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:ring-1 focus:ring-secondary"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="mb-3">
-                                        <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                                            Description <span className="text-gray-400 font-normal normal-case">(Optional)</span>
+                                        <label className="block text-[11px] font-bold text-white/70 uppercase mb-1">
+                                            Description <span className="font-normal normal-case text-white/45">(Optional)</span>
                                         </label>
                                         <textarea
                                             name="description"
@@ -418,14 +438,14 @@ const Profile: React.FC = () => {
                                             onChange={handleRequestChange}
                                             placeholder="Tell us about this community..."
                                             rows={2}
-                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                                            className="w-full rounded border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:ring-1 focus:ring-secondary"
                                         />
                                     </div>
 
                                     {!requestData.isOnline && (
                                         <div className="grid grid-cols-2 gap-3 mb-4">
                                             <div>
-                                                <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                                                <label className="block text-[11px] font-bold text-white/70 uppercase mb-1">
                                                     City <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
@@ -434,11 +454,11 @@ const Profile: React.FC = () => {
                                                     value={requestData.city}
                                                     onChange={handleRequestChange}
                                                     placeholder="e.g. Mountain House"
-                                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                                                    className="w-full rounded border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:ring-1 focus:ring-secondary"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                                                <label className="block text-[11px] font-bold text-white/70 uppercase mb-1">
                                                     State <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
@@ -447,7 +467,7 @@ const Profile: React.FC = () => {
                                                     value={requestData.state}
                                                     onChange={handleRequestChange}
                                                     placeholder="e.g. California"
-                                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                                                    className="w-full rounded border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:ring-1 focus:ring-secondary"
                                                 />
                                             </div>
                                         </div>
@@ -458,14 +478,14 @@ const Profile: React.FC = () => {
                                             type="button"
                                             onClick={() => setShowRequestForm(false)}
                                             disabled={editLoading}
-                                            className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition disabled:opacity-50"
+                                            className="px-4 py-2 text-sm font-bold text-white/50 transition hover:text-white disabled:opacity-50"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={handleSubmitRequest}
                                             disabled={editLoading}
-                                            className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-900 transition disabled:opacity-50"
+                                            className="rounded-lg bg-sky-500 px-6 py-2 font-bold text-white transition hover:bg-sky-400 disabled:opacity-50"
                                         >
                                             {editLoading ? 'Submitting...' : 'Submit Request'}
                                         </button>
@@ -474,33 +494,33 @@ const Profile: React.FC = () => {
                             )}
 
                             {profile.requestedCommunity && (
-                                <div className="mt-4 p-4 bg-orange-50 border border-orange-100 rounded-xl">
+                                <div className="mt-4 rounded-xl border border-amber-300/25 bg-amber-400/10 p-4">
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
-                                            <label className="block text-[9px] text-orange-400 uppercase font-black mb-1">Pending Community Request</label>
+                                            <label className="block text-[9px] text-amber-200 uppercase font-black mb-1">Pending Community Request</label>
                                             <div className="flex items-center gap-2">
-                                                <p className="text-orange-900 font-bold">
+                                                <p className="font-bold text-white">
                                                     {typeof profile.requestedCommunity === 'object' && profile.requestedCommunity !== null
                                                         ? profile.requestedCommunity.name
                                                         : profile.requestedCommunity}
                                                 </p>
                                                 {profile.requestedCommunity.existingCommunityId && (
-                                                    <span className="text-[9px] bg-green-600 text-white px-1.5 py-0.5 rounded-full font-bold uppercase">MATCHED</span>
+                                                    <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase text-emerald-100">MATCHED</span>
                                                 )}
                                             </div>
 
                                             {profile.requestedCommunity.existingCommunityId && (
-                                                <div className="mt-3 p-3 bg-white/50 border border-green-100 rounded-lg">
-                                                    <p className="text-[10px] text-green-700 font-bold uppercase mb-1">System Match Found</p>
+                                                <div className="mt-3 rounded-lg border border-emerald-300/20 bg-white/5 p-3">
+                                                    <p className="mb-1 text-[10px] font-bold uppercase text-emerald-200">System Match Found</p>
                                                     {(() => {
                                                         const matched = communities.find(c => c.communityId === profile.requestedCommunity.existingCommunityId);
-                                                        if (!matched) return <p className="text-xs text-gray-500 italic">Matching community details found in our system. If this is not what you requested, please cancel and request a unique one.</p>;
+                                                        if (!matched) return <p className="text-xs italic text-white/60">Matching community details found in our system. If this is not what you requested, please cancel and request a unique one.</p>;
                                                         return (
-                                                            <div className="text-xs text-gray-600">
+                                                            <div className="text-xs text-white/75">
                                                                 <p className="mb-0.5"><span className="font-bold">Official Name:</span> {matched.name}</p>
                                                                 <p className="mb-0.5"><span className="font-bold">Official Full Name:</span> {matched.fullName}</p>
                                                                 <p><span className="font-bold">Official Location:</span> {matched.city}, {matched.state}</p>
-                                                                <p className="mt-1 italic text-[10px] text-green-600 font-medium">If this is not the community you meant, please cancel this request and try a different name.</p>
+                                                                <p className="mt-1 text-[10px] font-medium italic text-emerald-200">If this is not the community you meant, please cancel this request and try a different name.</p>
                                                             </div>
                                                         );
                                                     })()}
@@ -509,7 +529,7 @@ const Profile: React.FC = () => {
                                         </div>
                                         <button
                                             onClick={() => apiService.updateProfile({ requestedCommunity: null }).then(fetchData)}
-                                            className="text-[10px] text-orange-400 hover:text-orange-600 font-bold uppercase"
+                                            className="text-[10px] font-bold uppercase text-amber-200 hover:text-white"
                                         >
                                             Cancel Request
                                         </button>
@@ -518,10 +538,10 @@ const Profile: React.FC = () => {
                             )}
 
                             {!profile.requestedCommunity && !showRequestForm && !isEditing && (
-                                <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end">
+                                <div className="mt-6 flex justify-end border-t border-white/10 pt-4">
                                     <button
                                         onClick={() => setShowRequestForm(true)}
-                                        className="text-[11px] bg-gray-50 hover:bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg font-bold transition border border-gray-200"
+                                        className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-1.5 text-[11px] font-bold text-sky-100 transition hover:bg-sky-400/20 hover:border-sky-300/45"
                                     >
                                         + Request New Community
                                     </button>
@@ -532,10 +552,11 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-gray-50 px-8 py-4 text-xs text-gray-400 italic">
+                <div className="border-t border-white/10 bg-white/5 px-8 py-4 text-xs italic text-white/50">
                     Account status: <span className="text-green-600 font-bold uppercase">{profile.isActive ? 'Active' : 'Inactive'}</span>
                 </div>
 
+            </div>
             </div>
         </div>
     );

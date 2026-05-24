@@ -13,6 +13,7 @@ interface SearchableDropdownProps {
   label?: string;
   disabled?: boolean;
   required?: boolean;
+  theme?: 'light' | 'dark';
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -22,7 +23,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   placeholder = "Select an option...",
   label,
   disabled = false,
-  required = false
+  required = false,
+  theme = 'light'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,6 +32,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
 
   // Find the label of the currently selected value
   const selectedOption = options.find(opt => opt.id === value);
+  const isDark = theme === 'dark';
 
   // Filter options based on search term
   const filteredOptions = options.filter(option =>
@@ -56,22 +59,28 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   return (
     <div className="relative w-full" ref={wrapperRef}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-white/70' : 'text-gray-700'}`}>
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
       
       <div 
-        className={`relative w-full bg-white border rounded-lg transition-all duration-200 ${
-          isOpen ? 'border-secondary ring-2 ring-secondary/20 shadow-md' : 'border-gray-300 hover:border-gray-400'
-        } ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+        className={`relative w-full border rounded-lg transition-all duration-200 ${
+          isDark
+            ? isOpen
+              ? 'border-sky-300/50 ring-2 ring-sky-400/20 shadow-md bg-slate-950/70'
+              : 'border-white/10 hover:border-white/20 bg-slate-950/60'
+            : isOpen
+              ? 'border-secondary ring-2 ring-secondary/20 shadow-md bg-white'
+              : 'border-gray-300 hover:border-gray-400 bg-white'
+        } ${disabled ? (isDark ? 'bg-slate-900/70 cursor-not-allowed' : 'bg-gray-100 cursor-not-allowed') : ''}`}
       >
         <div className="relative flex items-center">
           <input
             type="text"
             className={`w-full px-4 py-2 text-sm rounded-lg focus:outline-none bg-transparent ${
               disabled ? 'cursor-not-allowed' : 'cursor-text'
-            } ${!selectedOption && !searchTerm ? 'text-gray-400' : 'text-gray-900 font-medium'}`}
+            } ${isDark ? (!selectedOption && !searchTerm ? 'text-white/35' : 'text-white font-medium') : (!selectedOption && !searchTerm ? 'text-gray-400' : 'text-gray-900 font-medium')}`}
             placeholder={selectedOption ? selectedOption.label : placeholder}
             value={searchTerm !== '' || !selectedOption ? searchTerm : selectedOption.label}
             onChange={(e) => {
@@ -85,7 +94,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
             className="absolute right-3 flex items-center pointer-events-none"
           >
             <svg 
-              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
+              className={`w-4 h-4 transition-transform duration-200 ${isDark ? 'text-white/45' : 'text-gray-400'} ${isOpen ? 'rotate-180' : ''}`} 
               fill="none" 
               viewBox="0 0 24 24" 
               stroke="currentColor"
@@ -97,15 +106,21 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
       </div>
 
       {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl animate-in fade-in slide-in-from-top-2">
+        <div className={`absolute z-50 w-full mt-1 border rounded-lg shadow-xl animate-in fade-in slide-in-from-top-2 ${isDark ? 'bg-slate-950 border-white/10' : 'bg-white border-gray-200'}`}>
           {/* Options list */}
-          <ul className="max-h-60 overflow-y-auto py-1 text-sm text-gray-700">
+          <ul className={`max-h-60 overflow-y-auto py-1 text-sm ${isDark ? 'text-white/80' : 'text-gray-700'}`}>
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
                 <li
                   key={option.id}
                   className={`px-4 py-2 cursor-pointer flex items-center justify-between transition-colors ${
-                    value === option.id ? 'bg-secondary/10 text-secondary font-bold' : 'hover:bg-gray-50'
+                    value === option.id
+                      ? isDark
+                        ? 'bg-sky-400/10 text-sky-100 font-bold'
+                        : 'bg-secondary/10 text-secondary font-bold'
+                      : isDark
+                        ? 'hover:bg-white/5'
+                        : 'hover:bg-gray-50'
                   }`}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -114,14 +129,14 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                 >
                   <span>{option.label}</span>
                   {value === option.id && (
-                    <svg className="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className={`w-4 h-4 ${isDark ? 'text-sky-200' : 'text-secondary'}`} fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   )}
                 </li>
               ))
             ) : (
-              <li className="px-4 py-3 text-center text-gray-500 italic">
+              <li className={`px-4 py-3 text-center italic ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
                 No matching results
               </li>
             )}
@@ -129,10 +144,10 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
           
           {/* Clear Selection Option */}
           {value && (
-            <div className="p-1 border-t border-gray-100 text-center">
+            <div className={`p-1 border-t text-center ${isDark ? 'border-white/10' : 'border-gray-100'}`}>
               <button
                 type="button"
-                className="w-full py-1.5 text-[11px] text-gray-400 hover:text-red-500 font-bold uppercase tracking-wider transition-colors"
+                className={`w-full py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${isDark ? 'text-white/45 hover:text-rose-300' : 'text-gray-400 hover:text-red-500'}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSelect('');
