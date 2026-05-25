@@ -4,6 +4,26 @@ import { Prediction, Match } from '../types';
 import PredictionForm from '../components/PredictionForm';
 import { format } from 'date-fns';
 
+// ── Flag image with fallback ──────────────────────────────────────────────────
+const FlagImg: React.FC<{ src?: string | null; alt: string }> = ({ src, alt }) => {
+    const [err, setErr] = useState(false);
+    if (!src || err) {
+        return (
+            <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+                {alt.slice(0, 3).toUpperCase()}
+            </div>
+        );
+    }
+    return (
+        <img
+            src={src}
+            alt={alt}
+            onError={() => setErr(true)}
+            className="w-12 h-12 rounded-full object-cover border-2 border-white/30 shadow-lg shrink-0"
+        />
+    );
+};
+
 const MyPredictions: React.FC = () => {
     const [predictions, setPredictions] = useState<Prediction[]>([]);
     const [loading, setLoading] = useState(true);
@@ -17,7 +37,7 @@ const MyPredictions: React.FC = () => {
     const fetchPredictions = async (page: number) => {
         try {
             setLoading(true);
-            const response = await apiService.getUserPredictions(page, 10);
+            const response = await apiService.getUserPredictionsFromResults(page, 10);
             setPredictions(response.data.predictions);
             setPagination(response.data.pagination);
         } catch (error) {
@@ -73,6 +93,8 @@ const MyPredictions: React.FC = () => {
                                             <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Status</th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Prediction</th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Actual Score</th>
+                                            <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Match Pts</th>
+                                            <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Total Pts</th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Match Rank</th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Overall Rank</th>
                                         </tr>
@@ -94,6 +116,8 @@ const MyPredictions: React.FC = () => {
                                             const finalRank =
                                                 prediction.finalRank ??
                                                 prediction.historicRank?.finalRank;
+                                            const matchPoints = prediction.matchPoints;
+                                            const finalPoints = prediction.finalPoints;
                                             return (
                                                 <tr key={prediction.id} className="hover:bg-gray-50 transition-colors">
                                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -118,6 +142,24 @@ const MyPredictions: React.FC = () => {
                                                         {match?.status === 'completed' ? (
                                                             <span className="font-mono bg-gray-100 px-3 py-1 rounded-lg text-gray-700 font-bold text-sm">
                                                                 {match?.team1Score} - {match?.team2Score}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-400 text-xs">-</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                        {matchPoints != null ? (
+                                                            <span className="text-sm font-black text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
+                                                                {matchPoints} pts
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-400 text-xs">-</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                        {finalPoints != null ? (
+                                                            <span className="text-sm font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full">
+                                                                {finalPoints} pts
                                                             </span>
                                                         ) : (
                                                             <span className="text-gray-400 text-xs">-</span>
@@ -154,80 +196,149 @@ const MyPredictions: React.FC = () => {
                         <div className="md:hidden space-y-4">
                             {predictions.map((prediction: any, idx) => {
                                 const match = prediction.matchId;
-                                const team1Name = match?.team1Info?.teamName || match?.team1 || 'Unknown';
-                                const team2Name = match?.team2Info?.teamName || match?.team2 || 'Unknown';
+                                const team1Name = match?.team1Info?.teamName || match?.team1 || '?';
+                                const team2Name = match?.team2Info?.teamName || match?.team2 || '?';
                                 const isCompleted = match?.status === 'completed';
                                 const isPublishing = match?.status === 'publishing';
-                                const pred1 =
-                                    prediction.team1PredictedScore ?? prediction.team1Score;
-                                const pred2 =
-                                    prediction.team2PredictedScore ?? prediction.team2Score;
-                                const matchRank =
-                                    prediction.matchRank ?? prediction.historicRank?.matchRank;
-                                const finalRank =
-                                    prediction.finalRank ?? prediction.historicRank?.finalRank;
+                                const pred1 = prediction.team1PredictedScore ?? prediction.team1Score;
+                                const pred2 = prediction.team2PredictedScore ?? prediction.team2Score;
+                                const matchRank = prediction.matchRank ?? prediction.historicRank?.matchRank;
+                                const finalRank = prediction.finalRank ?? prediction.historicRank?.finalRank;
+                                const matchPoints = prediction.matchPoints;
+                                const finalPoints = prediction.finalPoints;
+                                const roundLabel = match?.round ? (/^\d+$/.test(String(match.round).trim()) ? `Round ${match.round}` : match.round) : '';
 
                                 return (
                                     <div
                                         key={prediction.id}
-                                        className="bg-white rounded-2xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                                        className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 hover:border-white/20 transition-all duration-300"
                                         style={{
-                                            animation: `slideInUp 0.6s ease-out ${idx * 0.1}s both`,
+                                            background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)',
+                                            animation: `slideInUp 0.5s ease-out ${idx * 0.08}s both`,
                                         }}
                                     >
-                                        {/* Match Header */}
-                                        <div className="flex items-start justify-between mb-4 pb-4 border-b border-gray-100">
-                                            <div className="flex-1">
-                                                <h3 className="text-base font-black text-gray-900">
-                                                    {team1Name} vs {team2Name}
-                                                </h3>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    {match?.matchTime ? format(new Date(match.matchTime), 'MMM dd, yyyy • HH:mm') : '-'}
-                                                </p>
-                                            </div>
-                                            <div className="flex-shrink-0">
+                                        {/* Pitch overlay */}
+                                        <div
+                                            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                                            style={{
+                                                backgroundImage:
+                                                    'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%), ' +
+                                                    'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,1) 28px, rgba(255,255,255,1) 29px)',
+                                            }}
+                                        />
+
+                                        {/* Header row */}
+                                        <div className="relative z-10 flex items-center justify-between px-4 pt-3 pb-2">
+                                            <span className="text-[10px] font-semibold text-white/50 uppercase tracking-widest truncate max-w-[140px]">
+                                                {match?.matchTag || 'Match'}
+                                            </span>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                {roundLabel && (
+                                                    <span className="text-[10px] text-white/30 font-medium">{roundLabel}</span>
+                                                )}
                                                 {isCompleted ? (
-                                                    <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">✓ Done</span>
+                                                    <span className="px-2 py-0.5 rounded-full bg-gray-500/70 text-[10px] font-bold text-white">Full Time</span>
                                                 ) : isPublishing ? (
-                                                    <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">⏳ Publishing</span>
+                                                    <span className="px-2 py-0.5 rounded-full bg-amber-500/80 text-[10px] font-bold text-white">Publishing</span>
                                                 ) : (
-                                                    <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full">⏳ Soon</span>
+                                                    <span className="px-2 py-0.5 rounded-full bg-blue-500/70 text-[10px] font-bold text-white">Upcoming</span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        {/* Prediction & Score Row */}
-                                        <div className="grid grid-cols-2 gap-4 mb-4">
-                                            <div className="bg-blue-50 rounded-xl p-4 text-center">
-                                                <p className="text-xs text-gray-600 font-semibold mb-2">YOUR PREDICTION</p>
-                                                <div className="font-mono text-2xl font-black text-blue-700">
-                                                    {pred1 != null && pred2 != null ? `${pred1} - ${pred2}` : '-'}
+                                        {/* Predicted on */}
+                                        {prediction.createdAt && (
+                                            <div className="relative z-10 px-4 pb-2 -mt-1">
+                                                <span className="text-[9px] text-white/30">
+                                                    🕐 Predicted: {format(new Date(prediction.createdAt), 'MMM dd, yyyy • hh:mm a')}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Teams + Scores */}
+                                        <div className="relative z-10 flex items-center justify-between px-4 py-3 gap-2">
+                                            {/* Team 1 */}
+                                            <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
+                                                <FlagImg src={match?.team1Info?.countryLogo} alt={match?.team1 || '?'} />
+                                                <span className="text-white font-bold text-[12px] text-center leading-tight line-clamp-2 max-w-[80px]">
+                                                    {team1Name}
+                                                </span>
+                                            </div>
+
+                                            {/* Centre: actual score + your prediction */}
+                                            <div className="flex flex-col items-center gap-2 shrink-0">
+                                                {/* Actual score boxes */}
+                                                <div className="flex items-center gap-1">
+                                                    <div className="w-8 h-8 bg-white/10 border border-white/20 rounded-md flex items-center justify-center text-white font-black text-sm">
+                                                        {isCompleted ? (match?.team1Score ?? 0) : '–'}
+                                                    </div>
+                                                    <span className="text-white/40 font-bold text-xs">–</span>
+                                                    <div className="w-8 h-8 bg-white/10 border border-white/20 rounded-md flex items-center justify-center text-white font-black text-sm">
+                                                        {isCompleted ? (match?.team2Score ?? 0) : '–'}
+                                                    </div>
+                                                </div>
+                                                <span className="text-white/30 text-[9px] uppercase tracking-widest">
+                                                    {isCompleted ? 'Final Score' : match?.matchTime ? format(new Date(match.matchTime), 'MMM dd • HH:mm') : 'TBD'}
+                                                </span>
+                                                {/* Your prediction */}
+                                                <div className="flex flex-col items-center gap-0.5 bg-sky-500/20 border border-sky-400/30 rounded-md px-2 py-0.5">
+                                                    <span className="text-sky-400 text-[8px] font-semibold uppercase tracking-wider leading-none">Your Prediction</span>
+                                                    <span className="text-sky-200 font-black text-xs tabular-nums leading-none">
+                                                        {pred1 != null && pred2 != null ? `${pred1}–${pred2}` : '–'}
+                                                    </span>
                                                 </div>
                                             </div>
 
-                                            <div className="bg-gray-100 rounded-xl p-4 text-center">
-                                                <p className="text-xs text-gray-600 font-semibold mb-2">ACTUAL SCORE</p>
-                                                <div className="font-mono text-2xl font-black text-gray-700">
-                                                    {isCompleted ? `${match?.team1Score} - ${match?.team2Score}` : '-'}
-                                                </div>
+                                            {/* Team 2 */}
+                                            <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
+                                                <FlagImg src={match?.team2Info?.countryLogo} alt={match?.team2 || '?'} />
+                                                <span className="text-white font-bold text-[12px] text-center leading-tight line-clamp-2 max-w-[80px]">
+                                                    {team2Name}
+                                                </span>
                                             </div>
                                         </div>
 
-                                        {/* Rankings Row */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 text-center border border-primary/20">
-                                                <p className="text-xs text-primary font-bold mb-2">MATCH RANK</p>
-                                                <div className="text-2xl font-black text-primary">
-                                                    {isCompleted && matchRank ? `#${matchRank}` : 'TBD'}
+                                        {/* Divider */}
+                                        <div className="relative z-10 mx-4 border-t border-white/[0.08]" />
+
+                                        {/* Stats footer */}
+                                        <div className="relative z-10 grid grid-cols-2 divide-x divide-white/[0.08] px-0 py-2 bg-white/[0.04]">
+                                            {/* Match column */}
+                                            <div className="flex flex-col items-center gap-1 px-3">
+                                                <span className="text-[9px] text-white/50 uppercase tracking-widest font-bold">Match</span>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex flex-col items-center gap-0">
+                                                        <span className="text-[8px] text-white/30 uppercase tracking-widest">Points</span>
+                                                        <span className="text-emerald-400 font-black text-base tabular-nums leading-none">
+                                                            {matchPoints != null ? matchPoints : '–'}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-white/20 text-sm">|</span>
+                                                    <div className="flex flex-col items-center gap-0">
+                                                        <span className="text-[8px] text-white/30 uppercase tracking-widest">Rank</span>
+                                                        <span className="text-yellow-300 font-black text-base tabular-nums leading-none">
+                                                            {matchRank ? `#${matchRank}` : '–'}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
-
-                                            <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 rounded-xl p-4 text-center border border-secondary/20">
-                                                <p className="text-xs text-secondary font-bold mb-2">OVERALL RANK</p>
-                                                <div className="text-2xl font-black text-secondary">
-                                                    {isCompleted && finalRank && finalRank > 0
-                                                        ? `🏆 ${finalRank}`
-                                                        : '-'}
+                                            {/* Current column */}
+                                            <div className="flex flex-col items-center gap-1 px-3">
+                                                <span className="text-[9px] text-white/50 uppercase tracking-widest font-bold">Current</span>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex flex-col items-center gap-0">
+                                                        <span className="text-[8px] text-white/30 uppercase tracking-widest">Points</span>
+                                                        <span className="text-indigo-300 font-black text-base tabular-nums leading-none">
+                                                            {finalPoints != null ? finalPoints : '–'}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-white/20 text-sm">|</span>
+                                                    <div className="flex flex-col items-center gap-0">
+                                                        <span className="text-[8px] text-white/30 uppercase tracking-widest">Rank</span>
+                                                        <span className="text-orange-300 font-black text-base tabular-nums leading-none">
+                                                            {finalRank && finalRank > 0 ? `#${finalRank}` : '–'}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
