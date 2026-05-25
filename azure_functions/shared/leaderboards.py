@@ -177,8 +177,24 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
 
     for day in days:
         cursor.execute("DELETE FROM mv_daily_leaders WHERE DATE(`date`) = %s", (day,))
-        cursor.execute(
-            """
+        # If target_date is set, filter by matchId for that date (single match scenario)
+        match_id_filter = None
+        if target_date is not None:
+            cursor.execute(
+                """
+                SELECT id FROM matches
+                WHERE DATE(matchTime) = %s
+                AND status = 'completed'
+                AND team1Score IS NOT NULL
+                AND team2Score IS NOT NULL
+                LIMIT 1
+                """,
+                (day,)
+            )
+            match_row = cursor.fetchone()
+            match_id_filter = match_row["id"] if match_row else None
+
+        insert_query = """
             INSERT INTO mv_daily_leaders (
               `rank`, totalPoints, name, state, community1, community2, userId, email, `date`, createdAt, updatedAt
             )
@@ -222,17 +238,16 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
                   AND m.team1Score IS NOT NULL
                   AND m.team2Score IS NOT NULL
                   AND DATE(m.matchTime) = %s
-                GROUP BY u.id, u.firstName, u.lastName, u.state, c1.name, c2.name, u.email
-              ) totals
-            ) ranked
-            ORDER BY rk ASC
-            """,
-            (day, day),
-        )
+        """
+        insert_params = [day, day]
+        if match_id_filter is not None:
+            insert_query += " AND m.id = %s"
+            insert_params.append(match_id_filter)
+        insert_query += "\n                GROUP BY u.id, u.firstName, u.lastName, u.state, c1.name, c2.name, u.email\n              ) totals\n            ) ranked\n            ORDER BY rk ASC\n            "
+        cursor.execute(insert_query, tuple(insert_params))
 
         cursor.execute("DELETE FROM mv_daily_community_leaders WHERE DATE(`date`) = %s", (day,))
-        cursor.execute(
-            """
+        comm_insert_query = """
             INSERT INTO mv_daily_community_leaders (
               `rank`, totalPoints, communityName, communityId, `date`, createdAt, updatedAt
             )
@@ -260,14 +275,13 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
                   AND m.team1Score IS NOT NULL
                   AND m.team2Score IS NOT NULL
                   AND DATE(m.matchTime) = %s
-                GROUP BY cr.communityId
-              ) totals
-              LEFT JOIN communities c ON c.id = CAST(totals.communityId AS UNSIGNED)
-            ) ranked
-            ORDER BY rk ASC
-            """,
-            (day, day),
-        )
+        """
+        comm_insert_params = [day, day]
+        if match_id_filter is not None:
+            comm_insert_query += " AND m.id = %s"
+            comm_insert_params.append(match_id_filter)
+        comm_insert_query += "\n                GROUP BY cr.communityId\n              ) totals\n              LEFT JOIN communities c ON c.id = CAST(totals.communityId AS UNSIGNED)\n            ) ranked\n            ORDER BY rk ASC\n            "
+        cursor.execute(comm_insert_query, tuple(comm_insert_params))
 
 
         # Sync community_results daily ranks for the completed matches on this day.

@@ -690,11 +690,14 @@ const AdminDashboard: React.FC = () => {
                                                     ) : (
                                                         <button
                                                             onClick={() => {
+                                                                if (match.status === 'publishing') return;
                                                                 const s1 = (document.getElementById(`s1-${match.matchId}`) as HTMLInputElement).value;
                                                                 const s2 = (document.getElementById(`s2-${match.matchId}`) as HTMLInputElement).value;
                                                                 handleFinalizeMatch(match.matchId, s1, s2);
                                                             }}
-                                                            className="bg-secondary text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                                                            className={`bg-secondary text-white px-3 py-1 rounded text-sm ${match.status === 'publishing' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+                                                            disabled={match.status === 'publishing'}
+                                                            title={match.status === 'publishing' ? 'Cannot finalize while match is publishing' : ''}
                                                         >
                                                             {match.status === 'completed' ? 'Recalculate' : 'Finalize'}
                                                         </button>
