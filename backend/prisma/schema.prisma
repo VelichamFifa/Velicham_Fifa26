@@ -212,7 +212,7 @@ model DailyLeader {
 
   @@index([date])
   @@index([userId])
-  @@map("mv_daily_leaders")
+  @@map("mv_match_leaders")
 }
 
 model CommunityLeader {
@@ -240,5 +240,5 @@ model DailyCommunityLeader {
 
   @@index([date])
   @@index([communityId, date])
-  @@map("mv_daily_community_leaders")
+  @@map("mv_match_community_leaders")
 }
