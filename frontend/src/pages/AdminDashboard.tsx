@@ -375,7 +375,7 @@ const AdminDashboard: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold text-primary mb-8">Admin Dashboard</h1>
+            <h1 className="text-3xl font-bold text-white mb-8">Admin Dashboard</h1>
 
             {/* US Eastern Time Display */}
             <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded flex items-center gap-4">

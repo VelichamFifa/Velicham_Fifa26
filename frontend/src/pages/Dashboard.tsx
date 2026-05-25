@@ -136,8 +136,8 @@ const Dashboard: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-2">Welcome, {user?.firstName}!</h1>
-        <p className="text-sm sm:text-base text-gray-600">Make predictions on upcoming matches and climb the leaderboard</p>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">Welcome, {user?.firstName}!</h1>
+        <p className="text-sm sm:text-base text-white/60">Make predictions on upcoming matches and climb the leaderboard</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -216,11 +216,11 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Leaderboard Highlights Banner */}
-          <h2 className="text-xl sm:text-2xl font-bold text-primary mb-4">Matches to Predict</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4">Matches to Predict</h2>
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-secondary"></div>
-              <p className="mt-4 text-sm sm:text-base text-gray-600">Loading matches...</p>
+              <p className="mt-4 text-sm sm:text-base text-white/60">Loading matches...</p>
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 gap-4">
@@ -237,7 +237,7 @@ const Dashboard: React.FC = () => {
                   );
                 })
               ) : (
-                <div className="col-span-full text-center py-12 text-gray-600">
+                <div className="col-span-full text-center py-12 text-white/60">
                   No matches scheduled yet
                 </div>
               )}

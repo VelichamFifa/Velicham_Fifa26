@@ -50,7 +50,7 @@ const CommunityMembers: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Header */}
       <div className="bg-primary px-4 py-5 shadow-md">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
@@ -77,25 +77,25 @@ const CommunityMembers: React.FC = () => {
             <p className="mt-4 text-gray-500 text-sm">Fetching ranks...</p>
           </div>
         ) : error ? (
-          <div className="py-12 text-center text-red-500 text-sm px-6 bg-white rounded-2xl shadow">
+          <div className="py-12 text-center text-red-400 text-sm px-6 bg-white/10 border border-white/10 rounded-2xl">
             {error}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow overflow-hidden">
+          <div className="bg-white/10 border border-white/10 rounded-2xl overflow-hidden">
             {/* Count badge */}
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+              <span className="text-xs font-bold text-white/50 uppercase tracking-wider">
                 {ranking.length} {ranking.length === 1 ? 'Member' : 'Members'}
               </span>
             </div>
 
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-white/[0.06]">
               {ranking.map((item) => {
                 const isMe = item.userId === user?.userId;
                 return (
                   <div
                     key={`${item.userId}-${item.rank}-${item.totalPoints}`}
-                    className={`flex items-center gap-4 px-4 py-3 transition ${isMe ? 'bg-blue-50/60' : 'hover:bg-gray-50'}`}
+                    className={`flex items-center gap-4 px-4 py-3 transition ${isMe ? 'bg-white/10' : 'hover:bg-white/5'}`}
                   >
                     {/* Rank */}
                     <div className="w-9 flex-shrink-0 text-center">
@@ -107,7 +107,7 @@ const CommunityMembers: React.FC = () => {
                     {/* Name + state */}
                     <div className="flex-grow min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`text-sm font-bold truncate ${isMe ? 'text-primary' : 'text-gray-800'}`}>
+                        <p className={`text-sm font-bold truncate ${isMe ? 'text-secondary' : 'text-white'}`}>
                           {item.name}
                         </p>
                         {isMe && (
@@ -117,7 +117,7 @@ const CommunityMembers: React.FC = () => {
                         )}
                       </div>
                       {item.state && (
-                        <p className="text-[10px] text-gray-400 uppercase font-black mt-0.5">{item.state}</p>
+                        <p className="text-[10px] text-white/40 uppercase font-black mt-0.5">{item.state}</p>
                       )}
                     </div>
 
@@ -131,7 +131,7 @@ const CommunityMembers: React.FC = () => {
 
               {ranking.length === 0 && (
                 <div className="py-16 text-center px-6">
-                  <p className="text-gray-400 text-sm font-medium">No rankings available yet</p>
+                  <p className="text-white/40 text-sm font-medium">No rankings available yet</p>
                 </div>
               )}
             </div>

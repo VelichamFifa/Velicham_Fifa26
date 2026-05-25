@@ -116,7 +116,7 @@ const ProfileSetup: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-8 text-white flex items-center justify-center">
+        <div className="min-h-screen px-4 py-8 text-white flex items-center justify-center">
             <div
                 className="pointer-events-none absolute inset-0 opacity-[0.04]"
                 style={{

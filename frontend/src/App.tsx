@@ -17,7 +17,7 @@ import CommunityMembers from './pages/CommunityMembers';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 60%, #0c1a1a 100%)' }}>
         <Header />
         <main className="flex-1">
           <Routes>
@@ -34,7 +34,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
           </Routes>
         </main>
-        <footer className="border-t border-gray-200 bg-white py-4 text-center text-sm text-gray-600">
+        <footer className="border-t border-white/10 bg-primary py-4 text-center text-sm text-white/70">
           Velicham North America - Fifa Prediction 2026. All rights reserved.
         </footer>
       </div>

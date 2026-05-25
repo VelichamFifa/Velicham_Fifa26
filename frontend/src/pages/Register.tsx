@@ -135,9 +135,9 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-secondary flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl p-6 sm:p-8 max-w-md w-full my-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-4 sm:mb-6">
+    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] p-4">
+      <div className="bg-white/10 border border-white/15 backdrop-blur-sm rounded-xl shadow-2xl p-6 sm:p-8 max-w-md w-full my-4">
+        <h2 className="text-2xl sm:text-3xl font-bold text-center text-white mb-4 sm:mb-6">
           Join Velicham Fifa'26 Prediction
         </h2>
 
@@ -149,7 +149,7 @@ const Register: React.FC = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white/80 mb-1">
               Email
             </label>
             <input
@@ -157,14 +157,14 @@ const Register: React.FC = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-white/80 mb-1">
                 First Name
               </label>
               <input
@@ -172,12 +172,12 @@ const Register: React.FC = () => {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+                className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-white/80 mb-1">
                 Last Name
               </label>
               <input
@@ -185,14 +185,14 @@ const Register: React.FC = () => {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+                className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
                 required
               />
             </div>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white/80 mb-1">
               Password
             </label>
             <input
@@ -200,14 +200,14 @@ const Register: React.FC = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-white/80 mb-1">
                 City
               </label>
               <input
@@ -215,11 +215,11 @@ const Register: React.FC = () => {
                 name="city"
                 value={formData.city}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+                className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-white/80 mb-1">
                 State
               </label>
               <input
@@ -227,29 +227,29 @@ const Register: React.FC = () => {
                 name="state"
                 value={formData.state}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+                className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
               />
             </div>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white/80 mb-1">
               Country
             </label>
             <select
               name="country"
               value={formData.country}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white rounded focus:outline-none focus:ring-2 focus:ring-secondary"
             >
-              <option value="">Select Country</option>
-              <option value="USA">USA</option>
-              <option value="Canada">Canada</option>
+              <option value="" className="bg-gray-900 text-white">Select Country</option>
+              <option value="USA" className="bg-gray-900 text-white">USA</option>
+              <option value="Canada" className="bg-gray-900 text-white">Canada</option>
             </select>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white/80 mb-1">
               Phone Number (Required)
             </label>
             <input
@@ -258,7 +258,7 @@ const Register: React.FC = () => {
               value={formData.phoneNumber}
               onChange={handleChange}
               placeholder="+1234567890"
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
               required
             />
           </div>
@@ -291,7 +291,7 @@ const Register: React.FC = () => {
                 placeholder="Search community..."
                 disabled={loadingCommunities}
               />
-              <p className="mt-2 text-xs text-gray-700 font-medium min-h-[1rem]">
+              <p className="mt-2 text-xs text-white/60 font-medium min-h-[1rem]">
                 {formData.communityId2 ? getCommunityFullName(formData.communityId2) : ''}
               </p>
             </div>
@@ -308,7 +308,7 @@ const Register: React.FC = () => {
             </button>
 
             {showCommunityRequest && (
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg animate-in fade-in slide-in-from-top-2">
+              <div className="mt-4 p-4 bg-white/10 border border-white/15 rounded-lg animate-in fade-in slide-in-from-top-2">
                 <h4 className="text-secondary font-bold text-sm mb-3">Community Request Details</h4>
 
                 <div className="flex items-center gap-2 mb-3">
@@ -318,17 +318,17 @@ const Register: React.FC = () => {
                     name="req_isOnline"
                     checked={requestedCommunity.isOnline}
                     onChange={handleChange}
-                    className="w-4 h-4 text-secondary focus:ring-secondary border-gray-300 rounded"
+                    className="w-4 h-4 text-secondary focus:ring-secondary border-white/20 rounded"
                   />
-                  <label htmlFor="isOnline" className="text-xs font-bold text-gray-700 uppercase cursor-pointer">
+                  <label htmlFor="isOnline" className="text-xs font-bold text-white/80 uppercase cursor-pointer">
                     This is an Online Community
                   </label>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                      Full Name <span className="text-red-500">*</span>
+                    <label className="block text-[11px] font-bold text-white/60 uppercase mb-1">
+                      Full Name <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
@@ -336,12 +336,12 @@ const Register: React.FC = () => {
                       value={requestedCommunity.name}
                       onChange={handleChange}
                       placeholder="e.g. Mountain House Sports"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                      className="w-full px-3 py-2 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:ring-1 focus:ring-secondary"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                      Short Name / Code <span className="text-red-500">*</span>
+                    <label className="block text-[11px] font-bold text-white/60 uppercase mb-1">
+                      Short Name / Code <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
@@ -349,14 +349,14 @@ const Register: React.FC = () => {
                       value={requestedCommunity.shortName}
                       onChange={handleChange}
                       placeholder="e.g. MHS"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                      className="w-full px-3 py-2 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:ring-1 focus:ring-secondary"
                     />
                   </div>
                 </div>
 
                 <div className="mb-3">
-                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                    Description <span className="text-gray-400 font-normal normal-case">(Optional)</span>
+                  <label className="block text-[11px] font-bold text-white/60 uppercase mb-1">
+                    Description <span className="text-white/40 font-normal normal-case">(Optional)</span>
                   </label>
                   <textarea
                     name="req_description"
@@ -364,15 +364,15 @@ const Register: React.FC = () => {
                     onChange={handleChange}
                     placeholder="Tell us about this community..."
                     rows={2}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                    className="w-full px-3 py-2 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:ring-1 focus:ring-secondary"
                   />
                 </div>
 
                 {!requestedCommunity.isOnline && (
                   <div className="grid grid-cols-2 gap-3 pb-2">
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                        City <span className="text-red-500">*</span>
+                      <label className="block text-[11px] font-bold text-white/60 uppercase mb-1">
+                        City <span className="text-red-400">*</span>
                       </label>
                       <input
                         type="text"
@@ -380,12 +380,12 @@ const Register: React.FC = () => {
                         value={requestedCommunity.city}
                         onChange={handleChange}
                         placeholder="e.g. Mountain House"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                        className="w-full px-3 py-2 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:ring-1 focus:ring-secondary"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                        State <span className="text-red-500">*</span>
+                      <label className="block text-[11px] font-bold text-white/60 uppercase mb-1">
+                        State <span className="text-red-400">*</span>
                       </label>
                       <input
                         type="text"
@@ -393,7 +393,7 @@ const Register: React.FC = () => {
                         value={requestedCommunity.state}
                         onChange={handleChange}
                         placeholder="e.g. California"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-secondary"
+                        className="w-full px-3 py-2 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:ring-1 focus:ring-secondary"
                       />
                     </div>
                   </div>
@@ -415,7 +415,7 @@ const Register: React.FC = () => {
           </button>
         </form >
 
-        <p className="text-center text-gray-600 mt-4">
+        <p className="text-center text-white/60 mt-4">
           Already have an account?{' '}
           <a href="/login" className="text-secondary hover:underline">
             Login

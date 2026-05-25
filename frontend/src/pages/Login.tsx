@@ -38,9 +38,9 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-secondary flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
-        <h2 className="text-3xl font-bold text-center text-primary mb-6">
+    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] p-4">
+      <div className="bg-white/10 border border-white/15 backdrop-blur-sm rounded-xl shadow-2xl p-8 max-w-md w-full">
+        <h2 className="text-3xl font-bold text-center text-white mb-6">
           Login to Velicham Fifa'26 Prediction
         </h2>
 

@@ -48,7 +48,6 @@ const LeaderboardPage: React.FC = () => {
   ] as const;
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 60%, #0c1a1a 100%)' }}>
     <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6 sm:mb-8">Leaderboards</h1>
 
@@ -130,7 +129,6 @@ const LeaderboardPage: React.FC = () => {
         </>
       )}
 
-    </div>
     </div>
   );
 };

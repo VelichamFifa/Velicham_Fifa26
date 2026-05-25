@@ -53,19 +53,14 @@ const MyPredictions: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="min-h-screen w-full">
             {/* Header Section */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-primary via-secondary to-primary">
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute w-96 h-96 bg-white rounded-full blur-3xl -top-48 -right-48" />
-                    <div className="absolute w-96 h-96 bg-white rounded-full blur-3xl -bottom-48 -left-48" />
-                </div>
-
-                <div className="relative max-w-7xl mx-auto px-4 py-8 sm:py-12">
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-2 drop-shadow-lg">
+            <div className="relative overflow-hidden bg-white/5 border-b border-white/10">
+                <div className="relative max-w-7xl mx-auto px-4 py-5 sm:py-6">
+                    <h1 className="text-base sm:text-lg font-semibold text-white/80">
                         📋 My Previous Predictions
                     </h1>
-                    <p className="text-white/90 text-base sm:text-lg font-medium">
+                    <p className="text-white/50 text-xs sm:text-sm mt-0.5">
                         Track your predictions and rankings
                     </p>
                 </div>
