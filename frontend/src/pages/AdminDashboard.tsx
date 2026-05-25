@@ -619,6 +619,7 @@ const AdminDashboard: React.FC = () => {
                                             <tr key={match.matchId}>
                                                 <td className="px-4 py-4">
                                                     <div className="text-sm font-bold">{getTeamDisplayName(match, 'team1')} vs {getTeamDisplayName(match, 'team2')}</div>
+                                                    <div className="text-xs text-gray-400 font-mono">ID: {match.matchId}</div>
                                                 </td>
                                                 <td className="px-4 py-4 text-xs text-gray-700">{match.group || '-'}</td>
                                                 <td className="px-4 py-4 text-xs text-gray-700">{match.round || '-'}</td>
