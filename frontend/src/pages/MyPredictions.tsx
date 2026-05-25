@@ -84,14 +84,14 @@ const MyPredictions: React.FC = () => {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gradient-to-r from-primary/10 to-secondary/10">
                                         <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Match</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Status</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Prediction</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Actual Score</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Match Pts</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Total Pts</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Match Rank</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Current Rank</th>
+                                            <th className="px-4 py-2 text-left text-xs font-bold text-primary uppercase tracking-wider">Match</th>
+                                            <th className="px-4 py-2 text-center text-xs font-bold text-primary uppercase tracking-wider">Status</th>
+                                            <th className="px-4 py-2 text-center text-xs font-bold text-primary uppercase tracking-wider">Prediction</th>
+                                            <th className="px-4 py-2 text-center text-xs font-bold text-primary uppercase tracking-wider">Actual Score</th>
+                                            <th className="px-4 py-2 text-center text-xs font-bold text-primary uppercase tracking-wider">Match Pts</th>
+                                            <th className="px-4 py-2 text-center text-xs font-bold text-primary uppercase tracking-wider">Total Pts</th>
+                                            <th className="px-4 py-2 text-center text-xs font-bold text-primary uppercase tracking-wider">Match Rank</th>
+                                            <th className="px-4 py-2 text-center text-xs font-bold text-primary uppercase tracking-wider">Current Rank</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-100">
@@ -115,11 +115,11 @@ const MyPredictions: React.FC = () => {
                                             const finalPoints = prediction.finalPoints;
                                             return (
                                                 <tr key={prediction.id} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="px-4 py-2 whitespace-nowrap">
                                                         <div className="text-sm font-bold text-gray-900">{team1Name} vs {team2Name}</div>
                                                         <div className="text-xs text-gray-500">{match?.matchTime ? format(new Date(match.matchTime), 'MMM dd, HH:mm') : '-'}</div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <td className="px-4 py-2 whitespace-nowrap text-center">
                                                         {match?.status === 'completed' ? (
                                                             <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">Completed</span>
                                                         ) : match?.status === 'publishing' ? (
@@ -128,12 +128,12 @@ const MyPredictions: React.FC = () => {
                                                             <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full">Scheduled</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <td className="px-4 py-2 whitespace-nowrap text-center">
                                                         <div className="font-mono bg-blue-50 px-3 py-1 rounded-lg text-blue-700 font-bold text-sm">
                                                             {pred1 != null && pred2 != null ? `${pred1} - ${pred2}` : '-'}
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <td className="px-4 py-2 whitespace-nowrap text-center">
                                                         {match?.status === 'completed' ? (
                                                             <span className="font-mono bg-gray-100 px-3 py-1 rounded-lg text-gray-700 font-bold text-sm">
                                                                 {match?.team1Score} - {match?.team2Score}
@@ -142,7 +142,7 @@ const MyPredictions: React.FC = () => {
                                                             <span className="text-gray-400 text-xs">-</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <td className="px-4 py-2 whitespace-nowrap text-center">
                                                         {matchPoints != null ? (
                                                             <span className="text-sm font-black text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
                                                                 {matchPoints} pts
@@ -151,7 +151,7 @@ const MyPredictions: React.FC = () => {
                                                             <span className="text-gray-400 text-xs">-</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <td className="px-4 py-2 whitespace-nowrap text-center">
                                                         {finalPoints != null ? (
                                                             <span className="text-sm font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full">
                                                                 {finalPoints} pts
@@ -160,7 +160,7 @@ const MyPredictions: React.FC = () => {
                                                             <span className="text-gray-400 text-xs">-</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <td className="px-4 py-2 whitespace-nowrap text-center">
                                                         {match?.status === 'completed' && matchRank ? (
                                                             <span className="text-sm font-black text-primary bg-primary/10 px-3 py-1 rounded-full">
                                                                 #{matchRank}
@@ -169,7 +169,7 @@ const MyPredictions: React.FC = () => {
                                                             <span className="text-gray-400 text-xs">TBD</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <td className="px-4 py-2 whitespace-nowrap text-center">
                                                         {match?.status === 'completed' && finalRank && finalRank > 0 ? (
                                                             <div className="flex items-center justify-center gap-1">
                                                                 <span className="text-lg">🏆</span>
@@ -223,7 +223,7 @@ const MyPredictions: React.FC = () => {
                                         />
 
                                         {/* Header row */}
-                                        <div className="relative z-10 flex items-center justify-between px-4 pt-3 pb-2">
+                                        <div className="relative z-10 flex items-center justify-between px-4 pt-2 pb-1">
                                             <span className="text-[10px] font-semibold text-white/50 uppercase tracking-widest truncate max-w-[140px]">
                                                 {match?.matchTag || 'Match'}
                                             </span>
@@ -243,7 +243,7 @@ const MyPredictions: React.FC = () => {
 
                                         {/* Predicted on */}
                                         {prediction.createdAt && (
-                                            <div className="relative z-10 px-4 pb-2 -mt-1">
+                                            <div className="relative z-10 px-4 pb-1 -mt-0.5">
                                                 <span className="text-[9px] text-white/30">
                                                     🕐 Predicted: {format(new Date(prediction.createdAt), 'MMM dd, yyyy • hh:mm a')}
                                                 </span>
@@ -251,7 +251,7 @@ const MyPredictions: React.FC = () => {
                                         )}
 
                                         {/* Teams + Scores */}
-                                        <div className="relative z-10 flex items-center justify-between px-4 py-3 gap-2">
+                                        <div className="relative z-10 flex items-center justify-between px-4 py-2 gap-2">
                                             {/* Team 1 */}
                                             <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
                                                 <FlagImg src={match?.team1Info?.countryLogo} alt={match?.team1 || '?'} />
@@ -276,9 +276,9 @@ const MyPredictions: React.FC = () => {
                                                     {isCompleted ? 'Final Score' : match?.matchTime ? format(new Date(match.matchTime), 'MMM dd • HH:mm') : 'TBD'}
                                                 </span>
                                                 {/* Your prediction */}
-                                                <div className="flex flex-col items-center gap-1 bg-sky-500/20 border border-sky-400/30 rounded-lg px-4 py-1.5">
-                                                    <span className="text-sky-400 text-[9px] font-semibold uppercase tracking-wider leading-none">Your Prediction</span>
-                                                    <span className="text-sky-200 font-black text-base tabular-nums leading-none">
+                                                <div className="flex flex-col items-center gap-0.5 bg-sky-500/20 border border-sky-400/30 rounded-md px-3 py-1">
+                                                    <span className="text-sky-400 text-[8px] font-semibold uppercase tracking-wider leading-none">Your Prediction</span>
+                                                    <span className="text-sky-200 font-black text-sm tabular-nums leading-none">
                                                         {pred1 != null && pred2 != null ? `${pred1}–${pred2}` : '–'}
                                                     </span>
                                                 </div>
@@ -297,7 +297,7 @@ const MyPredictions: React.FC = () => {
                                         <div className="relative z-10 mx-4 border-t border-white/[0.08]" />
 
                                         {/* Stats footer */}
-                                        <div className="relative z-10 grid grid-cols-2 divide-x divide-white/[0.08] px-0 py-2 bg-white/[0.04]">
+                                        <div className="relative z-10 grid grid-cols-2 divide-x divide-white/[0.08] px-0 py-1.5 bg-white/[0.04]">
                                             {/* Match column */}
                                             <div className="flex flex-col items-center gap-1 px-3">
                                                 <span className="text-[9px] text-white/50 uppercase tracking-widest font-bold">Match</span>
