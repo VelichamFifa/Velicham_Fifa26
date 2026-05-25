@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+import os
+from datetime import datetime, timezone
 
 import azure.functions as func
 
@@ -12,6 +13,55 @@ from shared.scoring import calculate_prediction_points, prediction_outcome
 
 
 logger = get_logger(__name__)
+
+
+def _archive_predictions_to_blob(predictions: list, match_id: int, match_tag: str) -> None:
+    """Serialize predictions for a match to JSON and upload to Azure Blob Storage."""
+    storage_url = os.environ.get("BLOB_STORAGE_URL")
+    if not storage_url:
+        logger.warning("finalize_match: BLOB_STORAGE_URL not set, skipping predictions archive")
+        return
+
+    from azure.identity import DefaultAzureCredential
+    from azure.storage.blob import BlobServiceClient
+
+    def _json_default(obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+    archived_at = datetime.now(timezone.utc)
+    timestamp = archived_at.strftime("%Y%m%dT%H%M%SZ")
+    blob_name = f"match_{match_id}_{match_tag}_{timestamp}.json"
+    container_name = "predictions-archive"
+
+    payload = json.dumps(
+        {
+            "matchId": match_id,
+            "matchTag": match_tag,
+            "archivedAt": archived_at.isoformat(),
+            "predictions": [dict(p) for p in predictions],
+        },
+        default=_json_default,
+        indent=2,
+    ).encode("utf-8")
+
+    credential = DefaultAzureCredential()
+    blob_service = BlobServiceClient(account_url=storage_url, credential=credential)
+    container_client = blob_service.get_container_client(container_name)
+
+    try:
+        container_client.create_container()
+    except Exception:
+        pass  # Container already exists
+
+    container_client.upload_blob(name=blob_name, data=payload, overwrite=True)
+    logger.info(
+        "finalize_match: archived %d predictions to blob %s/%s",
+        len(predictions),
+        container_name,
+        blob_name,
+    )
 
 
 def _community_name(cursor, community_id: int | None) -> str | None:
@@ -125,7 +175,7 @@ def _finalize(
 
         cur.execute(
             """
-            SELECT id, userId, matchTag, team1Score, team2Score
+            SELECT id, userId, matchTag, team1Score, team2Score, submittedTime
             FROM predictions
             WHERE matchId = %s
             """,
@@ -179,14 +229,16 @@ def _finalize(
                 team2_score,
             )
 
+            prediction_time = p.get("submittedTime")
+
             cur.execute(
                 """
                 INSERT INTO results (
                   userId, matchId, matchTag, result, matchPoints, finalPoints,
                   team1PredictedScore, team2PredictedScore,
-                  communityName1, communityName2, createdAt, updatedAt
+                  communityName1, communityName2, predictionTime, createdAt, updatedAt
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, UTC_TIMESTAMP(), UTC_TIMESTAMP())
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, UTC_TIMESTAMP(), UTC_TIMESTAMP())
                 ON DUPLICATE KEY UPDATE
                   matchTag = VALUES(matchTag),
                   result = VALUES(result),
@@ -196,6 +248,7 @@ def _finalize(
                   team2PredictedScore = VALUES(team2PredictedScore),
                   communityName1 = VALUES(communityName1),
                   communityName2 = VALUES(communityName2),
+                  predictionTime = VALUES(predictionTime),
                   updatedAt = UTC_TIMESTAMP()
                 """,
                 (
@@ -209,6 +262,7 @@ def _finalize(
                     int(p["team2Score"]),
                     community_name1,
                     community_name2,
+                    prediction_time,
                 ),
             )
 
@@ -264,6 +318,12 @@ def _finalize(
                 target_date=match_time if isinstance(match_time, datetime) else None,
             )
             log_step(logger, "leaderboard_rebuild_completed", function="finalize_match", matchId=match_id)
+
+        try:
+            _archive_predictions_to_blob(predictions, match_id, match_tag)
+            log_step(logger, "predictions_archived", function="finalize_match", matchId=match_id, count=len(predictions))
+        except Exception:
+            logger.exception("finalize_match: blob archive failed (matchId=%s), proceeding with delete", match_id)
 
         cur.execute("DELETE FROM predictions WHERE matchId = %s", (match_id,))
         log_step(

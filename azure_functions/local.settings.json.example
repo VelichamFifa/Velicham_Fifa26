@@ -8,6 +8,7 @@
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "python",
 
-    "DATABASE_URL": "mysql://USER:PASSWORD@YOUR_SERVER.mysql.database.azure.com:3306/velichamfifa26_dev?sslaccept=strict"
+    "DATABASE_URL": "mysql://USER:PASSWORD@YOUR_SERVER.mysql.database.azure.com:3306/velichamfifa26_dev?sslaccept=strict",
+    "BLOB_STORAGE_URL": "https://YOUR_STORAGE_ACCOUNT.blob.core.windows.net"
   }
 }
