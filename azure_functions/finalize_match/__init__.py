@@ -129,7 +129,7 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
             logger.warning("finalize_match: match not found (matchId=%s)", match_id)
             return func.HttpResponse(json.dumps({"error": "Match not found"}), status_code=404, mimetype="application/json")
 
-        if match_row["status"] in ("completed", "publishing"):
+        if match_row["status"] in ("completed"):
             logger.warning(
                 "finalize_match: match already %s, skipping (matchId=%s)",
                 match_row["status"], match_id,
