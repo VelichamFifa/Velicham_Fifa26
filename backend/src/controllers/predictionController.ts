@@ -190,7 +190,7 @@ const buildPredictionsFromResults = async (
 export const getUserPredictions = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
-    const { matchId, page = '1', limit = '10' } = req.query;
+    const { matchId } = req.query;
 
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -201,18 +201,27 @@ export const getUserPredictions = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = parseInt(limit as string, 10);
-    let matchIdNum: number | undefined;
+    const where: { userId: number; matchId?: number } = { userId: userIdNum };
     if (matchId) {
       const parsedMatchId = Number(matchId);
       if (Number.isInteger(parsedMatchId) && parsedMatchId > 0) {
-        matchIdNum = parsedMatchId;
+        where.matchId = parsedMatchId;
       }
     }
 
-    const responsePayload = await buildPredictionsFromResults(userIdNum, pageNum, limitNum, matchIdNum);
-    res.json(responsePayload);
+    const predictions = await prisma.prediction.findMany({
+      where,
+      select: {
+        id: true,
+        matchId: true,
+        matchTag: true,
+        team1Score: true,
+        team2Score: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({ predictions });
   } catch (error) {
     const errorDetails = logger.error('getUserPredictions', error, {
       method: req.method,

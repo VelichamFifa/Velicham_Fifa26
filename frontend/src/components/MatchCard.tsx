@@ -280,7 +280,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
             </div>
           ) : (
             <span className="text-white/40 text-xs font-semibold">
-              {format(new Date(match.predictionsEndingTime), 'MMM dd, HH:mm')}
+              {format(new Date(match.predictionsEndingTime), 'MMM dd, h:mm a')}
             </span>
           )}
         </div>

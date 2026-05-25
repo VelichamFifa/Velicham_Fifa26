@@ -43,8 +43,11 @@ const Dashboard: React.FC = () => {
     communities: [],
   });
 
-  const getPredictionMatchId = (prediction: Prediction): string =>
-    typeof prediction.matchId === 'string' ? prediction.matchId : prediction.matchId.matchId;
+  const getPredictionMatchId = (prediction: Prediction): string => {
+    if (typeof prediction.matchId === 'string') return prediction.matchId;
+    if (typeof (prediction.matchId as any) === 'number') return String(prediction.matchId);
+    return (prediction.matchId as Match).matchId;
+  };
 
   useEffect(() => {
     if (!isLoggedIn) {
