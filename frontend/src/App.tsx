@@ -11,6 +11,7 @@ import ProfileSetup from './pages/ProfileSetup';
 import Profile from './pages/Profile';
 import MyPredictions from './pages/MyPredictions';
 import AdminDashboard from './pages/AdminDashboard';
+import CommunityMembers from './pages/CommunityMembers';
 
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route path="/my-predictions" element={<MyPredictions />} />
+            <Route path="/community/:communityId/members" element={<CommunityMembers />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/profile" element={<Profile />} />
           </Routes>

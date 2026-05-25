@@ -96,7 +96,7 @@ const MyPredictions: React.FC = () => {
                                             <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Match Pts</th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Total Pts</th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Match Rank</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Overall Rank</th>
+                                            <th className="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Current Rank</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-100">

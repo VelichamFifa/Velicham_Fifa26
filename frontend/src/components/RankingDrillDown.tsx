@@ -62,9 +62,6 @@ const RankingDrillDown: React.FC<RankingDrillDownProps> = ({
         <div className="bg-primary p-4 flex justify-between items-center">
           <div>
             <h3 className="text-white font-bold text-lg leading-tight">{title}</h3>
-            <p className="text-blue-100 text-xs mt-0.5">
-              {isDaily ? 'Today\'s Standings' : 'Overall Rankings'}
-            </p>
           </div>
           <button 
             onClick={onClose}

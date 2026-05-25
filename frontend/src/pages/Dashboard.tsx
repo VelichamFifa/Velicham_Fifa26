@@ -5,7 +5,7 @@ import { apiService } from '../services/apiService';
 import { Match, Prediction } from '../types';
 import MatchCard from '../components/MatchCard';
 
-import RankingDrillDown from '../components/RankingDrillDown';
+
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -14,13 +14,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [userPredictions, setUserPredictions] = useState<Prediction[]>([]);
 
-  // Drill-down state
-  const [showDrillDown, setShowDrillDown] = useState(false);
-  const [drillDownConfig, setDrillDownConfig] = useState({
-    communityId: 'global',
-    isDaily: false,
-    title: 'Overall Ranking',
-  });
+
 
   interface UserRankInfo {
     rank: string | number;
@@ -79,9 +73,9 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDrillDown = (communityId: string, isDaily: boolean, title: string) => {
-    setDrillDownConfig({ communityId, isDaily, title });
-    setShowDrillDown(true);
+  const handleDrillDown = (communityId: string, _isDaily: boolean, communityName: string) => {
+    const name = communityName.replace(/ — Community Members$/, '');
+    navigate(`/community/${communityId}/members?name=${encodeURIComponent(name)}`);
   };
 
   const handlePredictionSubmit = (matchId: string, team1Score: number, team2Score: number) => {
@@ -150,7 +144,7 @@ const Dashboard: React.FC = () => {
               <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/15 blur-md" />
               <div className="relative flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-black tracking-wider text-white/80">My Final Rank</p>
+                  <p className="text-xs font-black tracking-wider text-white/80">My Current Rank</p>
                   <div className="mt-2 flex items-baseline gap-2">
                     <span className="text-4xl sm:text-[2.75rem] leading-none font-black text-white">
                       {userStats.final.rank === '-' ? '–' : `#${userStats.final.rank}`}
@@ -294,10 +288,10 @@ const Dashboard: React.FC = () => {
                     <p className="mb-2 text-xs font-extrabold tracking-wide text-white/90">{comm.name}</p>
                     <div className="grid grid-cols-1 gap-2">
                       <button
-                        onClick={() => handleDrillDown(comm.communityId, false, `${comm.name} — Overall`)}
+                        onClick={() => handleDrillDown(comm.communityId, false, `${comm.name} — Community Members`)}
                         className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-left hover:bg-sky-400/20 hover:border-sky-300/45 transition-all"
                       >
-                        <span className="block text-[10px] font-bold tracking-wider text-white/55">Final Rank</span>
+                        <span className="block text-[10px] font-bold tracking-wider text-white/55">Current Rank</span>
                         <div className="mt-1 flex items-baseline gap-2">
                           <span className="block text-lg font-black text-sky-200">
                             {comm.overall?.rank === '-' ? '–' : `#${comm.overall?.rank}`}
@@ -320,14 +314,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <RankingDrillDown
-        isOpen={showDrillDown}
-        onClose={() => setShowDrillDown(false)}
-        communityId={drillDownConfig.communityId}
-        isDaily={drillDownConfig.isDaily}
-        title={drillDownConfig.title}
-        currentUserId={user?.userId}
-      />
+
     </div>
   );
 };
