@@ -123,11 +123,19 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
         cur = cnxn.cursor()
 
         # Load match metadata
-        cur.execute("SELECT id, matchTag, matchTime FROM matches WHERE id = %s", (match_id,))
+        cur.execute("SELECT id, matchTag, matchTime, status FROM matches WHERE id = %s", (match_id,))
         match_row = cur.fetchone()
         if not match_row:
             logger.warning("finalize_match: match not found (matchId=%s)", match_id)
             return func.HttpResponse(json.dumps({"error": "Match not found"}), status_code=404, mimetype="application/json")
+
+        if match_row["status"] == "completed":
+            logger.warning("finalize_match: match already completed, skipping (matchId=%s)", match_id)
+            return func.HttpResponse(
+                json.dumps({"message": "Match already completed", "matchId": match_id}),
+                status_code=409,
+                mimetype="application/json",
+            )
 
         match_tag = match_row["matchTag"]
         match_time = match_row["matchTime"]

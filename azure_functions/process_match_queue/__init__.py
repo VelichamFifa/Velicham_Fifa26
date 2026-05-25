@@ -98,7 +98,7 @@ def main(msg: func.QueueMessage) -> None:
     # Reuse the finalize logic (scores predictions + rebuilds leaderboards)
     log_step(logger, "invoke_finalize", function="process_match_queue", matchId=match_id)
     try:
-        result = _finalize(match_id, team1_score, team2_score, rebuild=True)
+        result = _finalize(match_id, team1_score, team2_score)
     except Exception:
         logger.exception(
             "process_match_queue: finalize threw exception (matchId=%s, messageId=%s, dequeueCount=%s)",
@@ -113,6 +113,16 @@ def main(msg: func.QueueMessage) -> None:
         match_id,
         result.status_code,
     )
+
+    if result.status_code == 409:
+        # Match was already completed (e.g. duplicate queue message). Treat as success
+        # so the message is removed from the queue rather than retried / dead-lettered.
+        logger.info(
+            "process_match_queue: match already completed, skipping (matchId=%s, messageId=%s)",
+            match_id,
+            message_id,
+        )
+        return
 
     if result.status_code != 200:
         body = result.get_body()
