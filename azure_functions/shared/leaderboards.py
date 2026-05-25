@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import logging
 from datetime import date, datetime
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def _as_date(value: date | datetime) -> date:
@@ -36,6 +39,7 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
 
     # ── Step 5: mv_top_leaders — top 50 users by total match points ──────────
     cursor.execute("DELETE FROM mv_top_leaders")
+    logger.info("leaderboards: DELETE mv_top_leaders OK")
     cursor.execute(
         """
         INSERT INTO mv_top_leaders (
@@ -82,6 +86,7 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
         LIMIT 50
         """
     )
+    logger.info("leaderboards: INSERT mv_top_leaders OK | rows=%s", cursor.rowcount)
 
     # Sync final_user_results dashboard table (from results table)
     cursor.execute(
@@ -106,13 +111,11 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
           updatedAt  = UTC_TIMESTAMP()
         """
     )
-
-    
-
-    
+    logger.info("leaderboards: UPSERT final_user_results OK | rows=%s", cursor.rowcount)
 
     # ── Step 6: mv_match_leaders — top 50 users for the current match ─────────
     cursor.execute("DELETE FROM mv_match_leaders")
+    logger.info("leaderboards: DELETE mv_match_leaders OK")
     if match_id is not None:
         cursor.execute(
             """
@@ -161,9 +164,11 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
             """,
             (match_id,),
         )
+        logger.info("leaderboards: INSERT mv_match_leaders OK | rows=%s", cursor.rowcount)
 
     # ── Step 7: mv_community_leaders — overall community rankings ─────────────
     cursor.execute("DELETE FROM mv_community_leaders")
+    logger.info("leaderboards: DELETE mv_community_leaders OK")
     cursor.execute(
         """
         INSERT INTO mv_community_leaders (
@@ -192,9 +197,11 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
         ORDER BY rk ASC
         """
     )
+    logger.info("leaderboards: INSERT mv_community_leaders OK | rows=%s", cursor.rowcount)
 
-       # ── Step 8: mv_match_community_leaders — community leaders for current match
+    # ── Step 8: mv_match_community_leaders — community leaders for current match
     cursor.execute("DELETE FROM mv_match_community_leaders")
+    logger.info("leaderboards: DELETE mv_match_community_leaders OK")
     if match_id is not None:
         cursor.execute(
             """
@@ -222,6 +229,7 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
             """,
             (match_id,),
         )
+        logger.info("leaderboards: INSERT mv_match_community_leaders OK | rows=%s", cursor.rowcount)
 
     return {
         "match_id": match_id,
