@@ -145,7 +145,7 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
         match_time_iso = match_time.isoformat() if isinstance(match_time, datetime) else None
         log_step(logger, "match_metadata_loaded", function="finalize_match", matchId=match_id, matchTag=match_tag)
 
-        # ── Step 0: Archive predictions to blob FIRST ──────────────────────
+        # ── Step 0: Archive predictions to blob FIRST ──── f──────────────────
         cur.execute(
             "SELECT id, userId, matchTag, team1Score, team2Score, submittedTime FROM predictions WHERE matchId = %s",
             (match_id,),
