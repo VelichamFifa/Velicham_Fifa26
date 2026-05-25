@@ -19,6 +19,7 @@ const Dashboard: React.FC = () => {
   interface UserRankInfo {
     rank: string | number;
     totalPoints: number;
+    lastMatchTag?: string | null;
   }
 
   interface CommunityStat {
@@ -37,7 +38,7 @@ const Dashboard: React.FC = () => {
 
   const [userStats, setUserStats] = useState<UserStats>({
     overall: { rank: '-', totalPoints: 0 },
-    daily: { rank: '-', totalPoints: 0 },
+    daily: { rank: '-', totalPoints: 0, lastMatchTag: null },
     final: { rank: '-', totalPoints: 0 },
     communities: [],
   });
@@ -140,44 +141,69 @@ const Dashboard: React.FC = () => {
         {/* Main Content: Matches to Predict */}
         <div className="lg:col-span-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-4 shadow-lg">
-              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/15 blur-md" />
+            <div
+              className="relative overflow-hidden rounded-xl p-4 shadow-lg border border-white/10"
+              style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
+            >
+              <div
+                className="pointer-events-none absolute inset-0 opacity-[0.03]"
+                style={{
+                  backgroundImage:
+                    'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%), ' +
+                    'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,1) 28px, rgba(255,255,255,1) 29px)',
+                }}
+              />
               <div className="relative flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-black tracking-wider text-white/80">My Current Rank</p>
+                  <p className="text-xs font-black tracking-wider text-white/60">My Current Rank</p>
                   <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-4xl sm:text-[2.75rem] leading-none font-black text-white">
+                    <span className="text-4xl sm:text-[2.75rem] leading-none font-black text-amber-400">
                       {userStats.final.rank === '-' ? '–' : `#${userStats.final.rank}`}
                     </span>
-                    <span className="rounded-md bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+                    <span className="rounded-md bg-white/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white/80">
                       {userStats.final.totalPoints} pts
                     </span>
                   </div>
                 </div>
-                <div className="rounded-full bg-white/20 p-2">
-                  <svg className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <div className="rounded-full bg-white/10 p-2 border border-white/15">
+                  <svg className="h-5 w-5 text-amber-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M7 2h10v2h3a1 1 0 0 1 1 1v2a6 6 0 0 1-6 6h-1.1A5 5 0 0 1 13 14.9V17h3a1 1 0 0 1 1 1v2H7v-2a1 1 0 0 1 1-1h3v-2.1A5 5 0 0 1 10.1 13H9a6 6 0 0 1-6-6V5a1 1 0 0 1 1-1h3V2Zm-2 4v1a4 4 0 0 0 4 4h.3A5 5 0 0 1 7 7V6H5Zm14 0h-2v1a5 5 0 0 1-2.3 4H15a4 4 0 0 0 4-4V6Z" />
                   </svg>
                 </div>
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-sky-600 via-blue-500 to-cyan-500 p-4 shadow-lg">
-              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/15 blur-md" />
+            <div
+              className="relative overflow-hidden rounded-xl p-4 shadow-lg border border-white/10"
+              style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
+            >
+              <div
+                className="pointer-events-none absolute inset-0 opacity-[0.03]"
+                style={{
+                  backgroundImage:
+                    'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%), ' +
+                    'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,1) 28px, rgba(255,255,255,1) 29px)',
+                }}
+              />
               <div className="relative flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-black tracking-wider text-white/80">Last Match Rank</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-black tracking-wider text-white/60">Last Match Rank</p>
+                    {userStats.daily.lastMatchTag && (
+                      <span className="text-[10px] font-bold text-sky-400/80 truncate max-w-[100px]">{userStats.daily.lastMatchTag}</span>
+                    )}
+                  </div>
                   <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-4xl sm:text-[2.75rem] leading-none font-black text-white">
+                    <span className="text-4xl sm:text-[2.75rem] leading-none font-black text-sky-300">
                       {userStats.daily.rank === '-' ? '–' : `#${userStats.daily.rank}`}
                     </span>
-                    <span className="rounded-md bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+                    <span className="rounded-md bg-white/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white/80">
                       {userStats.daily.totalPoints} pts
                     </span>
                   </div>
                 </div>
-                <div className="rounded-full bg-white/20 p-2">
-                  <svg className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <div className="rounded-full bg-white/10 p-2 border border-white/15">
+                  <svg className="h-5 w-5 text-sky-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M12 8a1 1 0 0 1 1 1v3.382l2.447 1.223a1 1 0 1 1-.894 1.79l-3-1.5A1 1 0 0 1 11 14V9a1 1 0 0 1 1-1Z" />
                     <path fillRule="evenodd" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8Z" clipRule="evenodd" />
                   </svg>

@@ -154,7 +154,7 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
 
     const userIdStr = String(userIdNum);
 
-    const [topLeader, latestDailyLeader] = await Promise.all([
+    const [topLeader, latestDailyLeader, latestResult] = await Promise.all([
       prisma.topLeader.findFirst({
         where: { userId: userIdStr },
         orderBy: [{ rank: 'asc' }],
@@ -164,6 +164,11 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
         where: { userId: userIdStr },
         orderBy: [{ date: 'desc' }, { rank: 'asc' }],
         select: { rank: true, totalPoints: true },
+      }),
+      prisma.result.findFirst({
+        where: { userId: userIdNum },
+        orderBy: [{ createdAt: 'desc' }],
+        select: { matchTag: true },
       }),
     ]);
 
@@ -193,9 +198,11 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
         : { rank: '-', totalPoints: pointsSum._sum.finalPoints ?? 0 };
     }
 
+    const lastMatchTag = latestResult?.matchTag ?? null;
+
     const dailyStats = latestDailyLeader
-      ? { rank: latestDailyLeader.rank, totalPoints: latestDailyLeader.totalPoints }
-      : { rank: '-', totalPoints: 0 };
+      ? { rank: latestDailyLeader.rank, totalPoints: latestDailyLeader.totalPoints, lastMatchTag }
+      : { rank: '-', totalPoints: 0, lastMatchTag };
 
     const communityRanks: any[] = [];
     for (const cid of [user.communityId1, user.communityId2].filter((v): v is number => typeof v === 'number')) {
