@@ -81,6 +81,10 @@ class ApiService {
     return this.client.get(`/matches/${matchId}`);
   }
 
+  getLatestCompletedMatch() {
+    return this.client.get('/matches/latest-completed');
+  }
+
   getTeams() {
     return this.client.get('/matches/teams');
   }

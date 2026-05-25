@@ -128,6 +128,28 @@ export const getMatchById = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const getLatestCompletedMatch = async (req: AuthRequest, res: Response) => {
+  try {
+    const match = await prisma.match.findFirst({
+      where: { status: 'completed' },
+      orderBy: { matchTime: 'desc' },
+      select: { matchTag: true },
+    });
+
+    if (!match) {
+      return res.status(404).json({ error: 'No completed match found' });
+    }
+
+    res.json({ matchTag: match.matchTag });
+  } catch (error) {
+    const errorDetails = logger.error('getLatestCompletedMatch', error, {
+      method: req.method,
+      path: req.path,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch latest completed match' });
+  }
+};
+
 export const createMatch = async (req: AuthRequest, res: Response) => {
   try {
     const { sequence, team1, team2, matchTime, predictionsEndingTime, round, group, matchTag, comment } = req.body;

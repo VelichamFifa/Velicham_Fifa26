@@ -65,6 +65,17 @@ const Home: React.FC = () => {
           </div>
         </div>
 
+        {/* Scoring Rules */}
+        <div className="bg-white rounded-xl shadow-lg p-6 max-w-md mx-auto">
+          <h3 className="text-lg font-bold text-primary mb-3">📊 Scoring Rules</h3>
+          <ul className="text-sm text-gray-700 space-y-2">
+            <li className="flex items-center gap-2">✅ <span><strong>Correct Result:</strong> 5 points</span></li>
+            <li className="flex items-center gap-2">⚽ <span><strong>Correct Team 1 Score:</strong> 2 points</span></li>
+            <li className="flex items-center gap-2">⚽ <span><strong>Correct Team 2 Score:</strong> 2 points</span></li>
+            <li className="flex items-center gap-2">🎯 <span><strong>Correct Goal Difference:</strong> 1 point</span></li>
+          </ul>
+        </div>
+
       </div>
     </div>
   );

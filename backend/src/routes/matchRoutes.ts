@@ -8,6 +8,7 @@ const router = Router();
 // Public routes
 router.get('/', matchController.getAllMatches);
 router.get('/teams', matchController.getAllTeams);
+router.get('/latest-completed', matchController.getLatestCompletedMatch);
 router.get('/:matchId', matchController.getMatchById);
 
 // Admin routes

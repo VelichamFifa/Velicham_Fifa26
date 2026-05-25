@@ -9,6 +9,7 @@ const LeaderboardPage: React.FC = () => {
   const [dailyLeaderboard, setDailyLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [communityLeaderboard, setCommunityLeaderboard] = useState<CommunityLeaderboardEntry[]>([]);
   const [dailyCommunityLeaderboard, setDailyCommunityLeaderboard] = useState<CommunityLeaderboardEntry[]>([]);
+  const [lastMatchTag, setLastMatchTag] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -19,17 +20,19 @@ const LeaderboardPage: React.FC = () => {
     try {
       setLoading(true);
 
-      const [topRes, dailyRes, communityRes, dailyCommunityRes] = await Promise.all([
+      const [topRes, dailyRes, communityRes, dailyCommunityRes, lastMatchRes] = await Promise.all([
         apiService.getTopLeaderboard(30),
         apiService.getDailyLeaderboard(30),
         apiService.getCommunityLeaderboard(30),
         apiService.getDailyCommunityLeaderboard(30),
+        apiService.getLatestCompletedMatch().catch(() => null),
       ]);
 
       setTopLeaderboard(topRes.data.leaderboard || []);
       setDailyLeaderboard(dailyRes.data.leaderboard || []);
       setCommunityLeaderboard(communityRes.data.leaderboard || []);
       setDailyCommunityLeaderboard(dailyCommunityRes.data.leaderboard || []);
+      if (lastMatchRes?.data?.matchTag) setLastMatchTag(lastMatchRes.data.matchTag);
     } catch (error) {
       console.error('Failed to load leaderboards:', error);
     } finally {
@@ -37,51 +40,46 @@ const LeaderboardPage: React.FC = () => {
     }
   };
 
-  return (
-    <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-6 sm:mb-8">Leaderboards</h1>
+  const tabs = [
+    { key: 'top', label: '🏆 Top Leaders' },
+    { key: 'community', label: '👥 Communities' },
+    { key: 'daily', label: '⚽ Last Match Leaders' },
+    { key: 'daily-community', label: '🗓️ Last Match Community Leaders' },
+  ] as const;
 
-      <div className="flex gap-1 sm:gap-2 mb-6 sm:mb-8 border-b border-gray-200 overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('top')}
-          className={`px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-medium border-b-2 transition whitespace-nowrap ${
-            activeTab === 'top'
-              ? 'border-secondary text-secondary'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
-          }`}
+  return (
+    <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 60%, #0c1a1a 100%)' }}>
+    <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6 sm:mb-8">Leaderboards</h1>
+
+      {/* Mobile: dropdown */}
+      <div className="sm:hidden mb-5">
+        <select
+          value={activeTab}
+          onChange={(e) => setActiveTab(e.target.value as typeof activeTab)}
+          className="w-full border border-white/20 rounded-lg px-3 py-2.5 text-sm font-medium text-white bg-[#1a2744] focus:outline-none focus:ring-2 focus:ring-secondary"
         >
-          🏆 Top Leaders
-        </button>
-        <button
-          onClick={() => setActiveTab('daily')}
-          className={`px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-medium border-b-2 transition whitespace-nowrap ${
-            activeTab === 'daily'
-              ? 'border-secondary text-secondary'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          📅 Daily Leaders
-        </button>
-        <button
-          onClick={() => setActiveTab('community')}
-          className={`px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-medium border-b-2 transition whitespace-nowrap ${
-            activeTab === 'community'
-              ? 'border-secondary text-secondary'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          👥 Communities
-        </button>
-        <button
-          onClick={() => setActiveTab('daily-community')}
-          className={`px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-medium border-b-2 transition whitespace-nowrap ${
-            activeTab === 'daily-community'
-              ? 'border-secondary text-secondary'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          🗓️ Daily Communities
-        </button>
+          {tabs.map((t) => (
+            <option key={t.key} value={t.key} className="bg-gray-900 text-white">{t.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Desktop: tab bar */}
+      <div className="hidden sm:flex gap-2 mb-8 border-b border-white/10">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setActiveTab(t.key)}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${
+              activeTab === t.key
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-white/60 hover:text-white'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
@@ -101,13 +99,16 @@ const LeaderboardPage: React.FC = () => {
             />
           )}
           {activeTab === 'daily' && (
-            <Leaderboard
-              entries={dailyLeaderboard}
-              type="user"
-              title="Today's Leaders"
-              showCommunityUnderName={true}
-              hideState={true}
-            />
+            <>
+              <Leaderboard
+                entries={dailyLeaderboard}
+                type="user"
+                title="Last Match Leaders"
+                subtitle={lastMatchTag ?? undefined}
+                showCommunityUnderName={true}
+                hideState={true}
+              />
+            </>
           )}
           {activeTab === 'community' && (
             <Leaderboard
@@ -117,24 +118,19 @@ const LeaderboardPage: React.FC = () => {
             />
           )}
           {activeTab === 'daily-community' && (
-            <Leaderboard
-              entries={dailyCommunityLeaderboard}
-              type="community"
-              title="Today's Community Leaders"
-            />
+            <>
+              <Leaderboard
+                entries={dailyCommunityLeaderboard}
+                type="community"
+                title="Last Match Community Leaders"
+                subtitle={lastMatchTag ?? undefined}
+              />
+            </>
           )}
         </>
       )}
 
-      <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-        <h3 className="font-bold text-primary mb-2">📊 Scoring Rules</h3>
-        <ul className="text-sm text-gray-700 space-y-1">
-          <li>✅ Correct Result: 5 points</li>
-          <li>⚽ Correct Team 1 Score: 2 points</li>
-          <li>⚽ Correct Team 2 Score: 2 points</li>
-          <li>🎯 Correct Goal Difference: 1 point</li>
-        </ul>
-      </div>
+    </div>
     </div>
   );
 };
