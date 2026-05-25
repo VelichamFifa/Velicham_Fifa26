@@ -120,7 +120,7 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
         cursor.execute(
             """
             INSERT INTO mv_match_leaders (
-              `rank`, totalPoints, name, state, community1, community2, userId, email, createdAt, updatedAt
+              `rank`, totalPoints, name, state, community1, community2, userId, email, `date`, createdAt, updatedAt
             )
             SELECT
               rk,
@@ -131,6 +131,7 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
               community2,
               userId,
               COALESCE(email, ''),
+              UTC_DATE(),
               UTC_TIMESTAMP(),
               UTC_TIMESTAMP()
             FROM (
@@ -206,13 +207,14 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
         cursor.execute(
             """
             INSERT INTO mv_match_community_leaders (
-              `rank`, totalPoints, communityName, communityId, createdAt, updatedAt
+              `rank`, totalPoints, communityName, communityId, `date`, createdAt, updatedAt
             )
             SELECT
               rk,
               communityMatchPoint,
               communityName,
               communityId,
+              UTC_DATE(),
               UTC_TIMESTAMP(),
               UTC_TIMESTAMP()
             FROM (
