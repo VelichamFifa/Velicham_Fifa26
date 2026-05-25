@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from typing import Any
 
 
@@ -10,19 +10,38 @@ def _as_date(value: date | datetime) -> date:
     return value
 
 
-def _utc_midnight(dt: datetime) -> datetime:
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    dt = dt.astimezone(timezone.utc)
-    return datetime(dt.year, dt.month, dt.day, tzinfo=timezone.utc)
-
-
-def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dict[str, Any]:
+def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, Any]:
     """
-    Rebuild materialized leaderboard tables (mv_*) from results + community_results.
-    Aligned with backend/prisma/schema.prisma (MySQL).
+    Rebuild materialized leaderboard tables (mv_*) — Steps 5–8 of the finalize workflow.
+
+    Args:
+        cursor:   DB cursor inside an open transaction.
+        match_id: The match just finalized. When None, the most recently completed
+                  match is used for mv_match_leaders / mv_match_community_leaders.
     """
 
+    # Resolve match_date for the per-match mv tables.
+    if match_id is None:
+        cursor.execute(
+            """
+            SELECT id, matchTime FROM matches
+            WHERE status = 'completed'
+            ORDER BY matchTime DESC
+            LIMIT 1
+            """
+        )
+        row = cursor.fetchone()
+        if row:
+            match_id = row["id"]
+            match_date = _as_date(row["matchTime"]) if row["matchTime"] else None
+        else:
+            match_date = None
+    else:
+        cursor.execute("SELECT matchTime FROM matches WHERE id = %s", (match_id,))
+        row = cursor.fetchone()
+        match_date = _as_date(row["matchTime"]) if row and row["matchTime"] else None
+
+    # ── Step 5: mv_top_leaders — top 50 users by total match points ──────────
     cursor.execute("DELETE FROM mv_top_leaders")
     cursor.execute(
         """
@@ -54,7 +73,7 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
             SELECT
               CAST(u.id AS CHAR) AS userId,
               TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
-              SUM(COALESCE(r.finalPoints, 0)) AS totalPoints,
+              SUM(COALESCE(r.matchPoints, 0)) AS totalPoints,
               UPPER(u.state) AS state,
               c1.name AS community1,
               c2.name AS community2,
@@ -67,10 +86,11 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
           ) totals
         ) ranked
         ORDER BY rk ASC
+        LIMIT 50
         """
     )
 
-    # Sync dashboard stats table (final_user_results) from overall leaderboard
+    # Sync final_user_results dashboard table
     cursor.execute(
         """
         INSERT INTO final_user_results (userId, finalPoint, finalRank, createdAt, updatedAt)
@@ -78,12 +98,12 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
         FROM mv_top_leaders
         ON DUPLICATE KEY UPDATE
           finalPoint = VALUES(finalPoint),
-          finalRank = VALUES(finalRank),
-          updatedAt = UTC_TIMESTAMP()
+          finalRank  = VALUES(finalRank),
+          updatedAt  = UTC_TIMESTAMP()
         """
     )
 
-    # Sync per-result final ranks from overall user leaderboard.
+    # Sync finalRank in results rows from overall leaderboard
     cursor.execute(
         """
         UPDATE results r
@@ -96,21 +116,59 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
         """
     )
 
-    # Compute per-match rank in results (same rank for equal match points).
-    cursor.execute(
-        """
-        UPDATE results r
-        INNER JOIN (
-          SELECT
-            id,
-            DENSE_RANK() OVER (PARTITION BY matchId ORDER BY COALESCE(matchPoints, 0) DESC) AS matchRank
-          FROM results
-        ) ranked ON ranked.id = r.id
-        SET r.matchRank = ranked.matchRank,
-            r.updatedAt = UTC_TIMESTAMP()
-        """
-    )
+    # ── Step 6: mv_match_leaders — top 50 users for the current match ─────────
+    cursor.execute("DELETE FROM mv_match_leaders")
+    if match_id is not None:
+        cursor.execute(
+            """
+            INSERT INTO mv_match_leaders (
+              `rank`, totalPoints, name, state, community1, community2, userId, email, `date`, createdAt, updatedAt
+            )
+            SELECT
+              rk,
+              matchPoints,
+              name,
+              COALESCE(state, ''),
+              community1,
+              community2,
+              userId,
+              COALESCE(email, ''),
+              %s,
+              UTC_TIMESTAMP(),
+              UTC_TIMESTAMP()
+            FROM (
+              SELECT
+                DENSE_RANK() OVER (ORDER BY matchPoints DESC) AS rk,
+                matchPoints,
+                name,
+                state,
+                community1,
+                community2,
+                userId,
+                email
+              FROM (
+                SELECT
+                  CAST(u.id AS CHAR) AS userId,
+                  TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
+                  COALESCE(r.matchPoints, 0) AS matchPoints,
+                  UPPER(u.state) AS state,
+                  c1.name AS community1,
+                  c2.name AS community2,
+                  u.email AS email
+                FROM results r
+                INNER JOIN users u ON u.id = r.userId
+                LEFT JOIN communities c1 ON c1.id = u.communityId1
+                LEFT JOIN communities c2 ON c2.id = u.communityId2
+                WHERE r.matchId = %s
+              ) match_totals
+            ) ranked
+            ORDER BY rk ASC
+            LIMIT 50
+            """,
+            (match_date, match_id),
+        )
 
+    # ── Step 7: mv_community_leaders — overall community rankings ─────────────
     cursor.execute("DELETE FROM mv_community_leaders")
     cursor.execute(
         """
@@ -127,15 +185,13 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
         FROM (
           SELECT
             DENSE_RANK() OVER (ORDER BY totalPoints DESC) AS rk,
-            totalPoints,
             COALESCE(c.name, totals.communityId) AS communityName,
-            totals.communityId AS communityId
+            totals.communityId,
+            totals.totalPoints
           FROM (
-            SELECT
-              cr.communityId,
-              SUM(COALESCE(cr.communityMatchPoint, 0) * COALESCE(cr.communityWeightagePoint, 1)) AS totalPoints
-            FROM community_results cr
-            GROUP BY cr.communityId
+            SELECT communityId, MAX(totalCommunityPoint) AS totalPoints
+            FROM community_results
+            GROUP BY communityId
           ) totals
           LEFT JOIN communities c ON c.id = CAST(totals.communityId AS UNSIGNED)
         ) ranked
@@ -143,117 +199,30 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
         """
     )
 
-
-    # Sync community_results with the rebuilt overall community leaderboard.
+    # Sync community finalRank in community_results
     cursor.execute(
         """
         UPDATE community_results cr
         INNER JOIN (
-          SELECT CAST(communityId AS UNSIGNED) AS communityId, totalPoints, `rank` AS finalRank
+          SELECT CAST(communityId AS UNSIGNED) AS communityId, `rank` AS finalRank
           FROM mv_community_leaders
         ) ranked ON ranked.communityId = CAST(cr.communityId AS UNSIGNED)
-        SET cr.totalCommunityPoint = ranked.totalPoints,
-            cr.finalRank = ranked.finalRank,
+        SET cr.finalRank = ranked.finalRank,
             cr.updatedAt = UTC_TIMESTAMP()
         """
     )
 
-    if target_date is not None:
-        days: list[date] = [_as_date(_utc_midnight(target_date))]
-    else:
+    # ── Step 8: mv_match_community_leaders — community leaders for current match
+    cursor.execute("DELETE FROM mv_match_community_leaders")
+    if match_id is not None:
         cursor.execute(
             """
-            SELECT DISTINCT DATE(m.matchTime) AS day
-            FROM matches m
-            WHERE m.status = 'completed'
-              AND m.team1Score IS NOT NULL
-              AND m.team2Score IS NOT NULL
-            """
-        )
-        days = []
-        for row in cursor.fetchall():
-            day_val = row["day"]
-            days.append(_as_date(day_val) if not isinstance(day_val, date) else day_val)
-
-    for day in days:
-        cursor.execute("DELETE FROM mv_daily_leaders WHERE DATE(`date`) = %s", (day,))
-        # If target_date is set, filter by matchId for that date (single match scenario)
-        match_id_filter = None
-        if target_date is not None:
-            cursor.execute(
-                """
-                SELECT id FROM matches
-                WHERE DATE(matchTime) = %s
-                AND status = 'completed'
-                AND team1Score IS NOT NULL
-                AND team2Score IS NOT NULL
-                LIMIT 1
-                """,
-                (day,)
-            )
-            match_row = cursor.fetchone()
-            match_id_filter = match_row["id"] if match_row else None
-
-        insert_query = """
-            INSERT INTO mv_daily_leaders (
-              `rank`, totalPoints, name, state, community1, community2, userId, email, `date`, createdAt, updatedAt
-            )
-            SELECT
-              rk,
-              totalPoints,
-              name,
-              COALESCE(state, ''),
-              community1,
-              community2,
-              userId,
-              COALESCE(email, ''),
-              %s,
-              UTC_TIMESTAMP(),
-              UTC_TIMESTAMP()
-            FROM (
-              SELECT
-                DENSE_RANK() OVER (ORDER BY totalPoints DESC) AS rk,
-                totalPoints,
-                name,
-                state,
-                community1,
-                community2,
-                userId,
-                email
-              FROM (
-                SELECT
-                  CAST(u.id AS CHAR) AS userId,
-                  TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
-                  SUM(COALESCE(r.finalPoints, 0)) AS totalPoints,
-                  UPPER(u.state) AS state,
-                  c1.name AS community1,
-                  c2.name AS community2,
-                  u.email AS email
-                FROM results r
-                INNER JOIN matches m ON m.id = r.matchId
-                INNER JOIN users u ON u.id = r.userId
-                LEFT JOIN communities c1 ON c1.id = u.communityId1
-                LEFT JOIN communities c2 ON c2.id = u.communityId2
-                WHERE m.status = 'completed'
-                  AND m.team1Score IS NOT NULL
-                  AND m.team2Score IS NOT NULL
-                  AND DATE(m.matchTime) = %s
-        """
-        insert_params = [day, day]
-        if match_id_filter is not None:
-            insert_query += " AND m.id = %s"
-            insert_params.append(match_id_filter)
-        insert_query += "\n                GROUP BY u.id, u.firstName, u.lastName, u.state, c1.name, c2.name, u.email\n              ) totals\n            ) ranked\n            ORDER BY rk ASC\n            "
-        cursor.execute(insert_query, tuple(insert_params))
-
-        cursor.execute("DELETE FROM mv_daily_community_leaders WHERE DATE(`date`) = %s", (day,))
-        comm_insert_query = """
-            INSERT INTO mv_daily_community_leaders (
+            INSERT INTO mv_match_community_leaders (
               `rank`, totalPoints, communityName, communityId, `date`, createdAt, updatedAt
             )
             SELECT
               rk,
-              totalPoints,
+              communityMatchPoint,
               communityName,
               communityId,
               %s,
@@ -261,44 +230,20 @@ def rebuild_all_leaderboards(cursor, target_date: datetime | None = None) -> dic
               UTC_TIMESTAMP()
             FROM (
               SELECT
-                DENSE_RANK() OVER (ORDER BY totalPoints DESC) AS rk,
-                totalPoints,
-                COALESCE(c.name, totals.communityId) AS communityName,
-                totals.communityId AS communityId
-              FROM (
-                SELECT
-                  cr.communityId,
-                  SUM(COALESCE(cr.communityMatchPoint, 0) * COALESCE(cr.communityWeightagePoint, 1)) AS totalPoints
-                FROM community_results cr
-                INNER JOIN matches m ON m.id = cr.matchId
-                WHERE m.status = 'completed'
-                  AND m.team1Score IS NOT NULL
-                  AND m.team2Score IS NOT NULL
-                  AND DATE(m.matchTime) = %s
-        """
-        comm_insert_params = [day, day]
-        if match_id_filter is not None:
-            comm_insert_query += " AND m.id = %s"
-            comm_insert_params.append(match_id_filter)
-        comm_insert_query += "\n                GROUP BY cr.communityId\n              ) totals\n              LEFT JOIN communities c ON c.id = CAST(totals.communityId AS UNSIGNED)\n            ) ranked\n            ORDER BY rk ASC\n            "
-        cursor.execute(comm_insert_query, tuple(comm_insert_params))
-
-
-        # Sync community_results daily ranks for the completed matches on this day.
-        cursor.execute(
-            """
-            UPDATE community_results cr
-            INNER JOIN matches m ON m.id = cr.matchId
-            INNER JOIN (
-                SELECT CAST(communityId AS UNSIGNED) AS communityId, `rank` AS dailyRank
-                FROM mv_daily_community_leaders
-                WHERE DATE(`date`) = %s
-            ) ranked ON ranked.communityId = CAST(cr.communityId AS UNSIGNED)
-            SET cr.dailyRank = ranked.dailyRank,
-                cr.updatedAt = UTC_TIMESTAMP()
-            WHERE DATE(m.matchTime) = %s
+                DENSE_RANK() OVER (ORDER BY communityMatchPoint DESC) AS rk,
+                COALESCE(c.name, cr.communityId) AS communityName,
+                cr.communityId,
+                cr.communityMatchPoint
+              FROM community_results cr
+              LEFT JOIN communities c ON c.id = CAST(cr.communityId AS UNSIGNED)
+              WHERE cr.matchId = %s
+            ) ranked
+            ORDER BY rk ASC
             """,
-            (day, day),
+            (match_date, match_id),
         )
 
-    return {"days_rebuilt": [d.isoformat() for d in days]}
+    return {
+        "match_id": match_id,
+        "match_date": match_date.isoformat() if match_date else None,
+    }

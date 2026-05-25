@@ -45,7 +45,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         with connect(autocommit=False) as cnxn:
             cur = cnxn.cursor()
             log_step(logger, "rebuild_started", function="rebuild_leaderboards")
-            info = rebuild_all_leaderboards(cur, target_date=target_date)
+            info = rebuild_all_leaderboards(cur)
             cnxn.commit()
             log_step(logger, "transaction_committed", function="rebuild_leaderboards")
     except Exception as exc:

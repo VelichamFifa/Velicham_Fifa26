@@ -63,15 +63,6 @@ def _archive_predictions_to_blob(predictions: list, match_id: int, match_tag: st
         blob_name,
     )
 
-
-def _community_name(cursor, community_id: int | None) -> str | None:
-    if not community_id:
-        return None
-    cursor.execute("SELECT name FROM communities WHERE id = %s", (community_id,))
-    row = cursor.fetchone()
-    return row["name"] if row else str(community_id)
-
-
 def main(req: func.HttpRequest) -> func.HttpResponse:
     log_step(logger, "request_received", function="finalize_match")
     try:
@@ -83,8 +74,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     match_id = body.get("matchId")
     team1_score = body.get("team1Score")
     team2_score = body.get("team2Score")
-    rebuild = body.get("rebuildLeaderboards", False)
-    log_step(logger, "payload_parsed", function="finalize_match", matchId=match_id, rebuild=rebuild)
+    log_step(logger, "payload_parsed", function="finalize_match", matchId=match_id)
 
     if not match_id:
         logger.warning("finalize_match: missing matchId")
@@ -108,12 +98,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     log_step(logger, "validation_complete", function="finalize_match", matchId=match_id)
 
     try:
-        response = _finalize(
-            match_id,
-            team1_score,
-            team2_score,
-            rebuild,
-        )
+        response = _finalize(match_id, team1_score, team2_score)
         log_step(logger, "request_completed", function="finalize_match", matchId=match_id, status=response.status_code)
         return response
     except Exception as exc:
@@ -125,18 +110,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
 
-def _finalize(
-    match_id: int,
-    team1_score: int,
-    team2_score: int,
-    rebuild: bool,
-) -> func.HttpResponse:
+def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpResponse:
     logger.info(
-        "finalize_match: begin finalize workflow (matchId=%s, team1Score=%s, team2Score=%s, rebuild=%s)",
-        match_id,
-        team1_score,
-        team2_score,
-        rebuild,
+        "finalize_match: begin (matchId=%s, team1Score=%s, team2Score=%s)",
+        match_id, team1_score, team2_score,
     )
     predictions_processed = 0
     skipped_users = 0
@@ -145,10 +122,8 @@ def _finalize(
         log_step(logger, "db_connection_opened", function="finalize_match", matchId=match_id)
         cur = cnxn.cursor()
 
-        cur.execute(
-            "SELECT id, matchTag, matchTime FROM matches WHERE id = %s",
-            (match_id,),
-        )
+        # Load match metadata
+        cur.execute("SELECT id, matchTag, matchTime FROM matches WHERE id = %s", (match_id,))
         match_row = cur.fetchone()
         if not match_row:
             logger.warning("finalize_match: match not found (matchId=%s)", match_id)
@@ -156,13 +131,24 @@ def _finalize(
 
         match_tag = match_row["matchTag"]
         match_time = match_row["matchTime"]
+        match_time_iso = match_time.isoformat() if isinstance(match_time, datetime) else None
         log_step(logger, "match_metadata_loaded", function="finalize_match", matchId=match_id, matchTag=match_tag)
-        match_time_iso = None
-        try:
-            match_time_iso = match_time.isoformat() if isinstance(match_time, datetime) else None
-        except Exception:
-            match_time_iso = None
 
+        # ── Step 0: Archive predictions to blob FIRST ──────────────────────
+        cur.execute(
+            "SELECT id, userId, matchTag, team1Score, team2Score, submittedTime FROM predictions WHERE matchId = %s",
+            (match_id,),
+        )
+        predictions = fetch_all(cur)
+        log_step(logger, "predictions_fetched", function="finalize_match", matchId=match_id, count=len(predictions))
+
+        try:
+            _archive_predictions_to_blob(predictions, match_id, match_tag)
+            log_step(logger, "predictions_archived", function="finalize_match", matchId=match_id, count=len(predictions))
+        except Exception:
+            logger.exception("finalize_match: blob archive failed (matchId=%s), continuing", match_id)
+
+        # ── Step 1: Update match table ──────────────────────────────────────
         cur.execute(
             """
             UPDATE matches
@@ -173,46 +159,33 @@ def _finalize(
         )
         log_step(logger, "match_updated", function="finalize_match", matchId=match_id)
 
-        cur.execute(
-            """
-            SELECT id, userId, matchTag, team1Score, team2Score, submittedTime
-            FROM predictions
-            WHERE matchId = %s
-            """,
-            (match_id,),
-        )
-        predictions = fetch_all(cur)
-        log_step(logger, "predictions_fetched", function="finalize_match", matchId=match_id, count=len(predictions))
-
-        community_points: dict[str, int] = {}
+        # ── Steps 2 & 3: Score predictions and write results ───────────────
         community_name_cache: dict[int, str | None] = {}
 
         def get_cached_community_name(community_id: int | None) -> str | None:
             if not community_id:
                 return None
             if community_id not in community_name_cache:
-                community_name_cache[community_id] = _community_name(cur, community_id)
+                cur.execute("SELECT name FROM communities WHERE id = %s", (community_id,))
+                row = cur.fetchone()
+                community_name_cache[community_id] = row["name"] if row else str(community_id)
             return community_name_cache[community_id]
 
         for p in predictions:
+            # Step 2: Calculate match points
             points = calculate_prediction_points(
                 int(p["team1Score"]),
                 int(p["team2Score"]),
                 team1_score,
                 team2_score,
             )
-
             cur.execute(
                 "UPDATE predictions SET points = %s, updatedAt = UTC_TIMESTAMP() WHERE id = %s",
                 (points, p["id"]),
             )
 
             cur.execute(
-                """
-                SELECT u.id, u.firstName, u.lastName, u.email, u.communityId1, u.communityId2
-                FROM users u
-                WHERE u.id = %s
-                """,
+                "SELECT id, firstName, lastName, email, communityId1, communityId2 FROM users WHERE id = %s",
                 (p["userId"],),
             )
             user = cur.fetchone()
@@ -229,8 +202,7 @@ def _finalize(
                 team2_score,
             )
 
-            prediction_time = p.get("submittedTime")
-
+            # Step 3: Insert result (finalPoints = matchPoints initially; updated cumulatively below)
             cur.execute(
                 """
                 INSERT INTO results (
@@ -240,16 +212,16 @@ def _finalize(
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, UTC_TIMESTAMP(), UTC_TIMESTAMP())
                 ON DUPLICATE KEY UPDATE
-                  matchTag = VALUES(matchTag),
-                  result = VALUES(result),
-                  matchPoints = VALUES(matchPoints),
-                  finalPoints = VALUES(finalPoints),
+                  matchTag            = VALUES(matchTag),
+                  result              = VALUES(result),
+                  matchPoints         = VALUES(matchPoints),
+                  finalPoints         = VALUES(matchPoints),
                   team1PredictedScore = VALUES(team1PredictedScore),
                   team2PredictedScore = VALUES(team2PredictedScore),
-                  communityName1 = VALUES(communityName1),
-                  communityName2 = VALUES(communityName2),
-                  predictionTime = VALUES(predictionTime),
-                  updatedAt = UTC_TIMESTAMP()
+                  communityName1      = VALUES(communityName1),
+                  communityName2      = VALUES(communityName2),
+                  predictionTime      = VALUES(predictionTime),
+                  updatedAt           = UTC_TIMESTAMP()
                 """,
                 (
                     user["id"],
@@ -262,77 +234,153 @@ def _finalize(
                     int(p["team2Score"]),
                     community_name1,
                     community_name2,
-                    prediction_time,
+                    p.get("submittedTime"),
                 ),
             )
-
-            cid1 = user.get("communityId1")
-            cid2 = user.get("communityId2")
-            if cid1:
-                key1 = str(cid1)
-                community_points[key1] = community_points.get(key1, 0) + points
-            if cid2 and cid2 != cid1:
-                key2 = str(cid2)
-                community_points[key2] = community_points.get(key2, 0) + points
-
             predictions_processed += 1
 
-        log_step(
-            logger,
-            "prediction_scoring_complete",
-            function="finalize_match",
-            matchId=match_id,
-            processed=predictions_processed,
-            skippedUsers=skipped_users,
+        log_step(logger, "prediction_scoring_complete", function="finalize_match",
+                 matchId=match_id, processed=predictions_processed, skippedUsers=skipped_users)
+
+        # Step 3: finalPoints = cumulative SUM(matchPoints) across ALL matches for each user
+        cur.execute(
+            """
+            UPDATE results r
+            INNER JOIN (
+              SELECT userId, SUM(matchPoints) AS cumulative
+              FROM results
+              GROUP BY userId
+            ) totals ON totals.userId = r.userId
+            SET r.finalPoints = totals.cumulative,
+                r.updatedAt   = UTC_TIMESTAMP()
+            WHERE r.matchId = %s
+            """,
+            (match_id,),
         )
 
-        for community_id, community_match_point in community_points.items():
-            cur.execute(
-                """
-                INSERT INTO community_results (
-                  communityId, matchId, matchTag, communityMatchPoint, totalCommunityPoint, createdAt, updatedAt
-                )
-                VALUES (%s, %s, %s, %s, 0, UTC_TIMESTAMP(), UTC_TIMESTAMP())
-                ON DUPLICATE KEY UPDATE
-                  matchTag = VALUES(matchTag),
-                  communityMatchPoint = VALUES(communityMatchPoint),
-                                    totalCommunityPoint = VALUES(totalCommunityPoint),
-                  updatedAt = UTC_TIMESTAMP()
-                """,
-                (community_id, match_id, match_tag, community_match_point),
-            )
-
-        log_step(
-            logger,
-            "community_results_upsert_complete",
-            function="finalize_match",
-            matchId=match_id,
-            communities=len(community_points),
+        # Step 3: matchRank = rank within this match by matchPoints
+        cur.execute(
+            """
+            UPDATE results r
+            INNER JOIN (
+              SELECT id,
+                DENSE_RANK() OVER (ORDER BY COALESCE(matchPoints, 0) DESC) AS mr
+              FROM results
+              WHERE matchId = %s
+            ) ranked ON ranked.id = r.id
+            SET r.matchRank = ranked.mr,
+                r.updatedAt = UTC_TIMESTAMP()
+            WHERE r.matchId = %s
+            """,
+            (match_id, match_id),
         )
 
-        leaderboard_info = None
-        if rebuild:
-            log_step(logger, "leaderboard_rebuild_requested", function="finalize_match", matchId=match_id)
-            leaderboard_info = rebuild_all_leaderboards(
-                cur,
-                target_date=match_time if isinstance(match_time, datetime) else None,
+        # Step 3: finalRank = overall rank by SUM(matchPoints) across all matches
+        cur.execute(
+            """
+            UPDATE results r
+            INNER JOIN (
+              SELECT userId,
+                DENSE_RANK() OVER (ORDER BY SUM(matchPoints) DESC) AS fr
+              FROM results
+              GROUP BY userId
+            ) ranked ON ranked.userId = r.userId
+            SET r.finalRank = ranked.fr,
+                r.updatedAt = UTC_TIMESTAMP()
+            """
+        )
+        log_step(logger, "results_ranks_updated", function="finalize_match", matchId=match_id)
+
+        # ── Step 4: Community results ───────────────────────────────────────
+        # communityMatchPoint = AVG match points of all community members for this match
+        # Uses UNION to cover both communityId1 and communityId2 memberships.
+        cur.execute(
+            """
+            INSERT INTO community_results (
+              communityId, matchId, matchTag, communityMatchPoint, totalCommunityPoint, createdAt, updatedAt
             )
-            log_step(logger, "leaderboard_rebuild_completed", function="finalize_match", matchId=match_id)
+            SELECT
+              CAST(members.communityId AS CHAR),
+              %s,
+              %s,
+              ROUND(AVG(r.matchPoints)),
+              0,
+              UTC_TIMESTAMP(),
+              UTC_TIMESTAMP()
+            FROM results r
+            INNER JOIN (
+              SELECT id AS userId, communityId1 AS communityId FROM users WHERE communityId1 IS NOT NULL
+              UNION
+              SELECT id AS userId, communityId2 AS communityId FROM users WHERE communityId2 IS NOT NULL
+            ) members ON members.userId = r.userId
+            WHERE r.matchId = %s
+            GROUP BY members.communityId
+            ON DUPLICATE KEY UPDATE
+              matchTag            = VALUES(matchTag),
+              communityMatchPoint = VALUES(communityMatchPoint),
+              updatedAt           = UTC_TIMESTAMP()
+            """,
+            (match_id, match_tag, match_id),
+        )
 
-        try:
-            _archive_predictions_to_blob(predictions, match_id, match_tag)
-            log_step(logger, "predictions_archived", function="finalize_match", matchId=match_id, count=len(predictions))
-        except Exception:
-            logger.exception("finalize_match: blob archive failed (matchId=%s), proceeding with delete", match_id)
+        # Step 4: totalCommunityPoint = cumulative SUM of communityMatchPoints per community
+        cur.execute(
+            """
+            UPDATE community_results cr
+            INNER JOIN (
+              SELECT communityId, SUM(communityMatchPoint) AS cumulative
+              FROM community_results
+              GROUP BY communityId
+            ) totals ON totals.communityId = cr.communityId
+            SET cr.totalCommunityPoint = totals.cumulative,
+                cr.updatedAt           = UTC_TIMESTAMP()
+            WHERE cr.matchId = %s
+            """,
+            (match_id,),
+        )
 
+        # Step 4: dailyRank = rank by communityMatchPoint within this match
+        cur.execute(
+            """
+            UPDATE community_results cr
+            INNER JOIN (
+              SELECT id,
+                DENSE_RANK() OVER (ORDER BY communityMatchPoint DESC) AS dr
+              FROM community_results
+              WHERE matchId = %s
+            ) ranked ON ranked.id = cr.id
+            SET cr.dailyRank = ranked.dr,
+                cr.updatedAt = UTC_TIMESTAMP()
+            WHERE cr.matchId = %s
+            """,
+            (match_id, match_id),
+        )
+
+        # Step 4: finalRank = rank by MAX(totalCommunityPoint) across all matches
+        cur.execute(
+            """
+            UPDATE community_results cr
+            INNER JOIN (
+              SELECT communityId,
+                DENSE_RANK() OVER (ORDER BY MAX(totalCommunityPoint) DESC) AS fr
+              FROM community_results
+              GROUP BY communityId
+            ) ranked ON ranked.communityId = cr.communityId
+            SET cr.finalRank = ranked.fr,
+                cr.updatedAt = UTC_TIMESTAMP()
+            """
+        )
+        log_step(logger, "community_results_complete", function="finalize_match", matchId=match_id)
+
+        # ── Steps 5–8: Rebuild materialized view tables ─────────────────────
+        log_step(logger, "leaderboard_rebuild_started", function="finalize_match", matchId=match_id)
+        leaderboard_info = rebuild_all_leaderboards(cur, match_id)
+        log_step(logger, "leaderboard_rebuild_completed", function="finalize_match", matchId=match_id)
+
+        # ── Step 9: Delete predictions ──────────────────────────────────────
         cur.execute("DELETE FROM predictions WHERE matchId = %s", (match_id,))
-        log_step(
-            logger,
-            "predictions_deleted",
-            function="finalize_match",
-            matchId=match_id,
-            deleted=cur.rowcount,
-        )
+        log_step(logger, "predictions_deleted", function="finalize_match",
+                 matchId=match_id, deleted=cur.rowcount)
 
         cnxn.commit()
         log_step(logger, "transaction_committed", function="finalize_match", matchId=match_id)
