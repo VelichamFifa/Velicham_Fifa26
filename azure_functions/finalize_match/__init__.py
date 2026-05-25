@@ -129,10 +129,13 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
             logger.warning("finalize_match: match not found (matchId=%s)", match_id)
             return func.HttpResponse(json.dumps({"error": "Match not found"}), status_code=404, mimetype="application/json")
 
-        if match_row["status"] == "completed":
-            logger.warning("finalize_match: match already completed, skipping (matchId=%s)", match_id)
+        if match_row["status"] in ("completed", "publishing"):
+            logger.warning(
+                "finalize_match: match already %s, skipping (matchId=%s)",
+                match_row["status"], match_id,
+            )
             return func.HttpResponse(
-                json.dumps({"message": "Match already completed", "matchId": match_id}),
+                json.dumps({"message": f"Match already {match_row['status']}", "matchId": match_id}),
                 status_code=409,
                 mimetype="application/json",
             )
@@ -156,16 +159,16 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
         except Exception:
             logger.exception("finalize_match: blob archive failed (matchId=%s), continuing", match_id)
 
-        # ── Step 1: Update match table ──────────────────────────────────────
+        # ── Step 1: Update match table (status → publishing while processing) ──
         cur.execute(
             """
             UPDATE matches
-            SET team1Score = %s, team2Score = %s, status = 'completed', updatedAt = UTC_TIMESTAMP()
+            SET team1Score = %s, team2Score = %s, status = 'publishing', updatedAt = UTC_TIMESTAMP()
             WHERE id = %s
             """,
             (team1_score, team2_score, match_id),
         )
-        log_step(logger, "match_updated", function="finalize_match", matchId=match_id)
+        log_step(logger, "match_publishing", function="finalize_match", matchId=match_id)
 
         # ── Steps 2 & 3: Score predictions and write results ───────────────
         community_name_cache: dict[int, str | None] = {}
@@ -283,7 +286,7 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
             (match_id, match_id),
         )
 
-        # Step 3: finalRank = overall rank by SUM(matchPoints) across all matches
+        # Step 3: finalRank = overall rank by SUM(matchPoints) across all matches (update current match rows only)
         cur.execute(
             """
             UPDATE results r
@@ -295,7 +298,9 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
             ) ranked ON ranked.userId = r.userId
             SET r.finalRank = ranked.fr,
                 r.updatedAt = UTC_TIMESTAMP()
-            """
+            WHERE r.matchId = %s
+            """,
+            (match_id,),
         )
         log_step(logger, "results_ranks_updated", function="finalize_match", matchId=match_id)
 
@@ -364,7 +369,7 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
             (match_id, match_id),
         )
 
-        # Step 4: finalRank = rank by MAX(totalCommunityPoint) across all matches
+        # Step 4: finalRank = rank by MAX(totalCommunityPoint) across all matches (update current match rows only)
         cur.execute(
             """
             UPDATE community_results cr
@@ -376,7 +381,9 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
             ) ranked ON ranked.communityId = cr.communityId
             SET cr.finalRank = ranked.fr,
                 cr.updatedAt = UTC_TIMESTAMP()
-            """
+            WHERE cr.matchId = %s
+            """,
+            (match_id,),
         )
         log_step(logger, "community_results_complete", function="finalize_match", matchId=match_id)
 
@@ -389,6 +396,13 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
         cur.execute("DELETE FROM predictions WHERE matchId = %s", (match_id,))
         log_step(logger, "predictions_deleted", function="finalize_match",
                  matchId=match_id, deleted=cur.rowcount)
+
+        # ── Final: Mark match as completed ─────────────────────────────────
+        cur.execute(
+            "UPDATE matches SET status = 'completed', updatedAt = UTC_TIMESTAMP() WHERE id = %s",
+            (match_id,),
+        )
+        log_step(logger, "match_completed", function="finalize_match", matchId=match_id)
 
         cnxn.commit()
         log_step(logger, "transaction_committed", function="finalize_match", matchId=match_id)
