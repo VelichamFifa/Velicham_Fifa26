@@ -43,7 +43,7 @@ const MyPredictions: React.FC = () => {
 
                 <div className="relative max-w-7xl mx-auto px-4 py-8 sm:py-12">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-2 drop-shadow-lg">
-                        📋 My Predictions
+                        📋 My Previous Predictions
                     </h1>
                     <p className="text-white/90 text-base sm:text-lg font-medium">
                         Track your predictions and rankings
