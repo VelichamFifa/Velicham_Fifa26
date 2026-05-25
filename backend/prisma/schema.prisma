@@ -141,6 +141,7 @@ model Result {
   team2PredictedScore    Int?
   matchRank              Int?
   finalRank              Int?
+  predictionTime         DateTime?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
