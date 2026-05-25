@@ -24,7 +24,7 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
     if match_id is None:
         cursor.execute(
             """
-            SELECT id, matchTime FROM matches
+            SELECT id FROM matches
             WHERE status = 'completed'
             ORDER BY matchTime DESC
             LIMIT 1
@@ -33,13 +33,6 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
         row = cursor.fetchone()
         if row:
             match_id = row["id"]
-            match_date = _as_date(row["matchTime"]) if row["matchTime"] else None
-        else:
-            match_date = None
-    else:
-        cursor.execute("SELECT matchTime FROM matches WHERE id = %s", (match_id,))
-        row = cursor.fetchone()
-        match_date = _as_date(row["matchTime"]) if row and row["matchTime"] else None
 
     # ── Step 5: mv_top_leaders — top 50 users by total match points ──────────
     cursor.execute("DELETE FROM mv_top_leaders")
@@ -90,12 +83,23 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
         """
     )
 
-    # Sync final_user_results dashboard table
+    # Sync final_user_results dashboard table (from results table)
     cursor.execute(
         """
         INSERT INTO final_user_results (userId, finalPoint, finalRank, createdAt, updatedAt)
-        SELECT CAST(userId AS UNSIGNED), totalPoints, `rank`, UTC_TIMESTAMP(), UTC_TIMESTAMP()
-        FROM mv_top_leaders
+        SELECT
+          userId,
+          finalPoint,
+          DENSE_RANK() OVER (ORDER BY finalPoint DESC) AS finalRank,
+          UTC_TIMESTAMP(),
+          UTC_TIMESTAMP()
+        FROM (
+          SELECT
+            r.userId,
+            SUM(r.matchPoints) AS finalPoint
+          FROM results r
+          GROUP BY r.userId
+        ) totals
         ON DUPLICATE KEY UPDATE
           finalPoint = VALUES(finalPoint),
           finalRank  = VALUES(finalRank),
@@ -103,18 +107,9 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
         """
     )
 
-    # Sync finalRank in results rows from overall leaderboard
-    cursor.execute(
-        """
-        UPDATE results r
-        INNER JOIN (
-          SELECT CAST(userId AS UNSIGNED) AS userId, `rank` AS finalRank
-          FROM mv_top_leaders
-        ) ranked ON ranked.userId = r.userId
-        SET r.finalRank = ranked.finalRank,
-            r.updatedAt = UTC_TIMESTAMP()
-        """
-    )
+    
+
+    
 
     # ── Step 6: mv_match_leaders — top 50 users for the current match ─────────
     cursor.execute("DELETE FROM mv_match_leaders")
@@ -122,7 +117,7 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
         cursor.execute(
             """
             INSERT INTO mv_match_leaders (
-              `rank`, totalPoints, name, state, community1, community2, userId, email, `date`, createdAt, updatedAt
+              `rank`, totalPoints, name, state, community1, community2, userId, email, createdAt, updatedAt
             )
             SELECT
               rk,
@@ -133,7 +128,6 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
               community2,
               userId,
               COALESCE(email, ''),
-              %s,
               UTC_TIMESTAMP(),
               UTC_TIMESTAMP()
             FROM (
@@ -165,7 +159,7 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
             ORDER BY rk ASC
             LIMIT 50
             """,
-            (match_date, match_id),
+            (match_id,),
         )
 
     # ── Step 7: mv_community_leaders — overall community rankings ─────────────
@@ -199,33 +193,19 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
         """
     )
 
-    # Sync community finalRank in community_results
-    cursor.execute(
-        """
-        UPDATE community_results cr
-        INNER JOIN (
-          SELECT CAST(communityId AS UNSIGNED) AS communityId, `rank` AS finalRank
-          FROM mv_community_leaders
-        ) ranked ON ranked.communityId = CAST(cr.communityId AS UNSIGNED)
-        SET cr.finalRank = ranked.finalRank,
-            cr.updatedAt = UTC_TIMESTAMP()
-        """
-    )
-
-    # ── Step 8: mv_match_community_leaders — community leaders for current match
+       # ── Step 8: mv_match_community_leaders — community leaders for current match
     cursor.execute("DELETE FROM mv_match_community_leaders")
     if match_id is not None:
         cursor.execute(
             """
             INSERT INTO mv_match_community_leaders (
-              `rank`, totalPoints, communityName, communityId, `date`, createdAt, updatedAt
+              `rank`, totalPoints, communityName, communityId, createdAt, updatedAt
             )
             SELECT
               rk,
               communityMatchPoint,
               communityName,
               communityId,
-              %s,
               UTC_TIMESTAMP(),
               UTC_TIMESTAMP()
             FROM (
@@ -240,10 +220,9 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
             ) ranked
             ORDER BY rk ASC
             """,
-            (match_date, match_id),
+            (match_id,),
         )
 
     return {
         "match_id": match_id,
-        "match_date": match_date.isoformat() if match_date else None,
     }
