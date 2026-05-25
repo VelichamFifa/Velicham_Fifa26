@@ -281,9 +281,9 @@ const MyPredictions: React.FC = () => {
                                                     {isCompleted ? 'Final Score' : match?.matchTime ? format(new Date(match.matchTime), 'MMM dd • HH:mm') : 'TBD'}
                                                 </span>
                                                 {/* Your prediction */}
-                                                <div className="flex flex-col items-center gap-0.5 bg-sky-500/20 border border-sky-400/30 rounded-md px-2 py-0.5">
-                                                    <span className="text-sky-400 text-[8px] font-semibold uppercase tracking-wider leading-none">Your Prediction</span>
-                                                    <span className="text-sky-200 font-black text-xs tabular-nums leading-none">
+                                                <div className="flex flex-col items-center gap-1 bg-sky-500/20 border border-sky-400/30 rounded-lg px-4 py-1.5">
+                                                    <span className="text-sky-400 text-[9px] font-semibold uppercase tracking-wider leading-none">Your Prediction</span>
+                                                    <span className="text-sky-200 font-black text-base tabular-nums leading-none">
                                                         {pred1 != null && pred2 != null ? `${pred1}–${pred2}` : '–'}
                                                     </span>
                                                 </div>
