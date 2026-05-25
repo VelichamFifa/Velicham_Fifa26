@@ -141,7 +141,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
     ? <span className="px-2 py-0.5 rounded-full bg-green-500/80 text-[10px] font-bold text-white animate-pulse">● Live</span>
     : isPublishing
     ? <span className="px-2 py-0.5 rounded-full bg-amber-500/80 text-[10px] font-bold text-white">Publishing</span>
-    : <span className="px-2 py-0.5 rounded-full bg-blue-500/70 text-[10px] font-bold text-white">Upcoming</span>;
+    : isPredictionOpen
+      ? <span className="px-2 py-0.5 rounded-full bg-blue-500/70 text-[10px] font-bold text-white">Upcoming</span>
+      : null;
 
   return (
     <div
