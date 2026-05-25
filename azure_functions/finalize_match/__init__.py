@@ -287,8 +287,7 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
         )
 
         # Step 3: finalRank = overall rank by SUM(matchPoints) across all matches (update current match rows only)
-        cur.execute(
-            """
+        final_rank_sql = """
             UPDATE results r
             INNER JOIN (
               SELECT userId,
@@ -299,8 +298,17 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
             SET r.finalRank = ranked.fr,
                 r.updatedAt = UTC_TIMESTAMP()
             WHERE r.matchId = %s
-            """,
-            (match_id,),
+            """
+        logger.info(
+            "finalize_match: executing finalRank UPDATE | matchId=%s | sql=%s",
+            match_id,
+            " ".join(final_rank_sql.split()),
+        )
+        cur.execute(final_rank_sql, (match_id,))
+        logger.info(
+            "finalize_match: finalRank UPDATE done | matchId=%s | rows_affected=%s",
+            match_id,
+            cur.rowcount,
         )
         log_step(logger, "results_ranks_updated", function="finalize_match", matchId=match_id)
 
