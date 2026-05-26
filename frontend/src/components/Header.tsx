@@ -27,7 +27,11 @@ const Header: React.FC = () => {
       <nav className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold">🏆 Velicham Fifa'26 Prediction</h1>
+            <img src="/VelichamLogo.png" alt="Velicham Logo" className="h-10 w-auto object-contain" />
+            <h1 className="text-xl sm:text-2xl font-bold">
+              <span className="sm:hidden">FIFA'26 Prediction</span>
+              <span className="hidden sm:inline">Velicham Fifa'26 Prediction</span>
+            </h1>
           </Link>
 
           {/* Mobile: Show Login/Register or Menu button */}
@@ -40,12 +44,7 @@ const Header: React.FC = () => {
                 >
                   Login
                 </Link>
-                <Link
-                  to="/register"
-                  className="px-3 py-1.5 text-xs border border-white rounded hover:bg-blue-800 transition"
-                >
-                  Register
-                </Link>
+                
               </>
             )}
             <button

@@ -72,49 +72,48 @@ const Home: React.FC = () => {
 
   return (
     <div>
-      <div className="max-w-7xl mx-auto px-4 py-12 sm:py-20">
-        <div className="text-center mb-12 sm:mb-16">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4">🏆 Velicham Fifa'26 Prediction</h1>
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-10">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="font-bold text-white mb-4 leading-tight">
+            <span className="block text-2xl sm:text-5xl md:text-6xl whitespace-nowrap">Velicham - Media One</span>
+            <span className="block text-xl sm:text-2xl md:text-3xl text-sky-400 mt-1">🏆 FIFA'26 Prediction</span>
+          </h1>
           <p className="text-lg sm:text-xl md:text-2xl text-blue-100 mb-6 sm:mb-8 px-4">
             Get ready to participate, compete and celebrate with your community!
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
+          <div className="flex flex-row gap-3 justify-center px-4">
               <Link
                 to="/leaderboard"
-                className="px-6 sm:px-8 py-3 bg-white text-primary font-bold rounded-lg hover:bg-blue-50 transition text-center inline-flex items-center justify-center gap-2"
+                className="w-40 py-2.5 bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-500 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm"
               >
-                <span aria-hidden="true">🏅</span>
                 View Leaderboard
               </Link>
+              {isLoggedIn && (
+                <Link
+                  to="/dashboard"
+                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-500 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-sky-500/20 text-sm"
+                >
+                  <span aria-hidden="true">📊</span>
+                  Dashboard
+                </Link>
+              )}
               {!isLoggedIn && (
                 <Link
                   to="/login"
-                  className="px-6 sm:px-8 py-3 bg-secondary text-white font-bold rounded-lg hover:bg-blue-600 transition text-center"
+                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-500 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm"
                 >
                   Login to Predict
                 </Link>
               )}
-                {isLoggedIn && (
-                  <Link
-                    to="/dashboard"
-                    className="px-6 sm:px-8 py-3 bg-secondary text-white font-bold rounded-lg hover:bg-blue-600 transition text-center inline-flex items-center justify-center gap-2"
-                  >
-                    <span aria-hidden="true">📊</span>
-                    View Dashboard
-                  </Link>
-                )}
             </div>
         </div>
 
         {/* Match Prediction Tiles — shown only when logged in */}
         {isLoggedIn && (
           <div className="mb-12 sm:mb-16">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-white">⚽ Matches to Predict</h2>
-              <Link to="/dashboard" className="text-sm text-sky-400 hover:text-white transition font-medium">
-                Full Dashboard →
-              </Link>
+            <div className="flex items-center mb-4">
+              <h2 className="text-base sm:text-lg font-bold text-white">⚽ Matches to Predict</h2>
             </div>
             {loadingMatches ? (
               <div className="text-center py-10">
