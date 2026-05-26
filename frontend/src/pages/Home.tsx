@@ -1,9 +1,74 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { apiService } from '../services/apiService';
+import { Match, Prediction } from '../types';
+import MatchCard from '../components/MatchCard';
 
 const Home: React.FC = () => {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [userPredictions, setUserPredictions] = useState<Prediction[]>([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+
+  const getPredictionMatchId = (prediction: Prediction): string => {
+    if (typeof prediction.matchId === 'string') return prediction.matchId;
+    if (typeof (prediction.matchId as any) === 'number') return String(prediction.matchId);
+    return (prediction.matchId as Match).matchId;
+  };
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const load = async () => {
+      try {
+        setLoadingMatches(true);
+        const [matchesRes, predictionsRes] = await Promise.all([
+          apiService.getAllMatches('scheduled', 1, 50),
+          apiService.getUserPredictions(1, 100),
+        ]);
+        setMatches(matchesRes.data.matches);
+        setUserPredictions(predictionsRes.data.predictions);
+      } catch (err) {
+        console.error('Failed to load matches:', err);
+      } finally {
+        setLoadingMatches(false);
+      }
+    };
+    load();
+  }, [isLoggedIn]);
+
+  const displayMatches = useMemo(() => {
+    const active = matches.filter((m) => {
+      const s = String(m.status || '').trim().toLowerCase();
+      return s === 'scheduled' || s === 'ongoing';
+    });
+    const sort = (list: Match[]) =>
+      [...list].sort((a, b) => new Date(a.matchTime).getTime() - new Date(b.matchTime).getTime());
+    return active.length > 0 ? sort(active) : sort(matches);
+  }, [matches]);
+
+  const handlePredictionSubmit = (matchId: string, team1Score: number, team2Score: number) => {
+    const submittedTime = new Date().toISOString();
+    setUserPredictions((prev) => {
+      const idx = prev.findIndex((p) => getPredictionMatchId(p) === matchId);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...next[idx], matchId, team1Score, team2Score, submittedTime };
+        return next;
+      }
+      const optimistic: Prediction = {
+        _id: `optimistic-${matchId}`,
+        userId: user?.userId || '',
+        matchId,
+        matchTag: '',
+        team1Score,
+        team2Score,
+        submittedTime,
+        points: 0,
+      };
+      return [optimistic, ...prev];
+    });
+  };
 
   return (
     <div>
@@ -27,7 +92,7 @@ const Home: React.FC = () => {
                   to="/login"
                   className="px-6 sm:px-8 py-3 bg-secondary text-white font-bold rounded-lg hover:bg-blue-600 transition text-center"
                 >
-                  Login
+                  Login to Predict
                 </Link>
               )}
                 {isLoggedIn && (
@@ -41,6 +106,42 @@ const Home: React.FC = () => {
                 )}
             </div>
         </div>
+
+        {/* Match Prediction Tiles — shown only when logged in */}
+        {isLoggedIn && (
+          <div className="mb-12 sm:mb-16">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">⚽ Matches to Predict</h2>
+              <Link to="/dashboard" className="text-sm text-sky-400 hover:text-white transition font-medium">
+                Full Dashboard →
+              </Link>
+            </div>
+            {loadingMatches ? (
+              <div className="text-center py-10">
+                <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-secondary"></div>
+                <p className="mt-3 text-white/50 text-sm">Loading matches…</p>
+              </div>
+            ) : displayMatches.length > 0 ? (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {displayMatches.map((match) => {
+                  const userPrediction = userPredictions.find(
+                    (p) => getPredictionMatchId(p) === match.matchId
+                  );
+                  return (
+                    <MatchCard
+                      key={match.matchId}
+                      match={match}
+                      userPrediction={userPrediction}
+                      onPredictionSubmit={handlePredictionSubmit}
+                    />
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-10 text-white/50">No matches scheduled yet</div>
+            )}
+          </div>
+        )}
 
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16">
           <div className="bg-white/10 border border-white/15 rounded-lg shadow-lg p-6 hover:bg-white/15 transition">
