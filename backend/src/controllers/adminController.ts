@@ -114,7 +114,7 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
 
     const completed = await prisma.match.update({
       where: { id: matchIdNum },
-      data: { status: 'completed' },
+      data: { status: 'completed', completedAt: new Date() },
     });
 
     res.json({

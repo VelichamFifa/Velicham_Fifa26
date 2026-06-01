@@ -98,6 +98,7 @@ model Match {
   comment               String?  @db.LongText
   matchTag              String   @db.VarChar(200)
   status                String   @default("scheduled") @db.VarChar(20)
+  completedAt           DateTime?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   predictions           Prediction[] @relation("MatchPredictions")

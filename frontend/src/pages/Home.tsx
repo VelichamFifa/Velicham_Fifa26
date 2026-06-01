@@ -142,7 +142,7 @@ const Home: React.FC = () => {
           </div>
         )}
 
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-6 sm:mb-8">
           <div className="bg-white/10 border border-white/15 rounded-lg shadow-lg p-6 hover:bg-white/15 transition">
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-3">⚽ Make Predictions</h3>
             <p className="text-white/70">

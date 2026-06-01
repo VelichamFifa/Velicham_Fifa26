@@ -132,7 +132,7 @@ export const getLatestCompletedMatch = async (req: AuthRequest, res: Response) =
   try {
     const match = await prisma.match.findFirst({
       where: { status: 'completed' },
-      orderBy: { matchTime: 'desc' },
+      orderBy: { completedAt: 'desc' },
       select: { matchTag: true },
     });
 
@@ -228,6 +228,8 @@ export const updateMatch = async (req: AuthRequest, res: Response) => {
         ...(team1Score !== undefined ? { team1Score } : {}),
         ...(team2Score !== undefined ? { team2Score } : {}),
         ...(status ? { status } : {}),
+        ...(status === 'completed' ? { completedAt: new Date() } : {}),
+        ...(status !== undefined && status !== 'completed' ? { completedAt: null } : {}),
       },
     });
 

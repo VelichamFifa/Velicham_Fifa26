@@ -102,7 +102,7 @@ const Header: React.FC = () => {
                   {userMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5 animate-in fade-in slide-in-from-top-2">
                       <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                        <p className="text-sm text-white/80 truncate">{user?.email}</p>
                       </div>
                       <Link
                         to="/profile"
@@ -133,12 +133,6 @@ const Header: React.FC = () => {
                 >
                   Login
                 </Link>
-                <Link
-                  to="/register"
-                  className="px-3 py-2 text-sm border border-secondary rounded hover:bg-secondary transition"
-                >
-                  Register
-                </Link>
               </>
             )}
           </div>
@@ -146,7 +140,7 @@ const Header: React.FC = () => {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-4 pt-4 border-t border-blue-800 space-y-3">
+          <div className="md:hidden mt-3 pt-3 border-t border-blue-800 space-y-2">
             <Link
               to="/"
               className="block py-2 hover:text-secondary transition"
@@ -180,12 +174,10 @@ const Header: React.FC = () => {
                     Admin Panel
                   </Link>
                 )}
-                <div className="pt-2 border-t border-blue-800 space-y-2">
+                <div className="pt-2 border-t border-blue-800 space-y-1">
                   <div className="flex items-center justify-between px-2">
-                    <span className="block text-sm font-bold">
-                      Hi, {user?.firstName}
-                    </span>
-                    <span className="text-[10px] text-blue-300 truncate max-w-[150px]">{user?.email}</span>
+                    <span className="block text-sm font-bold">Hi, {user?.firstName}</span>
+                    <span className="text-xs text-white/70 truncate max-w-[150px]">{user?.email}</span>
                   </div>
                   <Link
                     to="/profile"
@@ -207,20 +199,13 @@ const Header: React.FC = () => {
                 </div>
               </>
             ) : (
-              <div className="space-y-2 pt-2 border-t border-blue-800">
+              <div className="space-y-1 pt-2 border-t border-blue-800">
                 <Link
                   to="/login"
                   className="block w-full text-center px-4 py-2 bg-secondary rounded hover:bg-blue-600 transition"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Login
-                </Link>
-                <Link
-                  to="/register"
-                  className="block w-full text-center px-4 py-2 border border-secondary rounded hover:bg-secondary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Register
                 </Link>
               </div>
             )}

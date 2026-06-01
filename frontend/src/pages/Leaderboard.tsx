@@ -43,8 +43,8 @@ const LeaderboardPage: React.FC = () => {
   const tabs = [
     { key: 'top', label: '🏆 Top Leaders' },
     { key: 'community', label: '👥 Communities' },
-    { key: 'daily', label: '⚽ Last Match Leaders' },
-    { key: 'daily-community', label: '🗓️ Last Match Community Leaders' },
+    { key: 'daily', label: '🏆 Last Match Leaders' },
+    { key: 'daily-community', label: '👥 Last Match Community Leaders' },
   ] as const;
 
   return (

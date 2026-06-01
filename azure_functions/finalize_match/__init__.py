@@ -407,7 +407,7 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
 
         # ── Final: Mark match as completed ─────────────────────────────────
         cur.execute(
-            "UPDATE matches SET status = 'completed', updatedAt = UTC_TIMESTAMP() WHERE id = %s",
+            "UPDATE matches SET status = 'completed', completedAt = UTC_TIMESTAMP(), updatedAt = UTC_TIMESTAMP() WHERE id = %s",
             (match_id,),
         )
         log_step(logger, "match_completed", function="finalize_match", matchId=match_id)
