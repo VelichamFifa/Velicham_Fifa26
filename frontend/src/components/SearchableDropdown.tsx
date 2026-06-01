@@ -14,6 +14,9 @@ interface SearchableDropdownProps {
   disabled?: boolean;
   required?: boolean;
   theme?: 'light' | 'dark';
+  noOptionsMessage?: string;
+  onAddNew?: () => void;
+  addNewLabel?: string;
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -24,7 +27,10 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   label,
   disabled = false,
   required = false,
-  theme = 'light'
+  theme = 'light',
+  noOptionsMessage = 'No matching results',
+  onAddNew,
+  addNewLabel = 'Request new item',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -90,17 +96,31 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
             onFocus={() => !disabled && setIsOpen(true)}
             disabled={disabled}
           />
-          <div 
-            className="absolute right-3 flex items-center pointer-events-none"
-          >
-            <svg 
-              className={`w-4 h-4 transition-transform duration-200 ${isDark ? 'text-white/45' : 'text-gray-400'} ${isOpen ? 'rotate-180' : ''}`} 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+          <div className="absolute right-3 flex items-center gap-2">
+            {value && !disabled && (
+              <button
+                type="button"
+                className="text-white/50 hover:text-white focus:outline-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelect('');
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+            <div className="pointer-events-none">
+              <svg 
+                className={`w-4 h-4 transition-transform duration-200 ${isDark ? 'text-white/45' : 'text-gray-400'} ${isOpen ? 'rotate-180' : ''}`} 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
@@ -137,10 +157,24 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
               ))
             ) : (
               <li className={`px-4 py-3 text-center italic ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
-                No matching results
+                {noOptionsMessage}
               </li>
             )}
           </ul>
+          {filteredOptions.length === 0 && onAddNew && (
+            <div className={`px-4 py-3 border-t text-center ${isDark ? 'border-white/10' : 'border-gray-100'}`}>
+              <button
+                type="button"
+                className="text-sm font-semibold text-secondary hover:text-secondary/80"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddNew();
+                }}
+              >
+                {addNewLabel}
+              </button>
+            </div>
+          )}
           
           {/* Clear Selection Option */}
           {value && (
