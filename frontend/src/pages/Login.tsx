@@ -41,7 +41,7 @@ const Login: React.FC = () => {
     <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] p-4">
       <div className="bg-white/10 border border-white/15 backdrop-blur-sm rounded-xl shadow-2xl p-8 max-w-md w-full">
         <h2 className="text-3xl font-bold text-center text-white mb-6">
-          Login to Velicham Fifa'26 Prediction
+          Login to Velicham WORLD CUP '26 Prediction
         </h2>
 
         {error && (

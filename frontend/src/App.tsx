@@ -35,7 +35,7 @@ function App() {
           </Routes>
         </main>
        <footer className="border-t border-white/10 bg-primary py-4 text-center text-sm text-white/70">
-          <div>Velicham North America - Fifa Prediction 2026.</div>
+          <div>Velicham North America - WORLD CUP Prediction 2026.</div>
           <div>All rights reserved.</div>
         </footer>
       </div>

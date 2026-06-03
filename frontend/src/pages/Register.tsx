@@ -138,7 +138,7 @@ const Register: React.FC = () => {
     <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] p-4">
       <div className="bg-white/10 border border-white/15 backdrop-blur-sm rounded-xl shadow-2xl p-6 sm:p-8 max-w-md w-full my-4">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-white mb-4 sm:mb-6">
-          Join Velicham Fifa'26 Prediction
+          Join Velicham WORLD CUP '26 Prediction
         </h2>
 
         {error && (
