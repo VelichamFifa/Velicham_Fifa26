@@ -72,9 +72,13 @@ const Home: React.FC = () => {
 
   return (
     <div>
-      <div className="relative w-full overflow-hidden shadow-2xl border-b border-white/10 bg-slate-900">
+      <div className="relative w-full overflow-hidden shadow-2xl border-b border-white/10 bg-[#0f172a]">
         <img src="/Cover.png" alt="WORLD CUP 2026 Cover" className="w-full h-auto object-cover max-h-[400px] sm:max-h-[600px] block" />
-        <div className="absolute inset-0 flex flex-col justify-between pt-4 pb-1 pl-4 sm:pt-10 sm:pb-3 sm:pl-8 bg-black/10">
+        
+        {/* Bottom-to-top gradient to blend the image into the page background */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-black/10" />
+
+        <div className="absolute inset-0 flex flex-col justify-between pt-4 pb-2 pl-4 sm:pt-10 sm:pb-4 sm:pl-8">
           <div className="flex flex-col items-start gap-4">
             <div className="flex items-center gap-2 sm:gap-4">
               <img src="/VelichamLogo.png" alt="Velicham Logo" className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-left-12 duration-1000" />
@@ -82,10 +86,10 @@ const Home: React.FC = () => {
             </div>
             <h1 className="text-white font-bold text-sm sm:text-xl md:text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
               <span className="block text-white">WORLD CUP '26</span>
-              <span className="block text-secondary">Prediction</span>
+              <span className="block text-sky-400">Prediction</span>
             </h1>
           </div>
-          <p className="text-[10px] sm:text-sm md:text-base text-blue-100 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
+          <p className="text-[10px] sm:text-sm md:text-base text-sky-100/80 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
             Get ready to participate, compete and celebrate with your community!
           </p>
         </div>
