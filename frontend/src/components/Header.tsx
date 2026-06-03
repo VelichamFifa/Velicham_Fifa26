@@ -24,6 +24,8 @@ const Header: React.FC = () => {
       });
   }, [isLoggedIn, setUser]);
 
+  if (isHome) return null;
+
   return (
     <header className={`bg-primary text-white ${isHome ? '' : 'shadow-lg'}`}>
       <nav className="max-w-7xl mx-auto px-4 py-4">
