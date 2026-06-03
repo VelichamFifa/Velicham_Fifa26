@@ -83,11 +83,11 @@ const Home: React.FC = () => {
             <div className="absolute top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 z-20">
               <button
                 onClick={() => logout()}
-                className="p-2.5 bg-white/5 hover:bg-white/15 border border-white/10 text-white/70 hover:text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-xs font-bold backdrop-blur-sm shadow-xl"
+                className="p-1.5 sm:p-2 bg-white/5 hover:bg-white/15 border border-white/10 text-white/70 hover:text-white rounded-lg transition-all duration-200 flex items-center gap-1.5 text-xs font-bold backdrop-blur-sm shadow-xl"
                 title="Logout"
               >
                 <span className="hidden sm:inline uppercase tracking-wider">Logout</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
               </button>
@@ -173,65 +173,31 @@ const Home: React.FC = () => {
         )}
 
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-6 sm:mb-8">
-          <div
-            className="relative overflow-hidden rounded-2xl border border-white/10 p-6 shadow-2xl transition-all duration-300 hover:border-white/20 hover:shadow-blue-900/30 group"
-            style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
-          >
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-              style={{
-                backgroundImage:
-                  'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
-              }}
-            />
-            <div className="relative z-10">
-              <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 group-hover:text-sky-400 transition-colors">
-                <span className="text-2xl">⚽</span> Make Predictions
-              </h3>
-              <p className="text-white/60 text-sm sm:text-base leading-relaxed">
-                Predict the scores of upcoming WORLD CUP matches before the deadline and earn points based on accuracy.
-              </p>
+          {[
+            { icon: '⚽', title: 'Make Predictions', text: 'Predict the scores of upcoming WORLD CUP matches before the deadline and earn points based on accuracy.' },
+            { icon: '🏅', title: 'Climb Leaderboards', text: 'Compete individually and with your community. Track daily and all-time rankings.' },
+            { icon: '👥', title: 'Join Communities', text: 'Be part of up to 2 communities and help them climb the community leaderboard.' }
+          ].map((feature, i) => (
+            <div
+              key={i}
+              className="relative overflow-hidden rounded-2xl border border-white/10 p-6 shadow-2xl transition-all duration-300 hover:border-white/20 hover:shadow-blue-900/30 group"
+              style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
+            >
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                style={{
+                  backgroundImage: 'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
+                }}
+              />
+              <div className="relative z-10">
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 group-hover:text-sky-400 transition-colors">
+                  <span className="text-2xl">{feature.icon}</span> {feature.title}
+                </h3>
+                <p className="text-white/60 text-sm sm:text-base leading-relaxed">
+                  {feature.text}
+                </p>
+              </div>
             </div>
-          </div>
-
-          <div
-            className="relative overflow-hidden rounded-2xl border border-white/10 p-6 shadow-2xl transition-all duration-300 hover:border-white/20 hover:shadow-blue-900/30 group"
-            style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
-          >
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-              style={{
-                backgroundImage:
-                  'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
-              }}
-            />
-            <div className="relative z-10">
-              <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 group-hover:text-sky-400 transition-colors">
-                <span className="text-2xl">🏅</span> Climb Leaderboards
-              </h3>
-              <p className="text-white/60 text-sm sm:text-base leading-relaxed">
-                Compete individually and with your community. Track daily and all-time rankings.
-              </p>
-            </div>
-          </div>
-
-          <div
-            className="relative overflow-hidden rounded-2xl border border-white/10 p-6 shadow-2xl transition-all duration-300 hover:border-white/20 hover:shadow-blue-900/30 group"
-            style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
-          >
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-              style={{
-                backgroundImage:
-                  'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
-              }}
-            />
-            <div className="relative z-10">
-              <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 group-hover:text-sky-400 transition-colors">
-                <span className="text-2xl">👥</span> Join Communities
-              </h3>
-              <p className="text-white/60 text-sm sm:text-base leading-relaxed">
-                Be part of up to 2 communities and help them climb the community leaderboard.
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Scoring Rules */}
@@ -240,12 +206,11 @@ const Home: React.FC = () => {
           style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
         >
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-            style={{
-              backgroundImage:
-                'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
-            }}
-          />
-          <div className="relative z-10">
+              style={{
+              backgroundImage: 'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
+              }}
+            />
+            <div className="relative z-10">
             <h3 className="text-lg font-bold text-white mb-3 border-b border-white/10 pb-2">📊 Scoring Rules</h3>
             <ul className="text-sm text-white/70 space-y-3">
               <li className="flex items-center gap-3">

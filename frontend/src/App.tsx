@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
+import Footer from './components/Footer';
 
 // Pages
 import Home from './pages/Home';
@@ -34,10 +35,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
           </Routes>
         </main>
-       <footer className="border-t border-white/10 bg-primary py-4 text-center text-sm text-white/70">
-          <div>Velicham North America - WORLD CUP Prediction 2026.</div>
-          <div>All rights reserved.</div>
-        </footer>
+        <Footer />
       </div>
     </Router>
   );
