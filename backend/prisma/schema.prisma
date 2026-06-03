@@ -39,7 +39,8 @@ model User {
 }
 
 model UserCommunityRequest {
-  userId              Int     @id
+  id                  Int     @id @default(autoincrement())
+  userId              Int     @unique
   user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   name                String  @db.VarChar(500)
   shortName           String  @default("") @db.VarChar(500)
@@ -48,6 +49,8 @@ model UserCommunityRequest {
   city                String  @default("") @db.VarChar(200)
   state               String  @default("") @db.VarChar(200)
   existingCommunityId String? @db.VarChar(128)
+  status              String  @default("pending") @db.VarChar(50)
+  statusComment       String? @db.VarChar(100)
 
   @@map("user_community_requests")
 }

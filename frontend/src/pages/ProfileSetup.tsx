@@ -25,13 +25,23 @@ const ProfileSetup: React.FC = () => {
         communityId2: '',
         phoneNumber: '',
     });
+    const [requestedCommunity, setRequestedCommunity] = useState({
+        name: '',
+        shortName: '',
+        description: '',
+        isOnline: false,
+        city: '',
+        state: '',
+    });
 
     const [communities, setCommunities] = useState<Community[]>([]);
+    const [showCommunityRequest, setShowCommunityRequest] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [loadingCommunities, setLoadingCommunities] = useState(true);
 
     useEffect(() => {
+        // If user is already set up perfectly, redirect to dashboard
         // If user is already set up perfectly, redirect to dashboard
         if (user && user.city !== 'Not Set' && user.country !== 'Not Set') {
             navigate('/dashboard');
@@ -61,12 +71,20 @@ const ProfileSetup: React.FC = () => {
         fetchCommunities();
     }, [user, navigate]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+        const isCheckbox = e.target instanceof HTMLInputElement && e.target.type === 'checkbox';
+        const val = isCheckbox ? (e.target as HTMLInputElement).checked : value;
+
+        if (name.startsWith('req_')) {
+            const field = name.replace('req_', '');
+            setRequestedCommunity(prev => ({ ...prev, [field]: val }));
+        } else {
+            setFormData((prev) => ({
+                ...prev,
+                [name]: val,
+            }));
+        }
     };
 
     const handleDropdownChange = (name: string, value: string) => {
@@ -87,10 +105,16 @@ const ProfileSetup: React.FC = () => {
         setError('');
         setLoading(true);
 
-        if (!formData.phoneNumber.trim()) {
-            setError('Phone number is required.');
-            setLoading(false);
-            return;
+        // Validation for new community request
+        if (showCommunityRequest) {
+            const isMissingRequired = !requestedCommunity.name || !requestedCommunity.shortName;
+            const isMissingLocation = !requestedCommunity.isOnline && (!requestedCommunity.city || !requestedCommunity.state);
+
+            if (isMissingRequired || isMissingLocation) {
+                setError('Please fill in all required details for the new community request.');
+                setLoading(false);
+                return;
+            }
         }
 
         if (formData.communityId1 && formData.communityId2 && formData.communityId1 === formData.communityId2) {
@@ -101,7 +125,11 @@ const ProfileSetup: React.FC = () => {
 
         try {
             // Need an update profile endpoint if one exists
-            const response = await apiService.updateProfile(formData);
+            const payload = {
+                ...formData,
+                requestedCommunity: showCommunityRequest ? requestedCommunity : null
+            };
+            const response = await apiService.updateProfile(payload);
 
             // Update global user context with new details
             const token = localStorage.getItem('token') || '';
@@ -163,7 +191,7 @@ const ProfileSetup: React.FC = () => {
 
                     <div>
                         <label className="mb-1 block text-sm font-medium text-white/70">
-                            Phone Number <span className="text-red-400">*</span>
+                            Phone Number <span className="text-[10px] text-white/40 font-normal uppercase">(Optional)</span>
                         </label>
                         <input
                             type="text"
@@ -172,7 +200,6 @@ const ProfileSetup: React.FC = () => {
                             onChange={handleChange}
                             placeholder="+1234567890"
                             className="w-full rounded-lg border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-sky-400/60 focus:border-sky-400/40"
-                            required
                         />
                     </div>
 
@@ -225,7 +252,7 @@ const ProfileSetup: React.FC = () => {
                     <div className="grid grid-cols-1 gap-4">
                         <div>
                             <SearchableDropdown
-                                label="Community 1 (Optional)"
+                                label={<>Community 1 <span className="text-[10px] text-white/40 font-normal uppercase">(Optional)</span></>}
                                 value={formData.communityId1}
                                 onChange={(val) => handleDropdownChange('communityId1', val)}
                                 options={communities
@@ -241,7 +268,7 @@ const ProfileSetup: React.FC = () => {
                         </div>
                         <div>
                             <SearchableDropdown
-                                label="Community 2 (Optional)"
+                                label={<>Community 2 <span className="text-[10px] text-white/40 font-normal uppercase">(Optional)</span></>}
                                 value={formData.communityId2}
                                 onChange={(val) => handleDropdownChange('communityId2', val)}
                                 options={communities
@@ -255,6 +282,111 @@ const ProfileSetup: React.FC = () => {
                                 {formData.communityId2 ? getCommunityFullName(formData.communityId2) : ''}
                             </p>
                         </div>
+                    </div>
+
+                    <div className="mb-6">
+                        <button
+                            type="button"
+                            onClick={() => setShowCommunityRequest(!showCommunityRequest)}
+                            className="text-sm text-secondary font-bold hover:underline flex items-center transition-all duration-300"
+                        >
+                            <span className={`mr-2 transform transition-transform ${showCommunityRequest ? 'rotate-90' : ''}`}>▶</span>
+                            {showCommunityRequest ? "I'll join an existing community instead" : "Don't see your community? Request a new one"}
+                        </button>
+
+                        {showCommunityRequest && (
+                            <div className="mt-4 p-4 bg-white/10 border border-white/15 rounded-lg animate-in fade-in slide-in-from-top-2">
+                                <h4 className="text-secondary font-bold text-sm mb-3">Community Request Details</h4>
+
+                                <div className="flex items-center gap-2 mb-3">
+                                    <input
+                                        type="checkbox"
+                                        id="isOnline"
+                                        name="req_isOnline"
+                                        checked={requestedCommunity.isOnline}
+                                        onChange={handleChange}
+                                        className="w-4 h-4 text-secondary focus:ring-secondary border-white/20 rounded"
+                                    />
+                                    <label htmlFor="isOnline" className="text-xs font-bold text-white/80 uppercase cursor-pointer">
+                                        This is an Online Community
+                                    </label>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-white/60 uppercase mb-1">
+                                            Full Name <span className="text-red-400">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="req_name"
+                                            value={requestedCommunity.name}
+                                            onChange={handleChange}
+                                            placeholder="e.g. Mountain House Sports"
+                                            className="w-full px-3 py-2 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:ring-1 focus:ring-secondary"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-white/60 uppercase mb-1">
+                                            Short Name / Code <span className="text-red-400">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="req_shortName"
+                                            value={requestedCommunity.shortName}
+                                            onChange={handleChange}
+                                            placeholder="e.g. MHS"
+                                            className="w-full px-3 py-2 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:ring-1 focus:ring-secondary"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="mb-3">
+                                    <label className="block text-[11px] font-bold text-white/60 uppercase mb-1">
+                                        Description <span className="text-white/40 font-normal normal-case">(Optional)</span>
+                                    </label>
+                                    <textarea
+                                        name="req_description"
+                                        value={requestedCommunity.description}
+                                        onChange={handleChange}
+                                        placeholder="Tell us about this community..."
+                                        rows={2}
+                                        className="w-full px-3 py-2 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:ring-1 focus:ring-secondary"
+                                    />
+                                </div>
+
+                                {!requestedCommunity.isOnline && (
+                                    <div className="grid grid-cols-2 gap-3 pb-2">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-white/60 uppercase mb-1">
+                                                City <span className="text-red-400">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="req_city"
+                                                value={requestedCommunity.city}
+                                                onChange={handleChange}
+                                                placeholder="e.g. Mountain House"
+                                                className="w-full px-3 py-2 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:ring-1 focus:ring-secondary"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-white/60 uppercase mb-1">
+                                                State <span className="text-red-400">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="req_state"
+                                                value={requestedCommunity.state}
+                                                onChange={handleChange}
+                                                placeholder="e.g. California"
+                                                className="w-full px-3 py-2 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:ring-1 focus:ring-secondary"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <button

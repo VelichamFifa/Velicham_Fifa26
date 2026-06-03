@@ -80,11 +80,6 @@ const Profile: React.FC = () => {
 
     const handleSaveProfile = async () => {
         try {
-            if (!formData.phoneNumber.trim()) {
-                setError('Phone number is required.');
-                return;
-            }
-
             if (formData.communityId1 && formData.communityId2 && formData.communityId1 === formData.communityId2) {
                 setError('Community 1 and Community 2 must be different.');
                 return;
@@ -302,7 +297,9 @@ const Profile: React.FC = () => {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                                    <label className="block text-[9px] text-white/45 uppercase font-black mb-1">Primary Community</label>
+                                    <label className="block text-[9px] text-white/45 uppercase font-black mb-1">
+                                        Primary Community <span className="text-[10px] text-white/40 font-normal uppercase">(Optional)</span>
+                                    </label>
                                     {isEditing ? (
                                         <>
                                             <SearchableDropdown
@@ -322,7 +319,9 @@ const Profile: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                                    <label className="block text-[9px] text-white/45 uppercase font-black mb-1">Secondary Community</label>
+                                    <label className="block text-[9px] text-white/45 uppercase font-black mb-1">
+                                        Secondary Community <span className="text-[10px] text-white/40 font-normal uppercase">(Optional)</span>
+                                    </label>
                                     {isEditing ? (
                                         <>
                                             <SearchableDropdown
@@ -493,7 +492,7 @@ const Profile: React.FC = () => {
                                 </div>
                             )}
 
-                            {profile.requestedCommunity && (
+                            {profile.requestedCommunity && profile.requestedCommunity.status !== 'User Deleted' && (
                                 <div className="mt-4 rounded-xl border border-amber-300/25 bg-amber-400/10 p-4">
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
@@ -504,6 +503,9 @@ const Profile: React.FC = () => {
                                                         ? profile.requestedCommunity.name
                                                         : profile.requestedCommunity}
                                                 </p>
+                                                <span className="rounded-full bg-blue-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase text-blue-100">
+                                                    {profile.requestedCommunity.status || 'pending'}
+                                                </span>
                                                 {profile.requestedCommunity.existingCommunityId && (
                                                     <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase text-emerald-100">MATCHED</span>
                                                 )}
@@ -531,13 +533,13 @@ const Profile: React.FC = () => {
                                             onClick={() => apiService.updateProfile({ requestedCommunity: null }).then(fetchData)}
                                             className="text-[10px] font-bold uppercase text-amber-200 hover:text-white"
                                         >
-                                            Cancel Request
+                                            {profile.requestedCommunity.status === 'Admin Rejected' ? 'Dismiss' : 'Cancel Request'}
                                         </button>
                                     </div>
                                 </div>
                             )}
 
-                            {!profile.requestedCommunity && !showRequestForm && !isEditing && (
+                            {(!profile.requestedCommunity || profile.requestedCommunity.status === 'User Deleted' || profile.requestedCommunity.status === 'Admin Rejected') && !showRequestForm && !isEditing && (
                                 <div className="mt-6 flex justify-end border-t border-white/10 pt-4">
                                     <button
                                         onClick={() => setShowRequestForm(true)}

@@ -40,10 +40,6 @@ export const register = async (req: AuthRequest, res: Response) => {
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) return res.status(400).json({ error: 'Email already registered' });
 
-    if (!phoneNumber || !String(phoneNumber).trim()) {
-      return res.status(400).json({ error: 'Phone number is required' });
-    }
-
     let rc = requestedCommunity ? { ...requestedCommunity } : undefined;
     if (rc?.name && rc?.shortName) {
       const existingCommunity = await findExistingCommunityForRequest(rc.name, rc.shortName);
@@ -99,6 +95,8 @@ export const register = async (req: AuthRequest, res: Response) => {
                   city: rc.city ?? '',
                   state: rc.state ?? '',
                   existingCommunityId: rc.existingCommunityId,
+                  status: 'pending',
+                  statusComment: rc.statusComment,
                 },
               }
             : undefined,
@@ -253,7 +251,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
 
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    res.json({
+    const profileData = {
       userId: String(user.id),
       email: user.email,
       firstName: user.firstName,
@@ -266,26 +264,33 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       phoneNumber: user.phoneNumber,
       requestedCommunity: user.communityRequest
         ? {
-            name: user.communityRequest.name,
-            shortName: user.communityRequest.shortName,
-            description: user.communityRequest.description,
-            isOnline: user.communityRequest.isOnline,
-            city: user.communityRequest.city,
-            state: user.communityRequest.state,
-            existingCommunityId: user.communityRequest.existingCommunityId ?? undefined,
+            name: user.communityRequest.name || '',
+            shortName: user.communityRequest.shortName || '',
+            description: user.communityRequest.description || '',
+            isOnline: !!user.communityRequest.isOnline,
+            city: user.communityRequest.city || '',
+            state: user.communityRequest.state || '',
+            existingCommunityId: user.communityRequest.existingCommunityId || undefined,
+            status: user.communityRequest.status || 'pending',
+            statusComment: user.communityRequest.statusComment || undefined,
           }
         : undefined,
       role: user.role,
       status: user.status,
       isActive: user.isActive,
-    });
+    };
+
+    res.json(profileData);
   } catch (error) {
     const errorDetails = logger.error('getUserProfile', error, {
       method: req.method,
       path: req.path,
       userId: req.user?.userId,
     });
-    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to get profile' });
+    res.status(errorDetails.statusCode || 500).json({ 
+      error: 'Failed to get profile',
+      details: process.env.NODE_ENV === 'development' ? String(error) : undefined 
+    });
   }
 };
 
@@ -293,10 +298,6 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
   try {
     const body = (req as any).validatedBody ?? req.body;
     const { communityId1, communityId2, requestedCommunity, phoneNumber, city, state, country } = body;
-
-    if (phoneNumber !== undefined && !String(phoneNumber).trim()) {
-      return res.status(400).json({ error: 'Phone number is required' });
-    }
 
     const reqUserIdNum = Number(req.user?.userId);
     if (!Number.isInteger(reqUserIdNum) || reqUserIdNum <= 0) {
@@ -316,9 +317,9 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     if (country !== undefined) data.country = country ? capitalizeProperNoun(country) : '';
 
     let normalizedC1: number | null =
-      communityId1 !== undefined ? (communityId1 ? Number(communityId1) : null) : user.communityId1;
+      communityId1 !== undefined ? (Number(communityId1) > 0 ? Number(communityId1) : null) : user.communityId1;
     let normalizedC2: number | null =
-      communityId2 !== undefined ? (communityId2 ? Number(communityId2) : null) : user.communityId2;
+      communityId2 !== undefined ? (Number(communityId2) > 0 ? Number(communityId2) : null) : user.communityId2;
 
     if (normalizedC1) {
       if (!Number.isInteger(normalizedC1) || normalizedC1 <= 0) {
@@ -341,6 +342,10 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     if (communityId2 !== undefined) data.communityId2 = normalizedC2;
 
     if (requestedCommunity) {
+      if (user.communityRequest && user.communityRequest.status === 'pending') {
+        return res.status(400).json({ error: 'You already have a pending community request.' });
+      }
+
       let rc = { ...requestedCommunity };
       if (rc.name && rc.shortName) {
         const existingCommunity = await findExistingCommunityForRequest(rc.name, rc.shortName);
@@ -356,6 +361,8 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
             city: rc.city ?? '',
             state: rc.state ?? '',
             existingCommunityId: rc.existingCommunityId,
+            status: 'pending',
+            statusComment: rc.statusComment,
           },
           update: {
             name: rc.name,
@@ -365,11 +372,13 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
             city: rc.city ?? '',
             state: rc.state ?? '',
             existingCommunityId: rc.existingCommunityId,
+            status: 'pending',
+            statusComment: rc.statusComment,
           },
         },
       };
     } else if (requestedCommunity === null) {
-      data.communityRequest = user.communityRequest ? { delete: true } : undefined;
+      data.communityRequest = user.communityRequest ? { update: { status: 'User Deleted' } } : undefined;
     }
 
     const nextC1 = normalizedC1;
@@ -406,4 +415,3 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update profile' });
   }
 };
-

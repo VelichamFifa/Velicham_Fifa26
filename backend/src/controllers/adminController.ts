@@ -11,11 +11,7 @@ export const getCommunityRequests = async (req: AuthRequest, res: Response) => {
   try {
     const users = await prisma.user.findMany({
       where: {
-        communityRequest: {
-          is: {
-            name: { not: { equals: '' } },
-          },
-        },
+        communityRequest: { status: 'pending' },
       },
       include: { communityRequest: true },
       orderBy: { createdAt: 'desc' },
@@ -40,6 +36,8 @@ export const getCommunityRequests = async (req: AuthRequest, res: Response) => {
             city: u.communityRequest.city,
             state: u.communityRequest.state,
             existingCommunityId: u.communityRequest.existingCommunityId,
+            status: u.communityRequest.status,
+            statusComment: u.communityRequest.statusComment,
           }
         : undefined,
     }));
@@ -296,7 +294,7 @@ export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Re
 
 export const rejectCommunityRequest = async (req: AuthRequest, res: Response) => {
   try {
-    const { userId } = req.body;
+    const { userId, statusComment } = req.body;
     const userIdNum = Number(userId);
     if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
       return res.status(404).json({ error: 'User not found' });
@@ -305,9 +303,15 @@ export const rejectCommunityRequest = async (req: AuthRequest, res: Response) =>
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     if (user.communityRequest) {
-      await prisma.userCommunityRequest.delete({ where: { userId: userIdNum } });
+      await prisma.userCommunityRequest.update({
+        where: { userId: userIdNum },
+        data: {
+          status: 'Admin Rejected',
+          statusComment: statusComment || 'Request does not meet requirements.',
+        },
+      });
     }
-    res.json({ message: 'Community request rejected and cleared' });
+    res.json({ message: 'Community request rejected' });
   } catch (error) {
     const errorDetails = logger.error('rejectCommunityRequest', error, {
       method: req.method,
@@ -318,4 +322,3 @@ export const rejectCommunityRequest = async (req: AuthRequest, res: Response) =>
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to reject community request' });
   }
 };
-

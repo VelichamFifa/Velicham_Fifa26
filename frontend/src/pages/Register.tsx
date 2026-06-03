@@ -87,18 +87,6 @@ const Register: React.FC = () => {
     setError('');
     setLoading(true);
 
-    if (!formData.communityId1) {
-      setError('Community 1 is required.');
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.phoneNumber.trim()) {
-      setError('Phone number is required.');
-      setLoading(false);
-      return;
-    }
-
     if (formData.communityId1 && formData.communityId2 && formData.communityId1 === formData.communityId2) {
       setError('Community 1 and Community 2 must be different.');
       setLoading(false);
@@ -250,7 +238,7 @@ const Register: React.FC = () => {
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-white/80 mb-1">
-              Phone Number (Required)
+              Phone Number <span className="text-[10px] text-white/40 font-normal uppercase">(Optional)</span>
             </label>
             <input
               type="tel"
@@ -259,14 +247,13 @@ const Register: React.FC = () => {
               onChange={handleChange}
               placeholder="+1234567890"
               className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
-              required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <SearchableDropdown
-                label="Community 1"
+                label={<>Community 1 <span className="text-[10px] text-white/40 font-normal uppercase">(Optional)</span></>}
                 value={formData.communityId1}
                 onChange={(val) => handleDropdownChange('communityId1', val)}
                 options={communities
@@ -274,7 +261,6 @@ const Register: React.FC = () => {
                   .map(c => ({ id: c.communityId, label: c.name }))}
                 placeholder="Search community..."
                 disabled={loadingCommunities}
-                required
               />
               <p className="mt-2 text-xs text-blue-700 font-medium min-h-[1rem]">
                 {formData.communityId1 ? getCommunityFullName(formData.communityId1) : ''}
@@ -282,7 +268,7 @@ const Register: React.FC = () => {
             </div>
             <div>
               <SearchableDropdown
-                label="Community 2 (Optional)"
+                label={<>Community 2 <span className="text-[10px] text-white/40 font-normal uppercase">(Optional)</span></>}
                 value={formData.communityId2}
                 onChange={(val) => handleDropdownChange('communityId2', val)}
                 options={communities
@@ -398,10 +384,6 @@ const Register: React.FC = () => {
                     </div>
                   </div>
                 )}
-
-                <p className="text-[10px] text-blue-600 mt-3 italic leading-tight">
-                  Note: If you request a new community as your first community, your account will be pending approval before you can log in.
-                </p>
               </div>
             )}
           </div>

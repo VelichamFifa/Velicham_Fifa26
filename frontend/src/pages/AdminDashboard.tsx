@@ -428,8 +428,8 @@ const AdminDashboard: React.FC = () => {
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Requested</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assign To</th>
                                                 <th className="px-4 py-3"></th>
                                             </tr>
                                         </thead>
@@ -440,20 +440,42 @@ const AdminDashboard: React.FC = () => {
                                                         <div className="text-sm font-medium">{req.firstName} {req.lastName}</div>
                                                         <div className="text-xs text-gray-500">{req.email}</div>
                                                     </td>
-                                                    <td className="px-4 py-4 text-sm text-gray-600">
-                                                        {req.city || '-'}, {req.state || '-'}
+                                                    <td className="px-4 py-4 text-[10px] text-gray-600">
+                                                        <div><span className="font-black text-gray-400 uppercase">City:</span> {req.city || '-'}</div>
+                                                        <div><span className="font-black text-gray-400 uppercase">State:</span> {req.state || '-'}</div>
                                                     </td>
                                                     <td className="px-4 py-4">
                                                         <div className="text-sm font-bold text-secondary">{req.requestedCommunity?.name || '-'}</div>
                                                         <div className="text-[10px] text-gray-400 font-mono">Short: {req.requestedCommunity?.shortName || '-'}</div>
                                                         <div className="text-[10px] text-gray-500 max-w-[200px] truncate" title={req.requestedCommunity?.description}>
-                                                            {req.requestedCommunity?.description || '-'}
+                                                            <span className="font-bold text-gray-400 uppercase text-[9px]">Description:</span> {req.requestedCommunity?.description || '-'}
                                                         </div>
-                                                        {req.requestedCommunity?.isOnline ? (
-                                                            <div className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded inline-block mb-1">ONLINE</div>
-                                                        ) : (
-                                                            <div className="text-[10px] text-gray-400 italic">Loc: {req.requestedCommunity?.city}, {req.requestedCommunity?.state}</div>
+                                                        {req.requestedCommunity?.isOnline && (
+                                                            <div className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded inline-block mt-1">ONLINE</div>
                                                         )}
+
+                                                        {req.requestedCommunity?.existingCommunityId && (
+                                                            <div className="mt-2 p-1.5 border border-green-200 bg-green-50 rounded-md animate-in fade-in slide-in-from-top-1 duration-300">
+                                                                <div className="text-[9px] font-black text-green-700 uppercase tracking-wider leading-none mb-1">System Match</div>
+                                                                {(() => {
+                                                                    const matched = communities.find(c => c.communityId === req.requestedCommunity.existingCommunityId);
+                                                                    if (!matched) return <div className="text-[10px] text-gray-400 italic">ID: {req.requestedCommunity.existingCommunityId} (not found)</div>;
+                                                                    return (
+                                                                        <div className="text-[10px] text-green-800 leading-tight">
+                                                                            <div className="font-bold">{matched.name}</div>
+                                                                            <div className="text-[9px] opacity-75">
+                                                                                <span className="font-bold">City:</span> {matched.city}, <span className="font-bold">State:</span> {matched.state}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <span className="text-[10px] px-2 py-0.5 rounded font-black bg-gray-100 text-gray-600 uppercase">
+                                                            {req.requestedCommunity?.status || 'PENDING'}
+                                                        </span>
                                                     </td>
                                                     <td className="px-4 py-4">
                                                         <span className={`text-xs px-2 py-1 rounded font-bold ${
@@ -469,27 +491,16 @@ const AdminDashboard: React.FC = () => {
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="px-4 py-4">
-                                                        <select
-                                                            id={`select-${req.userId}`}
-                                                            className="text-sm border rounded px-2 py-1 w-full max-w-[200px]"
-                                                            defaultValue={req.requestedCommunity?.existingCommunityId || ""}
-                                                        >
-                                                            <option value="">Select Community...</option>
-                                                            {communities.map(c => <option key={c.communityId} value={c.communityId}>{c.name}</option>)}
-                                                        </select>
-                                                    </td>
                                                     <td className="px-4 py-4 text-right">
                                                         <div className="flex flex-col gap-2 scale-90 origin-right">
-                                                            <button
-                                                                onClick={() => {
-                                                                    const select = document.getElementById(`select-${req.userId}`) as HTMLSelectElement;
-                                                                    handleApproveCommunity(req.userId, select.value);
-                                                                }}
-                                                                className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 whitespace-nowrap"
-                                                            >
-                                                                Approve Existing
-                                                            </button>
+                                                            {req.requestedCommunity?.existingCommunityId && (
+                                                                <button
+                                                                    onClick={() => handleApproveCommunity(req.userId, req.requestedCommunity.existingCommunityId)}
+                                                                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 whitespace-nowrap"
+                                                                >
+                                                                    Approve Matched
+                                                                </button>
+                                                            )}
                                                             <button
                                                                 onClick={() => handleQuickCreateCommunity(
                                                                     req.userId,
