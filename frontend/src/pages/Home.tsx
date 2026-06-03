@@ -74,27 +74,26 @@ const Home: React.FC = () => {
     <div>
       <div className="relative w-full overflow-hidden shadow-2xl border-b border-white/10 bg-slate-900">
         <img src="/Cover.png" alt="WORLD CUP 2026 Cover" className="w-full h-auto object-cover max-h-[400px] sm:max-h-[600px] block" />
-        <div className="absolute inset-0 flex items-start justify-start py-4 pl-2 sm:py-10 sm:pl-8 bg-black/10">
+        <div className="absolute inset-0 flex flex-col justify-between pt-4 pb-1 pl-4 sm:pt-10 sm:pb-3 sm:pl-8 bg-black/10">
           <div className="flex flex-col items-start gap-4">
             <div className="flex items-center gap-2 sm:gap-4">
-              <img src="/VelichamLogo.png" alt="Velicham Logo" className="h-16 sm:h-24 md:h-32 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-left-12 duration-1000" />
-              <img src="/Mlogo-w.png" alt="Media One Logo" className="h-16 sm:h-24 md:h-32 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-right-12 duration-1000" />
+              <img src="/VelichamLogo.png" alt="Velicham Logo" className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-left-12 duration-1000" />
+              <img src="/Mlogo-w.png" alt="Media One Logo" className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-right-12 duration-1000" />
             </div>
-            <h1 className="text-white font-bold text-lg sm:text-3xl md:text-4xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
-              <span className="block text-white">🏆 WORLD CUP '26</span>
-              <span className="block text-sky-400">Prediction</span>
+            <h1 className="text-white font-bold text-sm sm:text-xl md:text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+              <span className="block text-white">WORLD CUP '26</span>
+              <span className="block text-secondary">Prediction</span>
             </h1>
           </div>
+          <p className="text-[10px] sm:text-sm md:text-base text-blue-100 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
+            Get ready to participate, compete and celebrate with your community!
+          </p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 sm:py-10">
 
         <div className="text-center mb-6 sm:mb-8">
-          <p className="text-lg sm:text-xl md:text-2xl text-blue-100 mb-6 sm:mb-8 px-4">
-            Get ready to participate, compete and celebrate with your community!
-          </p>
-
           <div className="flex flex-row gap-3 justify-center px-4">
               <Link
                 to="/leaderboard"

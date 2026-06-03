@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiService } from '../services/apiService';
 
 const Header: React.FC = () => {
   const { isLoggedIn, user, logout, setUser } = useAuth();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const didRefreshProfile = useRef(false);
+  const isHome = location.pathname === '/';
 
   // Keep the cached user (localStorage) in sync with backend role changes.
   useEffect(() => {
@@ -26,17 +28,21 @@ const Header: React.FC = () => {
     <header className="bg-primary text-white shadow-lg">
       <nav className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2 -ml-2">
-            <div className="flex items-center gap-1">
-              <img src="/VelichamLogo.png" alt="Velicham Logo" className="h-10 w-auto object-contain" />
-              <img src="/Mlogo-w.png" alt="M Logo" className="h-10 w-auto object-contain" />
-            </div>
-            <h1 className="text-sm sm:text-base font-bold ml-4">
+          <Link to="/" className="flex items-center gap-2">
+            {!isHome && (
+              <div className="flex items-center gap-1 -ml-2">
+                <img src="/VelichamLogo.png" alt="Velicham Logo" className="h-10 w-auto object-contain" />
+                <img src="/Mlogo-w.png" alt="M Logo" className="h-10 w-auto object-contain" />
+              </div>
+            )}
+            <h1 className={`text-sm sm:text-base font-bold leading-tight ${isHome ? '' : 'ml-4'}`}>
               <span className="sm:hidden">
-                <span className="text-white">WORLD CUP '26</span> <span className="text-secondary">Prediction</span>
+                <span className="block text-white">WORLD CUP '26</span>
+                <span className="block text-secondary">Prediction</span>
               </span>
-              <span className="hidden sm:inline text-white">
-                Velicham WORLD CUP '26 <span className="text-secondary">Prediction</span>
+              <span className="hidden sm:block">
+                <span className="block text-white">Velicham WORLD CUP '26</span>
+                <span className="block text-secondary">Prediction</span>
               </span>
             </h1>
           </Link>
