@@ -25,7 +25,7 @@ const Header: React.FC = () => {
   }, [isLoggedIn, setUser]);
 
   return (
-    <header className="bg-primary text-white shadow-lg">
+    <header className={`bg-primary text-white ${isHome ? '' : 'shadow-lg'}`}>
       <nav className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2">
@@ -35,16 +35,18 @@ const Header: React.FC = () => {
                 <img src="/Mlogo-w.png" alt="M Logo" className="h-10 w-auto object-contain" />
               </div>
             )}
-            <h1 className={`text-sm sm:text-base font-bold leading-tight ${isHome ? '' : 'ml-4'}`}>
-              <span className="sm:hidden">
-                <span className="block text-white">WORLD CUP '26</span>
-                <span className="block text-secondary">Prediction</span>
-              </span>
-              <span className="hidden sm:block">
-                <span className="block text-white">Velicham WORLD CUP '26</span>
-                <span className="block text-secondary">Prediction</span>
-              </span>
-            </h1>
+            {!isHome && (
+              <h1 className="text-sm sm:text-base font-bold leading-tight ml-4">
+                <span className="sm:hidden">
+                  <span className="block text-white">WORLD CUP '26</span>
+                  <span className="block text-secondary">Prediction</span>
+                </span>
+                <span className="hidden sm:block">
+                  <span className="block text-white">Velicham WORLD CUP '26</span>
+                  <span className="block text-secondary">Prediction</span>
+                </span>
+              </h1>
+            )}
           </Link>
 
           {/* Mobile: Show Login/Register or Menu button */}

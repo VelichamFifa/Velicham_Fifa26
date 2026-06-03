@@ -72,11 +72,11 @@ const Home: React.FC = () => {
 
   return (
     <div>
-      <div className="relative w-full overflow-hidden shadow-2xl border-b border-white/10 bg-[#0f172a]">
+      <div className="relative w-full overflow-hidden shadow-2xl border-b border-white/10 bg-primary">
         <img src="/Cover.png" alt="WORLD CUP 2026 Cover" className="w-full h-auto object-cover max-h-[400px] sm:max-h-[600px] block" />
         
         {/* Bottom-to-top gradient to blend the image into the page background */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary via-transparent to-black/10" />
 
         <div className="absolute inset-0 flex flex-col justify-between pt-4 pb-2 pl-4 sm:pt-10 sm:pb-4 sm:pl-8">
           <div className="flex flex-col items-start gap-4">
@@ -101,14 +101,14 @@ const Home: React.FC = () => {
           <div className="flex flex-row gap-3 justify-center px-4">
               <Link
                 to="/leaderboard"
-                className="w-40 py-2.5 bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-500 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm"
+                className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm"
               >
                 View Leaderboard
               </Link>
               {isLoggedIn && (
                 <Link
                   to="/dashboard"
-                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-500 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-sky-500/20 text-sm"
+                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-sky-500/20 text-sm"
                 >
                   <span aria-hidden="true">📊</span>
                   Dashboard
@@ -117,7 +117,7 @@ const Home: React.FC = () => {
               {!isLoggedIn && (
                 <Link
                   to="/login"
-                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-500 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm"
+                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm"
                 >
                   Login to Predict
                 </Link>

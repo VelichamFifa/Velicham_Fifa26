@@ -296,7 +296,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
               submitted
                 ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
                 : isPredictionOpen
-                ? 'bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-500 text-white hover:brightness-110 active:scale-[0.98] shadow-lg shadow-sky-500/20'
+                ? 'bg-gradient-to-r from-blue-600 to-sky-400 text-white hover:brightness-110 active:scale-[0.98] shadow-lg shadow-sky-500/20'
                 : 'bg-white/8 text-white/25 cursor-not-allowed border border-white/10'
             }`}
           >
