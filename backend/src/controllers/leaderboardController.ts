@@ -204,34 +204,36 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
       ? { rank: latestDailyLeader.rank, totalPoints: latestDailyLeader.totalPoints, lastMatchTag }
       : { rank: '-', totalPoints: 0, lastMatchTag };
 
-    const communityRanks: any[] = [];
-    for (const cid of [user.communityId1, user.communityId2].filter((v): v is number => typeof v === 'number')) {
-      const cidStr = String(cid);
-      const [community, communityLeader, dailyCommunityLeader] = await Promise.all([
-        prisma.community.findUnique({ where: { id: cid }, select: { name: true } }),
-        prisma.communityLeader.findFirst({
-          where: { communityId: cidStr },
-          orderBy: [{ rank: 'asc' }],
-          select: { rank: true, totalPoints: true },
-        }),
-        prisma.dailyCommunityLeader.findFirst({
-          where: { communityId: cidStr },
-          orderBy: [{ date: 'desc' }, { rank: 'asc' }],
-          select: { rank: true, totalPoints: true },
-        }),
-      ]);
+    const communityIds = [user.communityId1, user.communityId2].filter((v): v is number => typeof v === 'number');
+    const communityRanks = await Promise.all(
+      communityIds.map(async (cid) => {
+        const cidStr = String(cid);
+        const [community, communityLeader, dailyCommunityLeader] = await Promise.all([
+          prisma.community.findUnique({ where: { id: cid }, select: { name: true } }),
+          prisma.communityLeader.findFirst({
+            where: { communityId: cidStr },
+            orderBy: [{ rank: 'asc' }],
+            select: { rank: true, totalPoints: true },
+          }),
+          prisma.dailyCommunityLeader.findFirst({
+            where: { communityId: cidStr },
+            orderBy: [{ date: 'desc' }, { rank: 'asc' }],
+            select: { rank: true, totalPoints: true },
+          }),
+        ]);
 
-      communityRanks.push({
-        communityId: cidStr,
-        name: community?.name ?? cidStr,
-        overall: communityLeader
-          ? { rank: communityLeader.rank, totalPoints: communityLeader.totalPoints }
-          : { rank: '-', totalPoints: 0 },
-        daily: dailyCommunityLeader
-          ? { rank: dailyCommunityLeader.rank, totalPoints: dailyCommunityLeader.totalPoints }
-          : { rank: '-', totalPoints: 0 },
-      });
-    }
+        return {
+          communityId: cidStr,
+          name: community?.name ?? cidStr,
+          overall: communityLeader
+            ? { rank: communityLeader.rank, totalPoints: communityLeader.totalPoints }
+            : { rank: '-', totalPoints: 0 },
+          daily: dailyCommunityLeader
+            ? { rank: dailyCommunityLeader.rank, totalPoints: dailyCommunityLeader.totalPoints }
+            : { rank: '-', totalPoints: 0 },
+        };
+      })
+    );
 
     res.json({
       overall: finalStats,
@@ -320,4 +322,3 @@ export const getCommunityUserRanking = async (req: AuthRequest, res: Response) =
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch community user ranking' });
   }
 };
-

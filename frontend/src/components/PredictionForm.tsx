@@ -5,8 +5,8 @@ import { apiService } from '../services/apiService';
 interface PredictionFormProps {
   match: Match;
   initialPrediction?: {
-    team1Score: number;
-    team2Score: number;
+    team1Score: number | '';
+    team2Score: number | '';
     comment?: string;
   };
   onSuccess?: (prediction: Prediction) => void;
@@ -14,22 +14,26 @@ interface PredictionFormProps {
 }
 
 const PredictionForm: React.FC<PredictionFormProps> = ({ match, initialPrediction, onSuccess, onClose }) => {
-  const [team1Score, setTeam1Score] = useState(initialPrediction?.team1Score ?? 0);
-  const [team2Score, setTeam2Score] = useState(initialPrediction?.team2Score ?? 0);
+  const [team1Score, setTeam1Score] = useState<number | ''>(initialPrediction?.team1Score ?? '');
+  const [team2Score, setTeam2Score] = useState<number | ''>(initialPrediction?.team2Score ?? '');
   const [comment, setComment] = useState(initialPrediction?.comment ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (team1Score === '' || team2Score === '') {
+      setError('Please enter both scores');
+      return;
+    }
     setError('');
     setLoading(true);
 
     try {
       const response = await apiService.submitPrediction({
         matchId: match.matchId,
-        team1Score,
-        team2Score,
+        team1Score: Number(team1Score),
+        team2Score: Number(team2Score),
         comment,
       });
 
@@ -69,7 +73,12 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ match, initialPredictio
             min="0"
             max="20"
             value={team1Score}
-            onChange={(e) => setTeam1Score(Number(e.target.value))}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '') return setTeam1Score('');
+              const num = parseInt(val, 10);
+              if (!isNaN(num)) setTeam1Score(Math.min(20, Math.max(0, num)));
+            }}
             className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
             required
           />
@@ -84,7 +93,12 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ match, initialPredictio
             min="0"
             max="20"
             value={team2Score}
-            onChange={(e) => setTeam2Score(Number(e.target.value))}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '') return setTeam2Score('');
+              const num = parseInt(val, 10);
+              if (!isNaN(num)) setTeam2Score(Math.min(20, Math.max(0, num)));
+            }}
             className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
             required
           />

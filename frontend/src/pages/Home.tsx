@@ -6,7 +6,7 @@ import { Match, Prediction } from '../types';
 import MatchCard from '../components/MatchCard';
 
 const Home: React.FC = () => {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [userPredictions, setUserPredictions] = useState<Prediction[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
@@ -79,6 +79,20 @@ const Home: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-primary via-transparent to-black/10" />
 
         <div className="absolute inset-0 flex flex-col justify-between pt-4 pb-2 pl-4 sm:pt-10 sm:pb-4 sm:pl-8">
+          {isLoggedIn && (
+            <div className="absolute top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 z-20">
+              <button
+                onClick={() => logout()}
+                className="p-2.5 bg-white/5 hover:bg-white/15 border border-white/10 text-white/70 hover:text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-xs font-bold backdrop-blur-sm shadow-xl"
+                title="Logout"
+              >
+                <span className="hidden sm:inline uppercase tracking-wider">Logout</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+          )}
           <div className="flex flex-col items-start gap-4">
             <div className="flex items-center gap-2 sm:gap-4">
               <img src="/VelichamLogo.png" alt="Velicham Logo" className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-left-12 duration-1000" />
@@ -89,7 +103,7 @@ const Home: React.FC = () => {
               <span className="block text-sky-400">Prediction</span>
             </h1>
           </div>
-          <p className="text-[10px] sm:text-sm md:text-base text-sky-100/80 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
+          <p className="text-xs sm:text-base md:text-lg text-sky-100/80 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
             Get ready to participate, compete and celebrate with your community!
           </p>
         </div>
@@ -159,37 +173,99 @@ const Home: React.FC = () => {
         )}
 
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-6 sm:mb-8">
-          <div className="bg-white/10 border border-white/15 rounded-lg shadow-lg p-6 hover:bg-white/15 transition">
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-3">⚽ Make Predictions</h3>
-            <p className="text-white/70">
-              Predict the scores of upcoming WORLD CUP matches before the deadline and earn points based on accuracy.
-            </p>
+          <div
+            className="relative overflow-hidden rounded-2xl border border-white/10 p-6 shadow-2xl transition-all duration-300 hover:border-white/20 hover:shadow-blue-900/30 group"
+            style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
+          >
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+              style={{
+                backgroundImage:
+                  'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
+              }}
+            />
+            <div className="relative z-10">
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 group-hover:text-sky-400 transition-colors">
+                <span className="text-2xl">⚽</span> Make Predictions
+              </h3>
+              <p className="text-white/60 text-sm sm:text-base leading-relaxed">
+                Predict the scores of upcoming WORLD CUP matches before the deadline and earn points based on accuracy.
+              </p>
+            </div>
           </div>
 
-          <div className="bg-white/10 border border-white/15 rounded-lg shadow-lg p-6 hover:bg-white/15 transition">
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-3">🏅 Climb Leaderboards</h3>
-            <p className="text-white/70">
-              Compete individually and with your community. Track daily and all-time rankings.
-            </p>
+          <div
+            className="relative overflow-hidden rounded-2xl border border-white/10 p-6 shadow-2xl transition-all duration-300 hover:border-white/20 hover:shadow-blue-900/30 group"
+            style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
+          >
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+              style={{
+                backgroundImage:
+                  'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
+              }}
+            />
+            <div className="relative z-10">
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 group-hover:text-sky-400 transition-colors">
+                <span className="text-2xl">🏅</span> Climb Leaderboards
+              </h3>
+              <p className="text-white/60 text-sm sm:text-base leading-relaxed">
+                Compete individually and with your community. Track daily and all-time rankings.
+              </p>
+            </div>
           </div>
 
-          <div className="bg-white/10 border border-white/15 rounded-lg shadow-lg p-6 hover:bg-white/15 transition">
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-3">👥 Join Communities</h3>
-            <p className="text-white/70">
-              Be part of up to 2 communities and help them climb the community leaderboard.
-            </p>
+          <div
+            className="relative overflow-hidden rounded-2xl border border-white/10 p-6 shadow-2xl transition-all duration-300 hover:border-white/20 hover:shadow-blue-900/30 group"
+            style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
+          >
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+              style={{
+                backgroundImage:
+                  'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
+              }}
+            />
+            <div className="relative z-10">
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 group-hover:text-sky-400 transition-colors">
+                <span className="text-2xl">👥</span> Join Communities
+              </h3>
+              <p className="text-white/60 text-sm sm:text-base leading-relaxed">
+                Be part of up to 2 communities and help them climb the community leaderboard.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Scoring Rules */}
-        <div className="bg-white/10 border border-white/15 rounded-xl shadow-lg p-6 max-w-md mx-auto">
-          <h3 className="text-lg font-bold text-white mb-3">📊 Scoring Rules</h3>
-          <ul className="text-sm text-white/80 space-y-2">
-            <li className="flex items-center gap-2">✅ <span><strong>Correct Result:</strong> 5 points</span></li>
-            <li className="flex items-center gap-2">⚽ <span><strong>Correct Team 1 Score:</strong> 2 points</span></li>
-            <li className="flex items-center gap-2">⚽ <span><strong>Correct Team 2 Score:</strong> 2 points</span></li>
-            <li className="flex items-center gap-2">🎯 <span><strong>Correct Goal Difference:</strong> 1 point</span></li>
-          </ul>
+        <div
+          className="relative overflow-hidden rounded-2xl border border-white/10 p-6 max-w-md mx-auto shadow-2xl"
+          style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
+        >
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            style={{
+              backgroundImage:
+                'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
+            }}
+          />
+          <div className="relative z-10">
+            <h3 className="text-lg font-bold text-white mb-3 border-b border-white/10 pb-2">📊 Scoring Rules</h3>
+            <ul className="text-sm text-white/70 space-y-3">
+              <li className="flex items-center gap-3">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500/20 text-green-400 text-[10px] border border-green-500/20 font-bold">5</span>
+                <span><strong>Correct Result:</strong> 5 points</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-blue-400 text-[10px] border border-blue-500/20 font-bold">2</span>
+                <span><strong>Correct Team 1 Score:</strong> 2 points</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-blue-400 text-[10px] border border-blue-500/20 font-bold">2</span>
+                <span><strong>Correct Team 2 Score:</strong> 2 points</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/20 text-sky-400 text-[10px] border border-sky-500/20 font-bold">1</span>
+                <span><strong>Correct Goal Difference:</strong> 1 point</span>
+              </li>
+            </ul>
+          </div>
         </div>
 
       </div>

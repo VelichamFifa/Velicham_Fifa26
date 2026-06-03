@@ -49,7 +49,7 @@ const Flag: React.FC<{ src?: string | null; alt: string }> = ({ src, alt }) => {
   const [err, setErr] = useState(false);
   if (!src || err) {
     return (
-      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-xs shrink-0">
+      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-xs shrink-0">
         {alt.slice(0, 3)}
       </div>
     );
@@ -59,7 +59,7 @@ const Flag: React.FC<{ src?: string | null; alt: string }> = ({ src, alt }) => {
       src={src}
       alt={alt}
       onError={() => setErr(true)}
-      className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white/30 shadow-lg shrink-0"
+      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-white/30 shadow-lg shrink-0"
     />
   );
 };
@@ -155,8 +155,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
         className="absolute inset-0 opacity-[0.04] pointer-events-none"
         style={{
           backgroundImage:
-            'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%), ' +
-            'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,1) 28px, rgba(255,255,255,1) 29px)',
+            'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
         }}
       />
 
@@ -181,7 +180,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
         {/* Team 1 */}
         <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
           <Flag src={match.team1Info?.countryLogo} alt={match.team1} />
-          <span className="text-white font-bold text-[13px] text-center leading-tight line-clamp-2 max-w-[90px]">
+          <span className="text-white font-bold text-[13px] text-center leading-tight line-clamp-2 max-w-[100px]">
             {t1Name}
           </span>
         </div>
@@ -205,7 +204,12 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
                   type="number" min="0" max="20"
                   disabled={!isPredictionOpen || loading}
                   value={team1Score}
-                  onChange={(e) => setTeam1Score(e.target.value === '' ? '' : Math.min(20, Math.max(0, Number(e.target.value))))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') return setTeam1Score('');
+                    const num = parseInt(val, 10);
+                    if (!isNaN(num)) setTeam1Score(Math.min(20, Math.max(0, num)));
+                  }}
                   placeholder="–"
                   className="w-12 h-12 bg-white/10 border border-white/25 rounded-lg text-center text-white font-black text-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60 focus:border-sky-400/40 disabled:opacity-40 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
@@ -214,7 +218,12 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
                   type="number" min="0" max="20"
                   disabled={!isPredictionOpen || loading}
                   value={team2Score}
-                  onChange={(e) => setTeam2Score(e.target.value === '' ? '' : Math.min(20, Math.max(0, Number(e.target.value))))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') return setTeam2Score('');
+                    const num = parseInt(val, 10);
+                    if (!isNaN(num)) setTeam2Score(Math.min(20, Math.max(0, num)));
+                  }}
                   placeholder="–"
                   className="w-12 h-12 bg-white/10 border border-white/25 rounded-lg text-center text-white font-black text-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60 focus:border-sky-400/40 disabled:opacity-40 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
@@ -234,7 +243,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
         {/* Team 2 */}
         <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
           <Flag src={match.team2Info?.countryLogo} alt={match.team2} />
-          <span className="text-white font-bold text-[13px] text-center leading-tight line-clamp-2 max-w-[90px]">
+          <span className="text-white font-bold text-[13px] text-center leading-tight line-clamp-2 max-w-[100px]">
             {t2Name}
           </span>
         </div>
@@ -244,9 +253,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
       {error && (
         <p className="relative z-10 text-red-400 text-[11px] text-center px-4 -mt-1 mb-1 font-medium">{error}</p>
       )}
-
-      {/* ── Divider ── */}
-      <div className="relative z-10 mx-4 border-t border-white/[0.08]" />
 
       {/* ── Match time + countdown ── */}
       <div className="relative z-10 flex items-start justify-between px-4 py-3 gap-4">
