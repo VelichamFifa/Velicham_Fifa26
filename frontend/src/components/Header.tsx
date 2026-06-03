@@ -23,14 +23,21 @@ const Header: React.FC = () => {
   }, [isLoggedIn, setUser]);
 
   return (
-    <header className="bg-white text-primary shadow-lg">
+    <header className="bg-primary text-white shadow-lg">
       <nav className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/VelichamLogo.png" alt="Velicham Logo" className="h-10 w-auto object-contain" />
-            <h1 className="text-xl sm:text-2xl font-bold">
-              <span className="sm:hidden">FIFA'26 Prediction</span>
-              <span className="hidden sm:inline">Velicham Fifa'26 Prediction</span>
+          <Link to="/" className="flex items-center gap-2 -ml-2">
+            <div className="flex items-center gap-1">
+              <img src="/VelichamLogo.png" alt="Velicham Logo" className="h-10 w-auto object-contain" />
+              <img src="/Mlogo-w.png" alt="M Logo" className="h-10 w-auto object-contain" />
+            </div>
+            <h1 className="text-sm sm:text-base font-bold ml-2">
+              <span className="sm:hidden">
+                <span className="text-white">WORLD CUP '26</span> <span className="text-secondary">Prediction</span>
+              </span>
+              <span className="hidden sm:inline text-white">
+                Velicham WORLD CUP '26 <span className="text-secondary">Prediction</span>
+              </span>
             </h1>
           </Link>
 

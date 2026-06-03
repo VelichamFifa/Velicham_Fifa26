@@ -34,7 +34,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
           </Routes>
         </main>
-        <footer className="border-t border-gray-200 bg-white py-4 text-center text-sm text-primary">
+       <footer className="border-t border-white/10 bg-primary py-4 text-center text-sm text-white/70">
           <div>Velicham North America - Fifa Prediction 2026.</div>
           <div>All rights reserved.</div>
         </footer>

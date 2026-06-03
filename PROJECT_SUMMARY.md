@@ -1,8 +1,8 @@
-# Fifa26Predictor - Project Summary
+# WorldCup26Predictor - Project Summary
 
 ## 🎉 Project Complete!
 
-A comprehensive full-stack web application for FIFA match prediction competitions with individual and community leaderboards.
+A comprehensive full-stack web application for WORLD CUP match prediction competitions with individual and community leaderboards.
 
 ---
 
@@ -39,7 +39,7 @@ A comprehensive full-stack web application for FIFA match prediction competition
 - **Tailwind CSS Styling** with custom theme
 
 ### ✅ Database Design
-All schemas based on the provided model.md:
+All schemas based on the provided project models:
 - **User** - User profiles with locations & communities
 - **Match** - Match details & status tracking
 - **Team** - Team information
@@ -60,7 +60,7 @@ All schemas based on the provided model.md:
 - ✅ Auth interceptors on API calls
 - ✅ Google/Instagram OAuth placeholders
 
-#### Prediction System
+#### WORLD CUP Prediction System
 - ✅ Match creation and management
 - ✅ User prediction submission
 - ✅ Deadline validation

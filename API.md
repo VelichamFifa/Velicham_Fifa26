@@ -1,4 +1,4 @@
-# Fifa26Predictor API Documentation
+# WorldCup26Predictor API Documentation
 
 ## Base URL below 
 ```

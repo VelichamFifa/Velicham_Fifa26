@@ -1,6 +1,6 @@
-# FIFA 26 Predictor
+# WORLD CUP 26 Predictor
 
-Full-stack web app for FIFA match predictions: users submit scores, earn points from a fixed rubric, and appear on individual and community leaderboards.
+Full-stack web app for WORLD CUP match predictions: users submit scores, earn points from a fixed rubric, and appear on individual and community leaderboards.
 
 ---
 

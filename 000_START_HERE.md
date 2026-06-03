@@ -1,8 +1,8 @@
-# 🎉 Fifa26Predictor - COMPLETE & READY TO USE
+# 🎉 WORLD CUP 26 Predictor - COMPLETE & READY TO USE
 
 ## What Has Been Created Test test ter bb
 
-I have successfully built a **complete, production-ready full-stack web application** called **Fifa26Predictor** with over **56 files** and **5,000+ lines of code**.
+I have successfully built a **complete, production-ready full-stack web application** called **WorldCup26Predictor** with over **56 files** and **5,000+ lines of code**.
 
 ---
 
@@ -10,7 +10,7 @@ I have successfully built a **complete, production-ready full-stack web applicat
 
 ### ✅ Backend (Node.js + Express + TypeScript)
 - **33 Backend Files** including:
-  - 10 MongoDB schemas (User, Match, Team, Community, Prediction, Result, etc.)
+  - 10 SQL schemas (User, Match, Team, Community, Prediction, Result, etc.)
   - 4 API Controllers (Auth, Match, Prediction, Leaderboard)
   - 4 Route files (20+ RESTful endpoints)
   - Scoring system with point calculations
@@ -33,7 +33,7 @@ I have successfully built a **complete, production-ready full-stack web applicat
 
 ### ✅ Database Models (10 Schemas)
 - User profiles with community affiliation
-- Match management
+- Match management (WORLD CUP)
 - Team data
 - Predictions with scoring
 - Results tracking

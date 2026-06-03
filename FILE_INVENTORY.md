@@ -1,11 +1,11 @@
-# Fifa26Predictor - Complete File Structure & Inventory
+# WorldCup26Predictor - Complete File Structure & Inventory
 
 ## 📋 Project Overview
 
 **Total Files Created:** 50+  
 **Total Directories:** 15+  
-**Total Lines of Code:** 5000+  
-**Languages:** TypeScript (85%), JavaScript/JSON (15%)  
+**Total Lines of Code:** 5000+
+**Languages:** TypeScript (85%), JavaScript/JSON (15%)
 **Documentation Files:** 5
 
 ---
