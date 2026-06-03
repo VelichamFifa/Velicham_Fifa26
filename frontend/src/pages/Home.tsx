@@ -73,7 +73,7 @@ const Home: React.FC = () => {
   return (
     <div>
       <div className="relative w-full overflow-hidden shadow-2xl border-b border-white/10 bg-primary">
-        <img src="/Cover.png" alt="WORLD CUP 2026 Cover" className="w-full h-auto object-cover max-h-[400px] sm:max-h-[600px] block" />
+        <img src="/Cover.png" alt="WORLD CUP 2026 Cover" className="w-full h-auto object-cover max-h-[500px] sm:max-h-[700px] block" />
         
         {/* Bottom-to-top gradient to blend the image into the page background */}
         <div className="absolute inset-0 bg-gradient-to-t from-primary via-transparent to-black/10" />
@@ -83,11 +83,11 @@ const Home: React.FC = () => {
             <div className="absolute top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 z-20">
               <button
                 onClick={() => logout()}
-                className="p-1.5 sm:p-2 bg-white/5 hover:bg-white/15 border border-white/10 text-white/70 hover:text-white rounded-lg transition-all duration-200 flex items-center gap-1.5 text-xs font-bold backdrop-blur-sm shadow-xl"
+                className="p-2.5 sm:p-3 bg-white/5 hover:bg-white/15 border border-white/10 text-white/70 hover:text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm font-bold backdrop-blur-sm shadow-xl"
                 title="Logout"
               >
                 <span className="hidden sm:inline uppercase tracking-wider">Logout</span>
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
               </button>
@@ -95,15 +95,15 @@ const Home: React.FC = () => {
           )}
           <div className="flex flex-col items-start gap-4">
             <div className="flex items-center gap-2 sm:gap-4">
-              <img src="/VelichamLogo.png" alt="Velicham Logo" className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-left-12 duration-1000" />
-              <img src="/Mlogo-w.png" alt="Media One Logo" className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-right-12 duration-1000" />
+              <img src="/VelichamLogo.png" alt="Velicham Logo" className="h-16 sm:h-24 md:h-32 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-left-12 duration-1000" />
+              <img src="/Mlogo-w.png" alt="Media One Logo" className="h-16 sm:h-24 md:h-32 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-right-12 duration-1000" />
             </div>
-            <h1 className="text-white font-bold text-sm sm:text-xl md:text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+            <h1 className="text-white font-bold text-xl sm:text-4xl md:text-5xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
               <span className="block text-white">WORLD CUP '26</span>
               <span className="block text-sky-400">Prediction</span>
             </h1>
           </div>
-          <p className="text-xs sm:text-base md:text-lg text-sky-100/80 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
+          <p className="text-sm sm:text-2xl md:text-3xl text-sky-100/80 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
             Get ready to participate, compete and celebrate with your community!
           </p>
         </div>
