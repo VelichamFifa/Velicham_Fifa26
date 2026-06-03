@@ -113,16 +113,10 @@ const Home: React.FC = () => {
 
         <div className="text-center mb-6 sm:mb-8">
           <div className="flex flex-row gap-3 justify-center px-4">
-              <Link
-                to="/leaderboard"
-                className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm"
-              >
-                View Leaderboard
-              </Link>
               {isLoggedIn && (
                 <Link
                   to="/dashboard"
-                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-sky-500/20 text-sm"
+                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-sky-500/20 text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
                 >
                   <span aria-hidden="true">📊</span>
                   Dashboard
@@ -131,11 +125,17 @@ const Home: React.FC = () => {
               {!isLoggedIn && (
                 <Link
                   to="/login"
-                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm"
+                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
                 >
                   Login to Predict
                 </Link>
               )}
+              <Link
+                to="/leaderboard"
+                className="w-40 py-2.5 bg-white/5 border border-sky-400/50 text-white/70 font-bold rounded-xl hover:bg-white/15 hover:text-white hover:border-sky-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+              >
+                View Leaderboard
+              </Link>
             </div>
         </div>
 
