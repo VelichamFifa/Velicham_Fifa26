@@ -11,36 +11,37 @@ export const getCommunityRequests = async (req: AuthRequest, res: Response) => {
   try {
     const users = await prisma.user.findMany({
       where: {
-        communityRequest: { status: 'pending' },
+        communityRequests: { some: { status: 'pending' } },
       },
-      include: { communityRequest: true },
+      include: { communityRequests: true },
       orderBy: { createdAt: 'desc' },
     });
 
-    const requests = users.map((u) => ({
-      userId: String(u.id),
-      email: u.email,
-      firstName: u.firstName,
-      lastName: u.lastName,
-      city: u.city,
-      state: u.state,
-      createdAt: u.createdAt,
-      communityId1: u.communityId1,
-      communityId2: u.communityId2,
-      requestedCommunity: u.communityRequest
-        ? {
-            name: u.communityRequest.name,
-            shortName: u.communityRequest.shortName,
-            description: u.communityRequest.description,
-            isOnline: u.communityRequest.isOnline,
-            city: u.communityRequest.city,
-            state: u.communityRequest.state,
-            existingCommunityId: u.communityRequest.existingCommunityId,
-            status: u.communityRequest.status,
-            statusComment: u.communityRequest.statusComment,
-          }
-        : undefined,
-    }));
+    const requests = users.flatMap((u) => {
+      const pendingReqs = u.communityRequests.filter((cr: any) => cr.status === 'pending');
+      return pendingReqs.map((cr: any) => ({
+        userId: String(u.id),
+        email: u.email,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        city: u.city,
+        state: u.state,
+        createdAt: u.createdAt,
+        communityId1: u.communityId1,
+        communityId2: u.communityId2,
+        requestedCommunity: {
+          name: cr.name,
+          shortName: cr.shortName,
+          description: cr.description,
+          isOnline: cr.isOnline,
+          city: cr.city,
+          state: cr.state,
+          existingCommunityId: cr.existingCommunityId,
+          status: cr.status,
+          statusComment: cr.statusComment,
+        }
+      }));
+    });
 
     res.json({ requests });
   } catch (error) {
@@ -52,6 +53,8 @@ export const getCommunityRequests = async (req: AuthRequest, res: Response) => {
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch community requests' });
   }
 };
+
+
 
 export const finalizeMatch = async (req: AuthRequest, res: Response) => {
   try {
@@ -194,7 +197,7 @@ export const approveCommunityRequest = async (req: AuthRequest, res: Response) =
     }
 
     const [user, community] = await Promise.all([
-      prisma.user.findUnique({ where: { id: userIdNum }, include: { communityRequest: true } }),
+      prisma.user.findUnique({ where: { id: userIdNum }, include: { communityRequests: true } }),
       prisma.community.findUnique({ where: { id: communityIdNum } }),
     ]);
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -213,8 +216,11 @@ export const approveCommunityRequest = async (req: AuthRequest, res: Response) =
       assigned = true;
     }
 
-    if (user.communityRequest) {
-      await prisma.userCommunityRequest.delete({ where: { userId: userIdNum } });
+    if (user.communityRequests && user.communityRequests.length > 0) {
+      await prisma.userCommunityRequest.updateMany({
+        where: { userId: userIdNum, status: 'pending' },
+        data: { status: 'Approved' }
+      });
     }
 
     res.json({
@@ -244,7 +250,7 @@ export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Re
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: userIdNum }, include: { communityRequest: true } });
+    const user = await prisma.user.findUnique({ where: { id: userIdNum }, include: { communityRequests: true } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // If this community already exists (case-insensitive), reuse it
@@ -277,8 +283,11 @@ export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Re
       await prisma.user.update({ where: { id: userIdNum }, data: { communityId2: communityId } });
     }
 
-    if (user.communityRequest) {
-      await prisma.userCommunityRequest.delete({ where: { userId: userIdNum } });
+    if (user.communityRequests && user.communityRequests.length > 0) {
+      await prisma.userCommunityRequest.updateMany({
+        where: { userId: userIdNum, status: 'pending' },
+        data: { status: 'Approved' }
+      });
     }
 
     res.json({ message: 'Community created and request approved successfully', communityId });
@@ -300,12 +309,12 @@ export const rejectCommunityRequest = async (req: AuthRequest, res: Response) =>
     if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
       return res.status(404).json({ error: 'User not found' });
     }
-    const user = await prisma.user.findUnique({ where: { id: userIdNum }, include: { communityRequest: true } });
+    const user = await prisma.user.findUnique({ where: { id: userIdNum }, include: { communityRequests: true } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (user.communityRequest) {
-      await prisma.userCommunityRequest.update({
-        where: { userId: userIdNum },
+    if (user.communityRequests && user.communityRequests.length > 0) {
+      await prisma.userCommunityRequest.updateMany({
+        where: { userId: userIdNum, status: 'pending' },
         data: {
           status: 'Admin Rejected',
           statusComment: statusComment || 'Request does not meet requirements.',

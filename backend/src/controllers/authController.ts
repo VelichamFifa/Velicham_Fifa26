@@ -84,7 +84,7 @@ export const register = async (req: AuthRequest, res: Response) => {
         status: 'active',
         isActive: true,
         role: 'user',
-        communityRequest:
+        communityRequests:
           rc && rc.name
             ? {
                 create: {
@@ -238,7 +238,6 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
 
     const user = await prisma.user.findUnique({
       where: { id: reqUserIdNum },
-      include: { communityRequest: true },
     });
 
     logger.info('getUserProfile', 'Completed user profile DB fetch', {
@@ -262,18 +261,19 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       communityId1: user.communityId1 ? String(user.communityId1) : undefined,
       communityId2: user.communityId2 ? String(user.communityId2) : undefined,
       phoneNumber: user.phoneNumber,
-      requestedCommunity: user.communityRequest
-        ? {
-            name: user.communityRequest.name || '',
-            shortName: user.communityRequest.shortName || '',
-            description: user.communityRequest.description || '',
-            isOnline: !!user.communityRequest.isOnline,
-            city: user.communityRequest.city || '',
-            state: user.communityRequest.state || '',
-            existingCommunityId: user.communityRequest.existingCommunityId || undefined,
-            status: user.communityRequest.status || 'pending',
-            statusComment: user.communityRequest.statusComment || undefined,
-          }
+      requestedCommunity: user.communityRequests && user.communityRequests.length > 0
+        ? user.communityRequests.map((req: any) => ({
+            id: req.id,
+            name: req.name || '',
+            shortName: req.shortName || '',
+            description: req.description || '',
+            isOnline: !!req.isOnline,
+            city: req.city || '',
+            state: req.state || '',
+            existingCommunityId: req.existingCommunityId || undefined,
+            status: req.status || 'pending',
+            statusComment: req.statusComment || undefined,
+          }))
         : undefined,
       role: user.role,
       status: user.status,
@@ -306,7 +306,7 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
 
     const user = await prisma.user.findUnique({
       where: { id: reqUserIdNum },
-      include: { communityRequest: true },
+      include: { communityRequests: true },
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -342,43 +342,42 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     if (communityId2 !== undefined) data.communityId2 = normalizedC2;
 
     if (requestedCommunity) {
-      if (user.communityRequest && user.communityRequest.status === 'pending') {
+      if (user.communityRequests && user.communityRequests.some((r: any) => r.status === 'pending')) {
         return res.status(400).json({ error: 'You already have a pending community request.' });
       }
 
       let rc = { ...requestedCommunity };
+      if (!rc.name || !rc.shortName) {
+        return res.status(400).json({ error: 'Both Full Name and Short Name are required for a community request' });
+      }
+      if (!rc.isOnline && (!rc.city || !rc.state)) {
+        return res.status(400).json({ error: 'City and State are required for local communities' });
+      }
+
       if (rc.name && rc.shortName) {
         const existingCommunity = await findExistingCommunityForRequest(rc.name, rc.shortName);
         if (existingCommunity) rc = { ...rc, existingCommunityId: existingCommunity.communityId };
       }
-      data.communityRequest = {
-        upsert: {
-          create: {
-            name: rc.name,
-            shortName: rc.shortName ?? '',
-            description: rc.description ?? '',
-            isOnline: !!rc.isOnline,
-            city: rc.city ?? '',
-            state: rc.state ?? '',
-            existingCommunityId: rc.existingCommunityId,
-            status: 'pending',
-            statusComment: rc.statusComment,
-          },
-          update: {
-            name: rc.name,
-            shortName: rc.shortName ?? '',
-            description: rc.description ?? '',
-            isOnline: !!rc.isOnline,
-            city: rc.city ?? '',
-            state: rc.state ?? '',
-            existingCommunityId: rc.existingCommunityId,
-            status: 'pending',
-            statusComment: rc.statusComment,
-          },
-        },
+      data.communityRequests = {
+        create: {
+          name: rc.name,
+          shortName: rc.shortName ?? '',
+          description: rc.description ?? '',
+          isOnline: !!rc.isOnline,
+          city: rc.city ?? '',
+          state: rc.state ?? '',
+          existingCommunityId: rc.existingCommunityId,
+          status: 'pending',
+          statusComment: rc.statusComment,
+        }
       };
     } else if (requestedCommunity === null) {
-      data.communityRequest = user.communityRequest ? { update: { status: 'User Deleted' } } : undefined;
+      data.communityRequests = user.communityRequests && user.communityRequests.length > 0 ? {
+        updateMany: {
+          where: { status: 'pending' },
+          data: { status: 'User Deleted' }
+        }
+      } : undefined;
     }
 
     const nextC1 = normalizedC1;
@@ -413,5 +412,257 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
       userId: req.user?.userId,
     });
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update profile' });
+  }
+};
+export const addUserCommunityRequest = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, shortName, description, isOnline, city, state } = req.body;
+    const reqUserIdNum = Number(req.user?.userId);
+
+    if (!Number.isInteger(reqUserIdNum) || reqUserIdNum <= 0) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: reqUserIdNum }
+    });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+
+    if (!Number.isInteger(reqUserIdNum) || reqUserIdNum <= 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    
+    if (!name || !shortName) {
+      return res.status(400).json({ error: 'Both Full Name and Short Name are required' });
+    }
+    if (!isOnline && (!city || !state)) {
+      return res.status(400).json({ error: 'City and State are required for local communities' });
+    }
+
+    let existingCommunityId: string | undefined = undefined;
+    const existingCommunity = await findExistingCommunityForRequest(name, shortName);
+    if (existingCommunity) {
+      existingCommunityId = existingCommunity.communityId;
+    }
+
+    const newRequest = await prisma.userCommunityRequest.create({
+      data: {
+        userId: reqUserIdNum,
+        name: name,
+        shortName: shortName,
+        description: description || '',
+        isOnline: !!isOnline,
+        city: city || '',
+        state: state || '',
+        existingCommunityId,
+        status: 'pending'
+      }
+    }); 
+
+    res.status(201).json({ message: 'User community request added successfully', request: newRequest });
+  } catch (error) {
+    const errorDetails = logger.error('addUserCommunityRequest', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to add user community request' });
+  }
+};
+
+export const submitCommunityRequest = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, shortName, description, isOnline, city, state } = req.body;
+    const reqUserIdNum = Number(req.user?.userId);
+
+    if (!Number.isInteger(reqUserIdNum) || reqUserIdNum <= 0) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: reqUserIdNum },
+      include: { communityRequests: true }
+    });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+   
+
+    if (!name || !shortName) {
+      return res.status(400).json({ error: 'Both Full Name and Short Name are required' });
+    }
+    if (!isOnline && (!city || !state)) {
+      return res.status(400).json({ error: 'City and State are required for local communities' });
+    }
+
+    let existingCommunityId: string | undefined = undefined;
+    const existingCommunity = await findExistingCommunityForRequest(name, shortName);
+    if (existingCommunity) {
+      existingCommunityId = existingCommunity.communityId;
+    }
+
+    const newRequest = await prisma.userCommunityRequest.create({
+      data: {
+        userId: reqUserIdNum,
+        name: name,
+        shortName: shortName,
+        description: description || '',
+        isOnline: !!isOnline,
+        city: city || '',
+        state: state || '',
+        existingCommunityId,
+        status: 'pending'
+      }
+    });
+
+    res.status(201).json({ message: 'Community request submitted successfully', request: newRequest });
+  } catch (error) {
+    const errorDetails = logger.error('submitCommunityRequest', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to submit community request' });
+  }
+};
+
+export const getUserCommunityRequests = async (req: AuthRequest, res: Response) => {
+  try {
+    const reqUserIdNum = Number(req.user?.userId);
+
+    if (!Number.isInteger(reqUserIdNum) || reqUserIdNum <= 0) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: reqUserIdNum },
+      include: { communityRequests: true }
+    });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json({
+      requests: user.communityRequests.map((req: any) => ({
+        id: req.id,
+        name: req.name || '',
+        shortName: req.shortName || '',
+        description: req.description || '',
+        isOnline: !!req.isOnline,
+        city: req.city || '',
+        state: req.state || '',
+        existingCommunityId: req.existingCommunityId || undefined,
+        status: req.status || 'pending',
+        statusComment: req.statusComment || undefined,
+      }))
+    });
+  } catch (error) {
+    const errorDetails = logger.error('getUserCommunityRequests', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch user community requests' });
+  }
+};
+
+export const deleteUserCommunityRequest = async (req: AuthRequest, res: Response) => {
+  try {
+    const reqUserIdNum = Number(req.user?.userId);
+    const requestId = Number(req.params.id);
+
+    if (!Number.isInteger(reqUserIdNum) || reqUserIdNum <= 0) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    if (!Number.isInteger(requestId) || requestId <= 0) {
+      return res.status(400).json({ error: 'Invalid request ID' });
+    }
+
+    const request = await prisma.userCommunityRequest.findUnique({
+      where: { id: requestId }
+    });
+
+    if (!request) return res.status(404).json({ error: 'Request not found' });
+    if (request.userId !== reqUserIdNum) return res.status(403).json({ error: 'Unauthorized to delete this request' });
+
+    if (request.status !== 'pending' && request.status !== 'Admin Rejected') {
+      return res.status(400).json({ error: 'Only pending or rejected requests can be deleted/dismissed' });
+    }
+
+    await prisma.userCommunityRequest.update({
+      where: { id: requestId },
+      data: { status: 'User Deleted' }
+    });
+
+    res.json({ message: 'Request deleted successfully' });
+  } catch (error) {
+    const errorDetails = logger.error('deleteUserCommunityRequest', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to delete community request' });
+  }
+};
+
+export const updateUserCommunityRequest = async (req: AuthRequest, res: Response) => {
+  try {
+    const reqUserIdNum = Number(req.user?.userId);
+    const requestId = Number(req.params.id);
+
+    if (!Number.isInteger(reqUserIdNum) || reqUserIdNum <= 0) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    if (!Number.isInteger(requestId) || requestId <= 0) {
+      return res.status(400).json({ error: 'Invalid request ID' });
+    }
+
+    const request = await prisma.userCommunityRequest.findUnique({
+      where: { id: requestId }
+    });
+
+    if (!request) return res.status(404).json({ error: 'Request not found' });
+    if (request.userId !== reqUserIdNum) return res.status(403).json({ error: 'Unauthorized to update this request' });
+    if (request.status !== 'pending') {
+      return res.status(400).json({ error: 'Only pending requests can be edited' });
+    }
+
+    const { name, shortName, description, isOnline, city, state } = req.body;
+    if (!name || !shortName) {
+      return res.status(400).json({ error: 'Both Full Name and Short Name are required' });
+    }
+    if (!isOnline && (!city || !state)) {
+      return res.status(400).json({ error: 'City and State are required for local communities' });
+    }
+
+    let existingCommunityId: string | undefined = undefined;
+    const existingCommunity = await findExistingCommunityForRequest(name, shortName);
+    if (existingCommunity) {
+      existingCommunityId = existingCommunity.communityId;
+    }
+
+    const updatedRequest = await prisma.userCommunityRequest.update({
+      where: { id: requestId },
+      data: {
+        name: name,
+        shortName: shortName,
+        description: description || '',
+        isOnline: !!isOnline,
+        city: city || '',
+        state: state || '',
+        existingCommunityId,
+      }
+    });
+
+    res.json({ message: 'Request updated successfully', request: updatedRequest });
+  } catch (error) {
+    const errorDetails = logger.error('updateUserCommunityRequest', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update community request' });
   }
 };

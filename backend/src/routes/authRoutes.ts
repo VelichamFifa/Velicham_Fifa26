@@ -13,5 +13,9 @@ router.post('/google', validateRequest(schemas.googleLogin), authController.goog
 // Protected routes
 router.get('/profile', authMiddleware, authController.getUserProfile);
 router.put('/profile', authMiddleware, validateRequest(schemas.updateProfile), authController.updateUserProfile);
+router.post('/profile/community-requests', authMiddleware, authController.submitCommunityRequest);
+router.get('/profile/community-requests', authMiddleware, authController.getUserCommunityRequests);
+router.put('/profile/community-requests/:id', authMiddleware, authController.updateUserCommunityRequest);
+router.delete('/profile/community-requests/:id', authMiddleware, authController.deleteUserCommunityRequest);
 
 export default router;

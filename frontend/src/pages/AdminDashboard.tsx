@@ -54,6 +54,27 @@ const getEasternTimeWithAbbr = () => {
     return { dateStr, abbr };
 };
 
+// Helper to get current UTC time and abbreviation
+const getUtcTimeWithAbbr = () => {
+    const now = new Date();
+    // Get time in UTC
+    const options: Intl.DateTimeFormatOptions = {
+        timeZone: 'UTC',
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZoneName: 'short',
+    };
+    const formatter = new Intl.DateTimeFormat('en-US', options);
+    const parts = formatter.formatToParts(now);
+    const abbr = parts.find(p => p.type === 'timeZoneName')?.value || 'UTC';
+    const dateStr = formatter.format(now);
+    return { dateStr, abbr };
+};
 
 
 
@@ -430,17 +451,24 @@ const AdminDashboard: React.FC = () => {
 
     // Eastern time display for admins
     const { dateStr: easternTimeStr, abbr: easternAbbr } = getEasternTimeWithAbbr();
+    const { dateStr: utcTimeStr, abbr: utcAbbr } = getUtcTimeWithAbbr();
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold text-white mb-8">Admin Dashboard</h1>
 
-            {/* US Eastern Time Display */}
-            <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded flex items-center gap-4">
-                <span className="font-semibold text-blue-800">Current US Eastern Time:</span>
-                <span className="font-mono text-blue-900 text-lg">{easternTimeStr}</span>
-                <span className="ml-2 px-2 py-0.5 rounded bg-blue-200 text-blue-900 text-xs font-bold uppercase">{easternAbbr}</span>
-                <span className="ml-4 text-xs text-blue-700">(Auto-detects EDT/EST)</span>
+            {/* Time Displays */}
+            <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded flex items-center gap-4">
+                    <span className="font-semibold text-blue-800">US Eastern Time:</span>
+                    <span className="font-mono text-blue-900 text-lg">{easternTimeStr}</span>
+                    <span className="ml-2 px-2 py-0.5 rounded bg-blue-200 text-blue-900 text-xs font-bold uppercase">{easternAbbr}</span>
+                </div>
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded flex items-center gap-4">
+                    <span className="font-semibold text-purple-800">UTC Time:</span>
+                    <span className="font-mono text-purple-900 text-lg">{utcTimeStr}</span>
+                    <span className="ml-2 px-2 py-0.5 rounded bg-purple-200 text-purple-900 text-xs font-bold uppercase">{utcAbbr}</span>
+                </div>
             </div>
 
             {error && <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg flex justify-between">

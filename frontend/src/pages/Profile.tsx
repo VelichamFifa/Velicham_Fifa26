@@ -14,6 +14,7 @@ const Profile: React.FC = () => {
     const [communities, setCommunities] = useState<any[]>([]);
     const [isEditing, setIsEditing] = useState(false);
     const [showRequestForm, setShowRequestForm] = useState(false);
+    const [userRequests, setUserRequests] = useState<any[]>([]);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -27,7 +28,15 @@ const Profile: React.FC = () => {
         communityId2: '',
     });
 
-    const [requestData, setRequestData] = useState({
+    const [requestData, setRequestData] = useState<{
+        id?: number;
+        name: string;
+        shortName: string;
+        description: string;
+        isOnline: boolean;
+        city: string;
+        state: string;
+    }>({
         name: '',
         shortName: '',
         description: '',
@@ -43,13 +52,15 @@ const Profile: React.FC = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [profileRes, communitiesRes] = await Promise.all([
+            const [profileRes, communitiesRes, requestsRes] = await Promise.all([
                 apiService.getProfile(),
-                apiService.getCommunities()
+                apiService.getCommunities(),
+                apiService.getUserCommunityRequests()
             ]);
             const p = profileRes.data;
             setProfile(p);
             setCommunities(communitiesRes.data);
+            setUserRequests(requestsRes.data.requests || []);
             setFormData({
                 firstName: p.firstName || '',
                 lastName: p.lastName || '',
@@ -125,8 +136,13 @@ const Profile: React.FC = () => {
                 return;
             }
 
-            await apiService.updateProfile({ requestedCommunity: requestData });
-            setSuccess('Community request submitted successfully');
+            if (requestData.id) {
+                await apiService.updateUserCommunityRequest(requestData.id, requestData);
+                setSuccess('Community request updated successfully');
+            } else {
+                await apiService.submitCommunityRequest(requestData);
+                setSuccess('Community request submitted successfully');
+            }
             setShowRequestForm(false);
             setRequestError('');
             fetchData();
@@ -400,7 +416,7 @@ const Profile: React.FC = () => {
 
                                     <div className="grid grid-cols-2 gap-3 mb-3">
                                         <div>
-                                            <label className="block text-[11px] font-bold text-white/70 uppercase mb-1">
+                                            <label className="block text-[11px] font-bold text-white/70  mb-1">
                                                 Full Name <span className="text-red-500">*</span>
                                             </label>
                                             <input
@@ -413,8 +429,8 @@ const Profile: React.FC = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[11px] font-bold text-white/70 uppercase mb-1">
-                                                Short Name / Code <span className="text-red-500">*</span>
+                                            <label className="block text-[11px] font-bold text-white/70  mb-1">
+                                                Short Name <span className="text-red-500">*</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -428,7 +444,7 @@ const Profile: React.FC = () => {
                                     </div>
 
                                     <div className="mb-3">
-                                        <label className="block text-[11px] font-bold text-white/70 uppercase mb-1">
+                                        <label className="block text-[11px] font-bold text-white/70  mb-1">
                                             Description <span className="font-normal normal-case text-white/45">(Optional)</span>
                                         </label>
                                         <textarea
@@ -444,7 +460,7 @@ const Profile: React.FC = () => {
                                     {!requestData.isOnline && (
                                         <div className="grid grid-cols-2 gap-3 mb-4">
                                             <div>
-                                                <label className="block text-[11px] font-bold text-white/70 uppercase mb-1">
+                                                <label className="block text-[11px] font-bold text-white/70  mb-1">
                                                     City <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
@@ -457,7 +473,7 @@ const Profile: React.FC = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[11px] font-bold text-white/70 uppercase mb-1">
+                                                <label className="block text-[11px] font-bold text-white/70  mb-1">
                                                     State <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
@@ -492,63 +508,135 @@ const Profile: React.FC = () => {
                                 </div>
                             )}
 
-                            {profile.requestedCommunity && profile.requestedCommunity.status !== 'User Deleted' && (
-                                <div className="mt-4 rounded-xl border border-amber-300/25 bg-amber-400/10 p-4">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <label className="block text-[9px] text-amber-200 uppercase font-black mb-1">Pending Community Request</label>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-bold text-white">
-                                                    {typeof profile.requestedCommunity === 'object' && profile.requestedCommunity !== null
-                                                        ? profile.requestedCommunity.name
-                                                        : profile.requestedCommunity}
-                                                </p>
-                                                <span className="rounded-full bg-blue-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase text-blue-100">
-                                                    {profile.requestedCommunity.status || 'pending'}
-                                                </span>
-                                                {profile.requestedCommunity.existingCommunityId && (
-                                                    <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase text-emerald-100">MATCHED</span>
-                                                )}
-                                            </div>
+                            {(() => {
+                                const allRequests = userRequests.filter(r => r);
 
-                                            {profile.requestedCommunity.existingCommunityId && (
-                                                <div className="mt-3 rounded-lg border border-emerald-300/20 bg-white/5 p-3">
-                                                    <p className="mb-1 text-[10px] font-bold uppercase text-emerald-200">System Match Found</p>
-                                                    {(() => {
-                                                        const matched = communities.find(c => c.communityId === profile.requestedCommunity.existingCommunityId);
-                                                        if (!matched) return <p className="text-xs italic text-white/60">Matching community details found in our system. If this is not what you requested, please cancel and request a unique one.</p>;
-                                                        return (
-                                                            <div className="text-xs text-white/75">
-                                                                <p className="mb-0.5"><span className="font-bold">Official Name:</span> {matched.name}</p>
-                                                                <p className="mb-0.5"><span className="font-bold">Official Full Name:</span> {matched.fullName}</p>
-                                                                <p><span className="font-bold">Official Location:</span> {matched.city}, {matched.state}</p>
-                                                                <p className="mt-1 text-[10px] font-medium italic text-emerald-200">If this is not the community you meant, please cancel this request and try a different name.</p>
-                                                            </div>
-                                                        );
-                                                    })()}
-                                                </div>
+                                return (
+                                    <div className="mt-8">
+                                        <div className="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
+                                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                My Onboarding Requests
+                                            </h2>
+                                            {!showRequestForm && (
+                                                <button
+                                                    onClick={() => {
+                                                        setRequestData({ id: undefined, name: '', shortName: '', description: '', isOnline: false, city: '', state: '' });
+                                                        setShowRequestForm(true);
+                                                    }}
+                                                    className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-4 py-1.5 text-xs font-bold text-sky-100 transition hover:bg-sky-400/20 hover:border-sky-300/45 flex items-center gap-1"
+                                                >
+                                                    + Add New
+                                                </button>
                                             )}
                                         </div>
-                                        <button
-                                            onClick={() => apiService.updateProfile({ requestedCommunity: null }).then(fetchData)}
-                                            className="text-[10px] font-bold uppercase text-amber-200 hover:text-white"
-                                        >
-                                            {profile.requestedCommunity.status === 'Admin Rejected' ? 'Dismiss' : 'Cancel Request'}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
 
-                            {(!profile.requestedCommunity || profile.requestedCommunity.status === 'User Deleted' || profile.requestedCommunity.status === 'Admin Rejected') && !showRequestForm && !isEditing && (
-                                <div className="mt-6 flex justify-end border-t border-white/10 pt-4">
-                                    <button
-                                        onClick={() => setShowRequestForm(true)}
-                                        className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-1.5 text-[11px] font-bold text-sky-100 transition hover:bg-sky-400/20 hover:border-sky-300/45"
-                                    >
-                                        + Request New Community
-                                    </button>
-                                </div>
-                            )}
+                                        <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/5">
+                                            <table className="w-full text-left text-sm text-white/70">
+                                                <thead className="border-b border-white/10 bg-white/5 text-[10px] uppercase tracking-wider text-white/50">
+                                                    <tr>
+                                                        <th className="p-4 font-medium">Community Details</th>
+                                                        <th className="p-4 font-medium">Location</th>
+                                                        <th className="p-4 font-medium">Status</th>
+                                                        <th className="p-4 font-medium text-right">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-white/5">
+                                                    {allRequests.map((req, idx) => (
+                                                        <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                                                            <td className="p-4">
+                                                                <div className="font-bold text-white text-base">{req.name}</div>
+                                                                {req.shortName && <div className="text-[10px] font-mono text-white/50 mt-0.5">Code: {req.shortName}</div>}
+                                                                {req.description && <div className="text-[11px] italic text-white/40 mt-1 truncate max-w-[250px]">"{req.description}"</div>}
+                                                            </td>
+                                                            <td className="p-4">
+                                                                {req.isOnline ? (
+                                                                    <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">● Online</span>
+                                                                ) : (
+                                                                    <span className="text-xs">
+                                                                        {req.city}{req.city && req.state ? ', ' : ''}{req.state}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="p-4">
+                                                                <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                                                                    req.status === 'Admin Rejected' ? 'bg-rose-500/20 text-rose-200' : 
+                                                                    req.status === 'Approved' ? 'bg-emerald-500/20 text-emerald-200' :
+                                                                    req.status === 'User Deleted' ? 'bg-gray-500/20 text-gray-400' :
+                                                                    'bg-blue-500/20 text-blue-100'
+                                                                }`}>
+                                                                    {req.status || 'pending'}
+                                                                </span>
+                                                                {req.existingCommunityId && (
+                                                                    <span className="ml-2 inline-block rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-100" title="System Match Found">
+                                                                        MATCHED
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="p-4 text-right">
+                                                                <div className="flex justify-end gap-3">
+                                                                    {req.status === 'pending' && (
+                                                                        <>
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    setRequestData({
+                                                                                        id: req.id,
+                                                                                        name: req.name || '',
+                                                                                        shortName: req.shortName || '',
+                                                                                        description: req.description || '',
+                                                                                        isOnline: !!req.isOnline,
+                                                                                        city: req.city || '',
+                                                                                        state: req.state || ''
+                                                                                    });
+                                                                                    setShowRequestForm(true);
+                                                                                }}
+                                                                                className="text-[11px] font-bold uppercase text-sky-400 hover:text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1.5 rounded transition"
+                                                                            >
+                                                                                Edit
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    if(window.confirm(`Are you sure you want to delete this request?`)) {
+                                                                                        apiService.deleteUserCommunityRequest(req.id).then(fetchData);
+                                                                                    }
+                                                                                }}
+                                                                                className="text-[11px] font-bold uppercase text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded transition"
+                                                                            >
+                                                                                Delete
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                                    {req.status === 'Admin Rejected' && (
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                if(window.confirm(`Are you sure you want to dismiss this request?`)) {
+                                                                                    apiService.deleteUserCommunityRequest(req.id).then(fetchData);
+                                                                                }
+                                                                            }}
+                                                                            className="text-[11px] font-bold uppercase text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded transition"
+                                                                        >
+                                                                            Dismiss
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                    {allRequests.length === 0 && (
+                                                        <tr>
+                                                            <td colSpan={4} className="p-8 text-center text-sm text-white/40 italic">
+                                                                No onboarding requests found.
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                     </div>

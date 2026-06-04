@@ -70,6 +70,22 @@ class ApiService {
     return this.client.put('/auth/profile', data);
   }
 
+  submitCommunityRequest(data: any) {
+    return this.client.post('/auth/profile/community-requests', data);
+  } 
+
+  getUserCommunityRequests() {
+    return this.client.get('/auth/profile/community-requests');
+  }
+
+  deleteUserCommunityRequest(id: number) {
+    return this.client.delete(`/auth/profile/community-requests/${id}`);
+  }
+
+  updateUserCommunityRequest(id: number, data: any) {
+    return this.client.put(`/auth/profile/community-requests/${id}`, data);
+  }
+
   // Match endpoints
   getAllMatches(status?: string, page?: number, limit?: number) {
     return this.client.get('/matches', {
@@ -154,6 +170,10 @@ class ApiService {
   // Admin endpoints
   getCommunityRequests() {
     return this.client.get('/admin/community-requests');
+  }
+
+  adminAddUserCommunityRequest(data: any) {
+    return this.client.post('/admin/community-requests', data);
   }
 
   approveCommunity(data: { userId: string, communityId: string }) {

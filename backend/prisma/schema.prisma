@@ -33,14 +33,14 @@ model User {
   predictions      Prediction[]
   results          Result[]
   finalUserResult  FinalUserResult?
-  communityRequest UserCommunityRequest?
+  communityRequests UserCommunityRequest[]
 
   @@map("users")
 }
 
 model UserCommunityRequest {
   id                  Int     @id @default(autoincrement())
-  userId              Int     @unique
+  userId              Int
   user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   name                String  @db.VarChar(500)
   shortName           String  @default("") @db.VarChar(500)
