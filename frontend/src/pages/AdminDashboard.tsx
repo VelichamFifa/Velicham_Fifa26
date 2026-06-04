@@ -99,7 +99,7 @@ const AdminDashboard: React.FC = () => {
     const [editingCommunityId, setEditingCommunityId] = useState<string | null>(null);
     const [reviewingRequest, setReviewingRequest] = useState<any>(null);
     const [communitySearchTerm, setCommunitySearchTerm] = useState('');
-    const [communityForm, setCommunityForm] = useState<Partial<Community>>({ // Use Partial<Community> for type safety
+    const [communityForm, setCommunityForm] = useState({
         fullName: '',
         shortName: '',
         city: '',
@@ -294,7 +294,7 @@ const AdminDashboard: React.FC = () => {
             shortName: c.name || '',
             city: c.city || '',
             state: c.state || '',
-            isOnline: c.isOnline || false,
+            isOnline: (c as any).isOnline || false,
             description: c.description || ''
         });
     };
