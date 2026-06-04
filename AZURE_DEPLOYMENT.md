@@ -17,28 +17,28 @@ az login
 
 # Create a resource group
 az group create \
-  --name fifa26-rg \
+  --name worldcup26-rg \
   --location eastus
 
 # Create App Service Plan (Linux)
 az appservice plan create \
-  --name fifa26-plan \
-  --resource-group fifa26-rg \
+  --name worldcup26-plan \
+  --resource-group worldcup26-rg \
   --sku B1 \
   --is-linux
 
 # Create Backend App Service
 az webapp create \
-  --resource-group fifa26-rg \
-  --plan fifa26-plan \
-  --name fifa26-backend \
+  --resource-group worldcup26-rg \
+  --plan worldcup26-plan \
+  --name worldcup26-backend \
   --runtime "NODE|18-lts"
 
 # Create Frontend Static Web App
 az staticwebapp create \
-  --name fifa26-frontend \
-  --resource-group fifa26-rg \
-  --source https://github.com/yourusername/fifa26-predictor \
+  --name worldcup26-frontend \
+  --resource-group worldcup26-rg \
+  --source https://github.com/yourusername/worldcup26-predictor \
   --location eastus \
   --branch main
 ```

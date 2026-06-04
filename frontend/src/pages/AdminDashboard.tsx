@@ -60,9 +60,10 @@ const getEasternTimeWithAbbr = () => {
 const AdminDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { isLoggedIn, user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'communities' | 'matches' | 'users'>('communities');
+    const [activeTab, setActiveTab] = useState<'communities' | 'directory' | 'matches' | 'users'>('communities');
     const [matchTab, setMatchTab] = useState<'onboarded' | 'scheduled' | 'completed'>('onboarded');
     const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState(false);
     const [communityRequests, setCommunityRequests] = useState<any[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     const [onboardedMatches, setOnboardedMatches] = useState<Match[]>([]);
@@ -73,6 +74,16 @@ const AdminDashboard: React.FC = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
+    const [editingCommunityId, setEditingCommunityId] = useState<string | null>(null);
+    const [communitySearchTerm, setCommunitySearchTerm] = useState('');
+    const [communityForm, setCommunityForm] = useState<Partial<Community>>({ // Use Partial<Community> for type safety
+        fullName: '',
+        shortName: '',
+        city: '',
+        state: '',
+        isOnline: false,
+        description: ''
+    });
     const [newMatchForm, setNewMatchForm] = useState({
         sequence: '',
         team1: '',
@@ -200,6 +211,53 @@ const AdminDashboard: React.FC = () => {
             setCommunities(res.data);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Failed to quick create community');
+        }
+    };
+
+    const handleCommunitySubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            setActionLoading(true);
+            if (editingCommunityId) {
+                await apiService.adminUpdateCommunity(editingCommunityId, communityForm);
+                setSuccess('Community updated successfully');
+            } else {
+                await apiService.adminCreateCommunity(communityForm);
+                setSuccess('Community created successfully');
+            }
+            setEditingCommunityId(null);
+            setCommunityForm({ fullName: '', shortName: '', city: '', state: '', isOnline: false, description: '' });
+            fetchInitialData();
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Operation failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleEditCommunity = (c: Community) => {
+        setEditingCommunityId(c.communityId);
+        setCommunityForm({
+            fullName: c.fullName || '',
+            shortName: c.name || '',
+            city: c.city || '',
+            state: c.state || '',
+            isOnline: c.isOnline || false,
+            description: c.description || ''
+        });
+    };
+
+    const handleDeleteCommunity = async (id: string) => {
+        if (!window.confirm('Are you sure? This will fail if users are still members.')) return;
+        try {
+            setActionLoading(true);
+            await apiService.adminDeleteCommunity(id);
+            setSuccess('Community deleted successfully');
+            fetchInitialData();
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Delete failed');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -400,6 +458,12 @@ const AdminDashboard: React.FC = () => {
                     Community Requests ({communityRequests.length})
                 </button>
                 <button
+                    className={`px-6 py-3 font-medium whitespace-nowrap ${activeTab === 'directory' ? 'border-b-2 border-secondary text-secondary' : 'text-gray-500'}`}
+                    onClick={() => setActiveTab('directory')}
+                >
+                    Community Directory ({communities.length})
+                </button>
+                <button
                     className={`px-6 py-3 font-medium whitespace-nowrap ${activeTab === 'matches' ? 'border-b-2 border-secondary text-secondary' : 'text-gray-500'}`}
                     onClick={() => setActiveTab('matches')}
                 >
@@ -428,6 +492,7 @@ const AdminDashboard: React.FC = () => {
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Requested</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Short Name</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                                                 <th className="px-4 py-3"></th>
@@ -446,7 +511,7 @@ const AdminDashboard: React.FC = () => {
                                                     </td>
                                                     <td className="px-4 py-4">
                                                         <div className="text-sm font-bold text-secondary">{req.requestedCommunity?.name || '-'}</div>
-                                                        <div className="text-[10px] text-gray-400 font-mono">Short: {req.requestedCommunity?.shortName || '-'}</div>
+                                                        <div className="text-[10px] text-gray-400 font-mono font-bold uppercase tracking-tighter">Short Name: {req.requestedCommunity?.shortName || '-'}</div>
                                                         <div className="text-[10px] text-gray-500 max-w-[200px] truncate" title={req.requestedCommunity?.description}>
                                                             <span className="font-bold text-gray-400 uppercase text-[9px]">Description:</span> {req.requestedCommunity?.description || '-'}
                                                         </div>
@@ -529,6 +594,116 @@ const AdminDashboard: React.FC = () => {
                                     </table>
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {activeTab === 'directory' && (
+                        <div className="p-6">
+                            <form onSubmit={handleCommunitySubmit} className="mb-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                                <div className="mb-4 flex items-center justify-between gap-3">
+                                    <h3 className="text-lg font-bold text-gray-800">{editingCommunityId ? 'Edit Community' : 'Add New Community'}</h3>
+                                    {editingCommunityId && (
+                                        <button type="button" onClick={() => { setEditingCommunityId(null); setCommunityForm({ name: '', fullName: '', shortName: '', city: '', state: '', isOnline: false, description: '' }); }} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                                            Cancel Edit
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Short Name / Code</label>
+                                        <input 
+                                            className="w-full border rounded px-3 py-2 text-sm"
+                                            value={communityForm.shortName}
+                                            onChange={(e) => setCommunityForm({...communityForm, shortName: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Online Only</label>
+                                        <div 
+                                            onClick={() => setCommunityForm({...communityForm, isOnline: !communityForm.isOnline})}
+                                            className={`w-full cursor-pointer border rounded px-3 py-2 text-sm font-bold text-center transition ${communityForm.isOnline ? 'bg-sky-500/10 border-sky-500 text-sky-600' : 'bg-white border-gray-300 text-gray-400'}`}
+                                        >
+                                            {communityForm.isOnline ? 'YES' : 'NO'}
+                                        </div>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Full Display Name</label>
+                                        <input 
+                                            className="w-full border rounded px-3 py-2 text-sm"
+                                            value={communityForm.fullName}
+                                            onChange={(e) => setCommunityForm({...communityForm, fullName: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    {!communityForm.isOnline && (
+                                        <>
+                                            <input className="border rounded px-3 py-2 text-sm" placeholder="City" value={communityForm.city} onChange={(e) => setCommunityForm({...communityForm, city: e.target.value})} required />
+                                            <input className="border rounded px-3 py-2 text-sm" placeholder="State" value={communityForm.state} onChange={(e) => setCommunityForm({...communityForm, state: e.target.value})} required />
+                                        </>
+                                    )}
+                                    <textarea 
+                                        className="border rounded px-3 py-2 text-sm md:col-span-2 h-20" 
+                                        placeholder="Description" 
+                                        value={communityForm.description} 
+                                        onChange={(e) => setCommunityForm({...communityForm, description: e.target.value})} 
+                                    />
+                                </div>
+                                <div className="mt-4 flex justify-end">
+                                    <button type="submit" disabled={actionLoading} className="bg-secondary text-white px-6 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50">
+                                        {actionLoading ? 'Processing...' : editingCommunityId ? 'Update Community' : 'Create Community'}
+                                    </button>
+                                </div>
+                            </form>
+
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                                <h2 className="text-xl font-bold text-gray-800">Existing Communities</h2>
+                                <input
+                                    type="text"
+                                    placeholder="Search by name, short name, city, state..."
+                                    value={communitySearchTerm}
+                                    onChange={(e) => setCommunitySearchTerm(e.target.value)}
+                                    className="w-full sm:w-80 border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-secondary"
+                                />
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Community</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Short Name</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                            <th className="px-4 py-3"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {communities.filter(c => 
+                                            !communitySearchTerm || 
+                                            c.fullName?.toLowerCase().includes(communitySearchTerm.toLowerCase()) ||
+                                            c.name?.toLowerCase().includes(communitySearchTerm.toLowerCase()) ||
+                                            c.city?.toLowerCase().includes(communitySearchTerm.toLowerCase()) ||
+                                            c.state?.toLowerCase().includes(communitySearchTerm.toLowerCase())
+                                        ).map(c => (
+                                            <tr key={c.communityId}>
+                                                <td className="px-4 py-4">
+                                                    <div className="text-sm font-bold text-gray-900">{c.fullName || c.name}</div>
+                                                    <div className="text-[10px] text-gray-400 font-mono">ID: {c.communityId}</div>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="text-xs font-mono font-bold text-sky-700 bg-sky-50 px-2 py-1 rounded inline-block uppercase">{c.name}</div>
+                                                </td>
+                                                <td className="px-4 py-4 text-xs text-gray-600">{c.isOnline ? '-' : `${c.city}, ${c.state}`}</td>
+                                                <td className="px-4 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${c.isOnline ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{c.isOnline ? 'ONLINE' : 'LOCAL'}</span></td>
+                                                <td className="px-4 py-4 text-right">
+                                                    <button onClick={() => handleEditCommunity(c)} className="text-sky-600 hover:text-sky-800 text-xs font-bold mr-3">Edit</button>
+                                                    <button onClick={() => handleDeleteCommunity(c.communityId)} className="text-red-600 hover:text-red-800 text-xs font-bold">Delete</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
 

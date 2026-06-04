@@ -14,6 +14,11 @@ router.post('/approve-community', adminController.approveCommunityRequest);
 router.post('/create-and-approve-community', adminController.createAndApproveCommunityRequest);
 router.post('/reject-community', adminController.rejectCommunityRequest);
 
+// Community CRUD
+router.post('/communities', adminController.createCommunity);
+router.put('/communities/:id', adminController.updateCommunity);
+router.delete('/communities/:id', adminController.deleteCommunity);
+
 // Match management
 router.post('/finalize-match', adminController.finalizeMatch);
 

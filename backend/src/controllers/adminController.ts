@@ -236,7 +236,8 @@ export const approveCommunityRequest = async (req: AuthRequest, res: Response) =
 export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Response) => {
   try {
     const { userId, name, fullName, state, city, address, isOnline, shortName, description } = req.body;
-    if (!name) return res.status(400).json({ error: 'Community name is required' });
+    const effectiveName = shortName || name;
+    if (!effectiveName) return res.status(400).json({ error: 'Community Short Name/Code is required' });
 
     const userIdNum = Number(userId);
     if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
@@ -248,16 +249,16 @@ export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Re
 
     // If this community already exists (case-insensitive), reuse it
     let communityId: number | null = null;
-    if (shortName) {
-      const existing = await findExistingCommunityForRequest(name, shortName);
+    if (effectiveName) {
+      const existing = await findExistingCommunityForRequest(fullName || name, effectiveName);
       communityId = existing?.communityId ? Number(existing.communityId) : null;
     }
 
     if (!communityId) {
       const createdCommunity = await prisma.community.create({
         data: {
-          name: capitalizeProperNoun(shortName || name),
-          fullName: capitalizeProperNoun(fullName || name),
+          name: capitalizeProperNoun(effectiveName), // Use shortName for Prisma's 'name' field
+          fullName: capitalizeProperNoun(fullName || effectiveName), // Use fullName for Prisma's 'fullName' field
           isOnline: !!isOnline,
           state: capitalizeProperNoun(state || 'Unknown'),
           city: capitalizeProperNoun(city || 'Unknown'),
@@ -320,5 +321,104 @@ export const rejectCommunityRequest = async (req: AuthRequest, res: Response) =>
       targetUserId: req.body?.userId,
     });
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to reject community request' });
+  }
+};
+
+export const createCommunity = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, fullName, shortName, city, state, isOnline, description, address } = req.body;
+    const effectiveName = shortName || name;
+    if (!effectiveName) return res.status(400).json({ error: 'Short Name / Code is required' });
+
+    const community = await prisma.community.create({
+      data: {
+        name: capitalizeProperNoun(effectiveName), // Use shortName for Prisma's 'name' field
+        fullName: capitalizeProperNoun(fullName || effectiveName), // Use fullName for Prisma's 'fullName' field
+        // shortName: shortName || name, // Removed: 'shortName' is not a field in Prisma Community model
+        city: city ? capitalizeProperNoun(city) : 'Unknown',
+        state: state ? capitalizeProperNoun(state) : 'Unknown',
+        isOnline: !!isOnline,
+        description: description || '',
+        address: address || '',
+      },
+    });
+
+    res.status(201).json({ message: 'Community created successfully', community });
+  } catch (error) {
+    const errorDetails = logger.error('createCommunity', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to create community' });
+  }
+};
+
+export const updateCommunity = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const communityIdNum = Number(id);
+    if (!Number.isInteger(communityIdNum)) return res.status(400).json({ error: 'Invalid ID' });
+
+    const { name, fullName, shortName, city, state, isOnline, description, address } = req.body;
+
+    const updated = await prisma.community.update({
+      where: { id: communityIdNum },
+      data: {
+        ...(shortName && { name: capitalizeProperNoun(shortName) }), // Use shortName for Prisma's 'name' field
+        ...(fullName && { fullName: capitalizeProperNoun(fullName) }),
+        // ...(shortName && { shortName }), // Removed: 'shortName' is not a field in Prisma Community model
+        ...(city && { city: capitalizeProperNoun(city) }),
+        ...(state && { state: capitalizeProperNoun(state) }),
+        ...(isOnline !== undefined && { isOnline: !!isOnline }),
+        ...(description !== undefined && { description }),
+        ...(address !== undefined && { address }),
+      },
+    });
+
+    res.json({ message: 'Community updated successfully', community: updated });
+  } catch (error) {
+    const errorDetails = logger.error('updateCommunity', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      communityId: req.params.id,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update community' });
+  }
+};
+
+export const deleteCommunity = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const communityIdNum = Number(id);
+    if (!Number.isInteger(communityIdNum)) return res.status(400).json({ error: 'Invalid ID' });
+
+    // Check if any users are assigned to this community
+    const userCount = await prisma.user.count({
+      where: {
+        OR: [
+          { communityId1: communityIdNum },
+          { communityId2: communityIdNum }
+        ]
+      }
+    });
+
+    if (userCount > 0) {
+      return res.status(400).json({ 
+        error: `Cannot delete community. It has ${userCount} active members. Move them first.` 
+      });
+    }
+
+    await prisma.community.delete({ where: { id: communityIdNum } });
+    res.json({ message: 'Community deleted successfully' });
+  } catch (error) {
+    const errorDetails = logger.error('deleteCommunity', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      communityId: req.params.id,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to delete community' });
   }
 };

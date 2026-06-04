@@ -164,8 +164,20 @@ class ApiService {
     return this.client.post('/admin/create-and-approve-community', data);
   }
 
-  rejectCommunity(data: { userId: string }) {
+  rejectCommunity(data: { userId: string, statusComment?: string }) {
     return this.client.post('/admin/reject-community', data);
+  }
+
+  adminCreateCommunity(data: any) {
+    return this.client.post('/admin/communities', data);
+  }
+
+  adminUpdateCommunity(id: string, data: any) {
+    return this.client.put(`/admin/communities/${id}`, data);
+  }
+
+  adminDeleteCommunity(id: string) {
+    return this.client.delete(`/admin/communities/${id}`);
   }
 
   finalizeMatch(data: { matchId: string; team1Score: number; team2Score: number }) {

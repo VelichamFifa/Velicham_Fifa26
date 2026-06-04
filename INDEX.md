@@ -1,8 +1,8 @@
-# 📋 NAVIGATION GUIDE - Fifa26Predictor
+# 📋 NAVIGATION GUIDE - WorldCup26Predictor
 
 ## 🎯 START HERE (You are reading this!)
 
-This guide helps you navigate the entire Fifa26Predictor project.
+This guide helps you navigate the entire WorldCup26Predictor project.
 
 ---
 

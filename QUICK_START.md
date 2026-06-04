@@ -1,4 +1,4 @@
-# Fifa26Predictor - Quick Reference Card
+# WorldCup26Predictor - Quick Reference Card
 
 ## 🚀 START HERE
 
@@ -24,7 +24,7 @@ npm run dev        # Runs on http://localhost:3000
 | Aspect | Details |
 |--------|---------|
 | **Type** | Full-Stack Web App |
-| **Purpose** | FIFA Match Predictions |
+| **Purpose** | WORLD CUP Match Predictions |
 | **Users** | Predict scores, compete on leaderboards |
 | **Frontend** | React + TypeScript + Tailwind |
 | **Backend** | Express + TypeScript |
@@ -144,7 +144,7 @@ npm run lint        # Check code quality
 
 ### Backend (.env)
 ```env
-MONGODB_URI=mongodb://localhost:27017/fifa26predictor
+MONGODB_URI=mongodb://localhost:27017/worldcup26predictor
 JWT_SECRET=your_secret_key_here
 REDIS_URL=redis://localhost:6379
 PORT=5000
