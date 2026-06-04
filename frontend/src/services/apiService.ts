@@ -86,6 +86,10 @@ class ApiService {
     return this.client.put(`/auth/profile/community-requests/${id}`, data);
   }
 
+  submitContactMessage(data: { name: string; email: string; subject: string; message: string }) {
+    return this.client.post('/auth/contact', data);
+  }
+
   // Match endpoints
   getAllMatches(status?: string, page?: number, limit?: number) {
     return this.client.get('/matches', {

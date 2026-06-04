@@ -666,3 +666,26 @@ export const updateUserCommunityRequest = async (req: AuthRequest, res: Response
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update community request' });
   }
 };
+
+export const submitContactMessage = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, email, subject, message } = req.body;
+    const userId = req.user?.userId ? Number(req.user.userId) : null;
+
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ error: 'Name, email, subject, and message are required' });
+    }
+
+    const contact = await prisma.contactMessage.create({
+      data: { userId, name, email, subject, message }
+    });
+
+    res.status(201).json({ message: 'Message sent successfully', contact });
+  } catch (error) {
+    const errorDetails = logger.error('submitContactMessage', error, {
+      method: req.method,
+      path: req.path,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to submit message' });
+  }
+};
