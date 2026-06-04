@@ -224,6 +224,7 @@ model CommunityLeader {
   rank           Int
   totalPoints    Int
   communityName  String   @db.VarChar(500)
+  CommunityFullname String? @db.VarChar(500)
   communityId    String   @db.VarChar(128)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -237,6 +238,7 @@ model DailyCommunityLeader {
   rank            Int
   totalPoints     Int
   communityName   String   @db.VarChar(500)
+  CommunityFullname String? @db.VarChar(500)
   communityId     String   @db.VarChar(128)
   date            DateTime
   createdAt       DateTime @default(now())

@@ -93,6 +93,7 @@ export interface CommunityLeaderboardEntry {
   rank: number;
   totalPoints: number;
   communityName: string;
+  CommunityFullname?: string;
   communityId: string;
 }
 

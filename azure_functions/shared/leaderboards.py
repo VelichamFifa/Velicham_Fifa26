@@ -173,12 +173,13 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
     cursor.execute(
         """
         INSERT INTO mv_community_leaders (
-          `rank`, totalPoints, communityName, communityId, createdAt, updatedAt
+          `rank`, totalPoints, communityName, CommunityFullname, communityId, createdAt, updatedAt
         )
         SELECT
           rk,
           totalPoints,
           communityName,
+          CommunityFullname,
           communityId,
           UTC_TIMESTAMP(),
           UTC_TIMESTAMP()
@@ -186,6 +187,7 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
           SELECT
             DENSE_RANK() OVER (ORDER BY totalPoints DESC) AS rk,
             COALESCE(c.name, totals.communityId) AS communityName,
+            COALESCE(c.fullName, c.name, totals.communityId) AS CommunityFullname,
             totals.communityId,
             totals.totalPoints
           FROM (
@@ -207,12 +209,13 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
         cursor.execute(
             """
             INSERT INTO mv_match_community_leaders (
-              `rank`, totalPoints, communityName, communityId, `date`, createdAt, updatedAt
+              `rank`, totalPoints, communityName, CommunityFullname, communityId, `date`, createdAt, updatedAt
             )
             SELECT
               rk,
               communityMatchPoint,
               communityName,
+              CommunityFullname,
               communityId,
               UTC_DATE(),
               UTC_TIMESTAMP(),
@@ -221,6 +224,7 @@ def rebuild_all_leaderboards(cursor, match_id: int | None = None) -> dict[str, A
               SELECT
                 DENSE_RANK() OVER (ORDER BY communityMatchPoint DESC) AS rk,
                 COALESCE(c.name, cr.communityId) AS communityName,
+                COALESCE(c.fullName, c.name, cr.communityId) AS CommunityFullname,
                 cr.communityId,
                 cr.communityMatchPoint
               FROM community_results cr
