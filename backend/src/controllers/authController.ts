@@ -261,20 +261,6 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       communityId1: user.communityId1 ? String(user.communityId1) : undefined,
       communityId2: user.communityId2 ? String(user.communityId2) : undefined,
       phoneNumber: user.phoneNumber,
-      requestedCommunity: user.communityRequests && user.communityRequests.length > 0
-        ? user.communityRequests.map((req: any) => ({
-            id: req.id,
-            name: req.name || '',
-            shortName: req.shortName || '',
-            description: req.description || '',
-            isOnline: !!req.isOnline,
-            city: req.city || '',
-            state: req.state || '',
-            existingCommunityId: req.existingCommunityId || undefined,
-            status: req.status || 'pending',
-            statusComment: req.statusComment || undefined,
-          }))
-        : undefined,
       role: user.role,
       status: user.status,
       isActive: user.isActive,

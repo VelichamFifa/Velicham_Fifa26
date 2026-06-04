@@ -89,6 +89,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               {/* Name + meta */}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-white text-sm truncate">{name}</p>
+                {type === 'community' && ((entry as any).CommunityFullname || (entry as any).communityFullName) && (
+                  <p className="text-xs text-white/50 truncate">
+                    {(entry as any).CommunityFullname || (entry as any).communityFullName}
+                  </p>
+                )}
                 {showCommunityUnderName && (c1 || c2) && (
                   <p className="text-xs text-white/40 truncate">
                     {[c1, c2].filter(Boolean).join(' · ')}
@@ -155,6 +160,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                       ? (entry as LeaderboardEntry).name
                       : (entry as CommunityLeaderboardEntry).communityName}
                   </p>
+                  {type === 'community' && ((entry as any).CommunityFullname || (entry as any).communityFullName) && (
+                    <div className="text-xs text-white/50 mt-1">
+                      {(entry as any).CommunityFullname || (entry as any).communityFullName}
+                    </div>
+                  )}
                   {showCommunityUnderName && type === 'user' && (
                     <div className="text-xs text-white/40 mt-1 space-y-0.5">
                       {(entry as LeaderboardEntry).community1 && (

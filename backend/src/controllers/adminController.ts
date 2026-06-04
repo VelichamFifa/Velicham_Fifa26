@@ -480,3 +480,46 @@ export const deleteUserCommunityRequest = async (req: AuthRequest, res: Response
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to delete community request' });
   }
 };
+
+export const getContactMessages = async (req: AuthRequest, res: Response) => {
+  try {
+    const messages = await prisma.contactMessage.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { firstName: true, lastName: true, email: true } } }
+    });
+    res.json({ messages });
+  } catch (error) {
+    const errorDetails = logger.error('getContactMessages', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch contact messages' });
+  }
+};
+
+export const updateContactMessageStatus = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const messageId = Number(id);
+
+    if (!Number.isInteger(messageId)) {
+      return res.status(400).json({ error: 'Invalid ID' });
+    }
+
+    const updated = await prisma.contactMessage.update({
+      where: { id: messageId },
+      data: { status }
+    });
+
+    res.json({ message: 'Status updated successfully', contactMessage: updated });
+  } catch (error) {
+    const errorDetails = logger.error('updateContactMessageStatus', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update contact message' });
+  }
+};

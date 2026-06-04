@@ -28,4 +28,8 @@ router.post('/finalize-match', adminController.finalizeMatch);
 router.get('/users', adminController.getAllUsers);
 router.delete('/users/:userId', adminController.deleteUser);
 
+// Contact Messages
+router.get('/contact-messages', adminController.getContactMessages);
+router.put('/contact-messages/:id', adminController.updateContactMessageStatus);
+
 export default router;

@@ -245,6 +245,14 @@ class ApiService {
     return this.client.delete(`/admin/users/${userId}`);
   }
 
+  getContactMessages() {
+    return this.client.get('/admin/contact-messages');
+  }
+
+  updateContactMessageStatus(id: number, status: string) {
+    return this.client.put(`/admin/contact-messages/${id}`, { status });
+  }
+
   // Community endpoints
   getCommunities() {
     return this.client.get('/communities');

@@ -81,7 +81,7 @@ const getUtcTimeWithAbbr = () => {
 const AdminDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { isLoggedIn, user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'communities' | 'directory' | 'matches' | 'users'>('communities');
+    const [activeTab, setActiveTab] = useState<'communities' | 'directory' | 'matches' | 'users' | 'messages'>('communities');
     const [matchTab, setMatchTab] = useState<'onboarded' | 'scheduled' | 'completed'>('onboarded');
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
@@ -91,6 +91,7 @@ const AdminDashboard: React.FC = () => {
     const [scheduledMatches, setScheduledMatches] = useState<Match[]>([]);
     const [completedMatches, setCompletedMatches] = useState<Match[]>([]);
     const [users, setUsers] = useState<User[]>([]);
+    const [messages, setMessages] = useState<any[]>([]);
     const [communities, setCommunities] = useState<Community[]>([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -170,11 +171,12 @@ const AdminDashboard: React.FC = () => {
     const fetchInitialData = async () => {
         try {
             setLoading(true);
-            const [commRes, allMatchesRes, teamsRes, communitiesListRes] = await Promise.all([
+            const [commRes, allMatchesRes, teamsRes, communitiesListRes, messagesRes] = await Promise.all([
                 apiService.getCommunityRequests(),
                 apiService.getAllMatches(undefined, 1, 500),
                 apiService.getTeams(),
-                apiService.getCommunities()
+                apiService.getCommunities(),
+                apiService.getContactMessages()
             ]);
             const allMatches = allMatchesRes.data.matches as Match[];
             setCommunityRequests(commRes.data.requests);
@@ -183,6 +185,7 @@ const AdminDashboard: React.FC = () => {
             setCompletedMatches(allMatches.filter(match => match.status === 'completed'));
             setTeams(teamsRes.data.teams);
             setCommunities(communitiesListRes.data);
+            setMessages(messagesRes.data.messages || []);
         } catch (err) {
             console.error('Failed to fetch admin data:', err);
             setError('Failed to load dashboard data');
@@ -530,6 +533,12 @@ const AdminDashboard: React.FC = () => {
                     onClick={() => setActiveTab('users')}
                 >
                     User Management
+                </button>
+                <button
+                    className={`px-6 py-3 font-medium whitespace-nowrap ${activeTab === 'messages' ? 'border-b-2 border-secondary text-secondary' : 'text-gray-500'}`}
+                    onClick={() => setActiveTab('messages')}
+                >
+                    Contact Messages
                 </button>
             </div>
 
@@ -980,6 +989,80 @@ const AdminDashboard: React.FC = () => {
                                                 </td>
                                             </tr>
                                         ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'messages' && (
+                        <div className="p-6">
+                            <h2 className="text-xl font-bold mb-4">Contact Messages</h2>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User Info</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject & Message</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                            <th className="px-4 py-3"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {messages.map(msg => (
+                                            <tr key={msg.id} className={msg.status === 'new' ? 'bg-blue-50/30' : ''}>
+                                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {format(new Date(msg.createdAt), 'MMM dd, HH:mm')}
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="text-sm font-medium text-gray-900">{msg.name}</div>
+                                                    <div className="text-xs text-gray-500">
+                                                      <a href={`mailto:${msg.email}`} className="text-blue-600 hover:underline">{msg.email}</a>
+                                                    </div>
+                                                    {msg.userId && (
+                                                      <div className="text-[10px] text-blue-600 bg-blue-100 inline-block px-2 py-0.5 rounded mt-1">Registered User</div>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="text-sm font-bold text-gray-900">{msg.subject}</div>
+                                                    <div className="text-sm text-gray-700 mt-1 max-w-md whitespace-pre-wrap">{msg.message}</div>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <span className={`text-xs px-2 py-1 rounded font-bold ${
+                                                        msg.status === 'new' ? 'bg-amber-100 text-amber-700' :
+                                                        msg.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
+                                                        'bg-green-100 text-green-700'
+                                                    }`}>
+                                                        {msg.status.toUpperCase()}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-4 text-right whitespace-nowrap">
+                                                    <select
+                                                        value={msg.status}
+                                                        onChange={async (e) => {
+                                                            try {
+                                                                await apiService.updateContactMessageStatus(msg.id, e.target.value);
+                                                                setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, status: e.target.value } : m));
+                                                                setSuccess('Status updated');
+                                                            } catch (err) {
+                                                                setError('Failed to update status');
+                                                            }
+                                                        }}
+                                                        className="text-sm border border-gray-300 rounded-md shadow-sm focus:border-secondary focus:ring-secondary px-3 py-1"
+                                                    >
+                                                        <option value="new">New</option>
+                                                        <option value="in-progress">In Progress</option>
+                                                        <option value="resolved">Resolved</option>
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {messages.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No contact messages found.</td>
+                                            </tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
