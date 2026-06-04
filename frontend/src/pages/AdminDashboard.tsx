@@ -212,20 +212,6 @@ const AdminDashboard: React.FC = () => {
         }
     }, [activeTab]);
 
-    const handleApproveCommunity = async (userId: string, communityId: string) => {
-        try {
-            if (!communityId) {
-                setError('Please select a community to approve');
-                return;
-            }
-            await apiService.approveCommunity({ userId, communityId });
-            setSuccess('Community approved successfully');
-            setCommunityRequests(prev => prev.filter(req => req.userId !== userId));
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to approve community');
-        }
-    };
-
     const handleOpenReview = (req: any) => {
         setReviewingRequest(req);
         setCommunityForm({
@@ -295,7 +281,7 @@ const AdminDashboard: React.FC = () => {
             city: c.city || '',
             state: c.state || '',
             isOnline: (c as any).isOnline || false,
-            description: c.description || ''
+            description: (c as any).description || ''
         });
     };
 
@@ -654,7 +640,7 @@ const AdminDashboard: React.FC = () => {
                                 <div className="mb-4 flex items-center justify-between gap-3">
                                     <h3 className="text-lg font-bold text-gray-800">{editingCommunityId ? 'Edit Community' : 'Add New Community'}</h3>
                                     {editingCommunityId && (
-                                        <button type="button" onClick={() => { setEditingCommunityId(null); setCommunityForm({ name: '', fullName: '', shortName: '', city: '', state: '', isOnline: false, description: '' }); }} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                                        <button type="button" onClick={() => { setEditingCommunityId(null); setCommunityForm({ fullName: '', shortName: '', city: '', state: '', isOnline: false, description: '' }); }} className="text-sm font-medium text-gray-600 hover:text-gray-900">
                                             Cancel Edit
                                         </button>
                                     )}
@@ -744,8 +730,8 @@ const AdminDashboard: React.FC = () => {
                                                 <td className="px-4 py-4">
                                                     <div className="text-xs font-mono font-bold text-sky-700 bg-sky-50 px-2 py-1 rounded inline-block uppercase">{c.name}</div>
                                                 </td>
-                                                <td className="px-4 py-4 text-xs text-gray-600">{c.isOnline ? '-' : `${c.city}, ${c.state}`}</td>
-                                                <td className="px-4 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${c.isOnline ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{c.isOnline ? 'ONLINE' : 'LOCAL'}</span></td>
+                                                <td className="px-4 py-4 text-xs text-gray-600">{(c as any).isOnline ? '-' : `${c.city}, ${c.state}`}</td>
+                                                <td className="px-4 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${(c as any).isOnline ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{(c as any).isOnline ? 'ONLINE' : 'LOCAL'}</span></td>
                                                 <td className="px-4 py-4 text-right">
                                                     <button onClick={() => handleEditCommunity(c)} className="text-sky-600 hover:text-sky-800 text-xs font-bold mr-3">Edit</button>
                                                     <button onClick={() => handleDeleteCommunity(c.communityId)} className="text-red-600 hover:text-red-800 text-xs font-bold">Delete</button>
