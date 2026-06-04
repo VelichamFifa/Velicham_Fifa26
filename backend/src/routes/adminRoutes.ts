@@ -10,6 +10,7 @@ router.use(adminMiddleware);
 
 // Community Request routes
 router.get('/community-requests', adminController.getCommunityRequests);
+router.delete('/community-requests/:id', adminController.deleteUserCommunityRequest);
 
 router.post('/approve-community', adminController.approveCommunityRequest);
 router.post('/create-and-approve-community', adminController.createAndApproveCommunityRequest);

@@ -172,19 +172,23 @@ class ApiService {
     return this.client.get('/admin/community-requests');
   }
 
+  adminDeleteUserCommunityRequest(id: number) {
+    return this.client.delete(`/admin/community-requests/${id}`);
+  }
+
   adminAddUserCommunityRequest(data: any) {
     return this.client.post('/admin/community-requests', data);
   }
 
-  approveCommunity(data: { userId: string, communityId: string }) {
+  approveCommunity(data: { userId: string, communityId: string, requestId?: number }) {
     return this.client.post('/admin/approve-community', data);
   }
 
-  createAndApproveCommunity(data: { userId: string; name: string; fullName?: string; state?: string; city?: string; address?: string; isOnline?: boolean; shortName?: string; description?: string }) {
+  createAndApproveCommunity(data: { userId: string; requestId?: number; name: string; fullName?: string; state?: string; city?: string; address?: string; isOnline?: boolean; shortName?: string; description?: string }) {
     return this.client.post('/admin/create-and-approve-community', data);
   }
 
-  rejectCommunity(data: { userId: string, statusComment?: string }) {
+  rejectCommunity(data: { userId: string, requestId?: number, statusComment?: string }) {
     return this.client.post('/admin/reject-community', data);
   }
 

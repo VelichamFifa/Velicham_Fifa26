@@ -96,6 +96,7 @@ const AdminDashboard: React.FC = () => {
     const [success, setSuccess] = useState('');
     const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
     const [editingCommunityId, setEditingCommunityId] = useState<string | null>(null);
+    const [reviewingRequest, setReviewingRequest] = useState<any>(null);
     const [communitySearchTerm, setCommunitySearchTerm] = useState('');
     const [communityForm, setCommunityForm] = useState<Partial<Community>>({ // Use Partial<Community> for type safety
         fullName: '',
@@ -222,16 +223,43 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    const handleQuickCreateCommunity = async (userId: string, name: string, city: string, state: string, description: string, shortName: string, isOnline: boolean) => {
+    const handleOpenReview = (req: any) => {
+        setReviewingRequest(req);
+        setCommunityForm({
+            fullName: req.requestedCommunity?.name || '',
+            shortName: req.requestedCommunity?.shortName || '',
+            city: req.requestedCommunity?.city || '',
+            state: req.requestedCommunity?.state || '',
+            isOnline: req.requestedCommunity?.isOnline || false,
+            description: req.requestedCommunity?.description || ''
+        });
+    };
+
+    const handleApproveReviewedRequest = async () => {
         try {
-            await apiService.createAndApproveCommunity({ userId, name, city, state, description, shortName, isOnline });
-            setSuccess(`Community "${name}" created and approved successfully`);
-            setCommunityRequests(prev => prev.filter(req => req.userId !== userId));
+            setActionLoading(true);
+            await apiService.createAndApproveCommunity({ 
+                userId: reviewingRequest.userId, 
+                requestId: reviewingRequest.requestedCommunity?.id,
+                name: communityForm.fullName || '', 
+                city: communityForm.city, 
+                state: communityForm.state, 
+                description: communityForm.description, 
+                shortName: communityForm.shortName || '', 
+                isOnline: communityForm.isOnline 
+            });
+            setSuccess(`Community "${communityForm.fullName}" created and approved successfully`);
+            setCommunityRequests(prev => prev.filter(req => req.userId !== reviewingRequest.userId));
+            setReviewingRequest(null);
+            setCommunityForm({ fullName: '', shortName: '', city: '', state: '', isOnline: false, description: '' });
+            
             // Refresh communities list so it shows up in future selects
             const res = await apiService.getCommunities();
             setCommunities(res.data);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to quick create community');
+            setError(err.response?.data?.error || 'Failed to approve community');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -282,14 +310,14 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    const handleRejectCommunity = async (userId: string) => {
-        if (!window.confirm('Are you sure you want to reject and clear this community request?')) return;
+    const handleDeleteCommunityRequest = async (id: number) => {
+        if (!window.confirm('Are you sure you want to delete this community request?')) return;
         try {
-            await apiService.rejectCommunity({ userId });
-            setSuccess('Community request rejected and cleared');
-            setCommunityRequests(prev => prev.filter(req => req.userId !== userId));
+            await apiService.adminDeleteUserCommunityRequest(id);
+            setSuccess('Community request deleted successfully');
+            fetchInitialData();
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to reject community');
+            setError(err.response?.data?.error || 'Failed to delete community request');
         }
     };
 
@@ -528,7 +556,7 @@ const AdminDashboard: React.FC = () => {
                                         </thead>
                                         <tbody className="divide-y divide-gray-200">
                                             {communityRequests.map(req => (
-                                                <tr key={req.userId}>
+                                            <tr key={req.requestedCommunity?.id || req.userId}>
                                                     <td className="px-4 py-4">
                                                         <div className="text-sm font-medium">{req.firstName} {req.lastName}</div>
                                                         <div className="text-xs text-gray-500">{req.email}</div>
@@ -586,34 +614,20 @@ const AdminDashboard: React.FC = () => {
                                                     </td>
                                                     <td className="px-4 py-4 text-right">
                                                         <div className="flex flex-col gap-2 scale-90 origin-right">
-                                                            {req.requestedCommunity?.existingCommunityId && (
-                                                                <button
-                                                                    onClick={() => handleApproveCommunity(req.userId, req.requestedCommunity.existingCommunityId)}
-                                                                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 whitespace-nowrap"
-                                                                >
-                                                                    Approve Matched
-                                                                </button>
-                                                            )}
+                                                           
                                                             <button
-                                                                onClick={() => handleQuickCreateCommunity(
-                                                                    req.userId,
-                                                                    req.requestedCommunity?.name || '',
-                                                                    req.requestedCommunity?.city || '',
-                                                                    req.requestedCommunity?.state || '',
-                                                                    req.requestedCommunity?.description || '',
-                                                                    req.requestedCommunity?.shortName || '',
-                                                                    !!req.requestedCommunity?.isOnline
-                                                                )}
+                                                                onClick={() => handleOpenReview(req)}
                                                                 className="bg-secondary text-white px-3 py-1 rounded text-sm hover:bg-blue-700 whitespace-nowrap"
                                                             >
-                                                                Quick Create & Approve
+                                                                Review & Approve
                                                             </button>
                                                             <button
-                                                                onClick={() => handleRejectCommunity(req.userId)}
-                                                                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 whitespace-nowrap"
+                                                                onClick={() => req.requestedCommunity?.id && handleDeleteCommunityRequest(req.requestedCommunity.id)}
+                                                                className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 whitespace-nowrap"
                                                             >
-                                                                Reject Request
+                                                                Delete Request
                                                             </button>
+                                                         
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -971,6 +985,90 @@ const AdminDashboard: React.FC = () => {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+            
+            {reviewingRequest && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white border border-gray-200 w-full max-w-lg rounded-xl p-6 shadow-2xl">
+                        <h2 className="text-xl font-bold mb-6 text-gray-800">Review & Approve Request</h2>
+                        <div className="space-y-4 text-gray-700">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Short Name / Code</label>
+                                    <input 
+                                        className="w-full border rounded px-3 py-2 text-sm"
+                                        value={communityForm.shortName}
+                                        onChange={(e) => setCommunityForm({...communityForm, shortName: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Online Only</label>
+                                    <div 
+                                        onClick={() => setCommunityForm({...communityForm, isOnline: !communityForm.isOnline})}
+                                        className={`w-full cursor-pointer border rounded px-3 py-2 text-sm font-bold text-center transition ${communityForm.isOnline ? 'bg-sky-100 border-sky-500 text-sky-700' : 'bg-gray-50 border-gray-300 text-gray-500'}`}
+                                    >
+                                        {communityForm.isOnline ? 'YES' : 'NO'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Full Display Name</label>
+                                <input 
+                                    className="w-full border rounded px-3 py-2 text-sm"
+                                    value={communityForm.fullName}
+                                    onChange={(e) => setCommunityForm({...communityForm, fullName: e.target.value})}
+                                />
+                            </div>
+
+                            {!communityForm.isOnline && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">City</label>
+                                        <input 
+                                            className="w-full border rounded px-3 py-2 text-sm"
+                                            value={communityForm.city}
+                                            onChange={(e) => setCommunityForm({...communityForm, city: e.target.value})}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">State</label>
+                                        <input 
+                                            className="w-full border rounded px-3 py-2 text-sm"
+                                            value={communityForm.state}
+                                            onChange={(e) => setCommunityForm({...communityForm, state: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Description</label>
+                                <textarea 
+                                    className="w-full border rounded px-3 py-2 text-sm h-20"
+                                    value={communityForm.description}
+                                    onChange={(e) => setCommunityForm({...communityForm, description: e.target.value})}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between items-center mt-8">
+                            <button 
+                                onClick={() => { setReviewingRequest(null); setCommunityForm({ fullName: '', shortName: '', city: '', state: '', isOnline: false, description: '' }); }}
+                                className="text-sm font-bold text-gray-500 hover:text-gray-800"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                disabled={actionLoading}
+                                onClick={handleApproveReviewedRequest}
+                                className="bg-secondary hover:bg-blue-700 px-6 py-2 rounded-lg font-bold text-sm text-white"
+                            >
+                                {actionLoading ? 'Approving...' : 'Approve & Create'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
