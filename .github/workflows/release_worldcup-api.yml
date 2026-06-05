@@ -7,13 +7,24 @@ on:
   push:
     branches:
       - release
+    paths:
+      - backend/**
+      - .github/workflows/dev_fifa-aps.yml
   workflow_dispatch:
+
+concurrency:
+  group: fifa-aps-dev-deploy
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read #This is required for actions/checkout
+
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +44,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: backend
+          include-hidden-files: true
 
   deploy:
     runs-on: ubuntu-latest
