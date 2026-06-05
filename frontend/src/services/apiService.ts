@@ -86,6 +86,10 @@ class ApiService {
     return this.client.put(`/auth/profile/community-requests/${id}`, data);
   }
 
+  submitContactMessage(data: { name: string; email: string; subject: string; message: string }) {
+    return this.client.post('/auth/contact', data);
+  }
+
   // Match endpoints
   getAllMatches(status?: string, page?: number, limit?: number) {
     return this.client.get('/matches', {
@@ -172,19 +176,23 @@ class ApiService {
     return this.client.get('/admin/community-requests');
   }
 
+  adminDeleteUserCommunityRequest(id: number) {
+    return this.client.delete(`/admin/community-requests/${id}`);
+  }
+
   adminAddUserCommunityRequest(data: any) {
     return this.client.post('/admin/community-requests', data);
   }
 
-  approveCommunity(data: { userId: string, communityId: string }) {
+  approveCommunity(data: { userId: string, communityId: string, requestId?: number }) {
     return this.client.post('/admin/approve-community', data);
   }
 
-  createAndApproveCommunity(data: { userId: string; name: string; fullName?: string; state?: string; city?: string; address?: string; isOnline?: boolean; shortName?: string; description?: string }) {
+  createAndApproveCommunity(data: { userId: string; requestId?: number; name: string; fullName?: string; state?: string; city?: string; address?: string; isOnline?: boolean; shortName?: string; description?: string }) {
     return this.client.post('/admin/create-and-approve-community', data);
   }
 
-  rejectCommunity(data: { userId: string, statusComment?: string }) {
+  rejectCommunity(data: { userId: string, requestId?: number, statusComment?: string }) {
     return this.client.post('/admin/reject-community', data);
   }
 
@@ -235,6 +243,14 @@ class ApiService {
 
   deleteUser(userId: string) {
     return this.client.delete(`/admin/users/${userId}`);
+  }
+
+  getContactMessages() {
+    return this.client.get('/admin/contact-messages');
+  }
+
+  updateContactMessageStatus(id: number, status: string) {
+    return this.client.put(`/admin/contact-messages/${id}`, { status });
   }
 
   // Community endpoints

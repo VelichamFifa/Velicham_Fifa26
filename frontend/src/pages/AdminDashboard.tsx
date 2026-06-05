@@ -81,7 +81,7 @@ const getUtcTimeWithAbbr = () => {
 const AdminDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { isLoggedIn, user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'communities' | 'directory' | 'matches' | 'users'>('communities');
+    const [activeTab, setActiveTab] = useState<'communities' | 'directory' | 'matches' | 'users' | 'messages'>('communities');
     const [matchTab, setMatchTab] = useState<'onboarded' | 'scheduled' | 'completed'>('onboarded');
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
@@ -91,13 +91,15 @@ const AdminDashboard: React.FC = () => {
     const [scheduledMatches, setScheduledMatches] = useState<Match[]>([]);
     const [completedMatches, setCompletedMatches] = useState<Match[]>([]);
     const [users, setUsers] = useState<User[]>([]);
+    const [messages, setMessages] = useState<any[]>([]);
     const [communities, setCommunities] = useState<Community[]>([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
     const [editingCommunityId, setEditingCommunityId] = useState<string | null>(null);
+    const [reviewingRequest, setReviewingRequest] = useState<any>(null);
     const [communitySearchTerm, setCommunitySearchTerm] = useState('');
-    const [communityForm, setCommunityForm] = useState<Partial<Community>>({ // Use Partial<Community> for type safety
+    const [communityForm, setCommunityForm] = useState({
         fullName: '',
         shortName: '',
         city: '',
@@ -169,11 +171,12 @@ const AdminDashboard: React.FC = () => {
     const fetchInitialData = async () => {
         try {
             setLoading(true);
-            const [commRes, allMatchesRes, teamsRes, communitiesListRes] = await Promise.all([
+            const [commRes, allMatchesRes, teamsRes, communitiesListRes, messagesRes] = await Promise.all([
                 apiService.getCommunityRequests(),
                 apiService.getAllMatches(undefined, 1, 500),
                 apiService.getTeams(),
-                apiService.getCommunities()
+                apiService.getCommunities(),
+                apiService.getContactMessages()
             ]);
             const allMatches = allMatchesRes.data.matches as Match[];
             setCommunityRequests(commRes.data.requests);
@@ -182,6 +185,7 @@ const AdminDashboard: React.FC = () => {
             setCompletedMatches(allMatches.filter(match => match.status === 'completed'));
             setTeams(teamsRes.data.teams);
             setCommunities(communitiesListRes.data);
+            setMessages(messagesRes.data.messages || []);
         } catch (err) {
             console.error('Failed to fetch admin data:', err);
             setError('Failed to load dashboard data');
@@ -208,30 +212,43 @@ const AdminDashboard: React.FC = () => {
         }
     }, [activeTab]);
 
-    const handleApproveCommunity = async (userId: string, communityId: string) => {
-        try {
-            if (!communityId) {
-                setError('Please select a community to approve');
-                return;
-            }
-            await apiService.approveCommunity({ userId, communityId });
-            setSuccess('Community approved successfully');
-            setCommunityRequests(prev => prev.filter(req => req.userId !== userId));
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to approve community');
-        }
+    const handleOpenReview = (req: any) => {
+        setReviewingRequest(req);
+        setCommunityForm({
+            fullName: req.requestedCommunity?.name || '',
+            shortName: req.requestedCommunity?.shortName || '',
+            city: req.requestedCommunity?.city || '',
+            state: req.requestedCommunity?.state || '',
+            isOnline: req.requestedCommunity?.isOnline || false,
+            description: req.requestedCommunity?.description || ''
+        });
     };
 
-    const handleQuickCreateCommunity = async (userId: string, name: string, city: string, state: string, description: string, shortName: string, isOnline: boolean) => {
+    const handleApproveReviewedRequest = async () => {
         try {
-            await apiService.createAndApproveCommunity({ userId, name, city, state, description, shortName, isOnline });
-            setSuccess(`Community "${name}" created and approved successfully`);
-            setCommunityRequests(prev => prev.filter(req => req.userId !== userId));
+            setActionLoading(true);
+            await apiService.createAndApproveCommunity({ 
+                userId: reviewingRequest.userId, 
+                requestId: reviewingRequest.requestedCommunity?.id,
+                name: communityForm.fullName || '', 
+                city: communityForm.city, 
+                state: communityForm.state, 
+                description: communityForm.description, 
+                shortName: communityForm.shortName || '', 
+                isOnline: communityForm.isOnline 
+            });
+            setSuccess(`Community "${communityForm.fullName}" created and approved successfully`);
+            setCommunityRequests(prev => prev.filter(req => req.userId !== reviewingRequest.userId));
+            setReviewingRequest(null);
+            setCommunityForm({ fullName: '', shortName: '', city: '', state: '', isOnline: false, description: '' });
+            
             // Refresh communities list so it shows up in future selects
             const res = await apiService.getCommunities();
             setCommunities(res.data);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to quick create community');
+            setError(err.response?.data?.error || 'Failed to approve community');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -263,8 +280,8 @@ const AdminDashboard: React.FC = () => {
             shortName: c.name || '',
             city: c.city || '',
             state: c.state || '',
-            isOnline: c.isOnline || false,
-            description: c.description || ''
+            isOnline: (c as any).isOnline || false,
+            description: (c as any).description || ''
         });
     };
 
@@ -282,14 +299,14 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    const handleRejectCommunity = async (userId: string) => {
-        if (!window.confirm('Are you sure you want to reject and clear this community request?')) return;
+    const handleDeleteCommunityRequest = async (id: number) => {
+        if (!window.confirm('Are you sure you want to delete this community request?')) return;
         try {
-            await apiService.rejectCommunity({ userId });
-            setSuccess('Community request rejected and cleared');
-            setCommunityRequests(prev => prev.filter(req => req.userId !== userId));
+            await apiService.adminDeleteUserCommunityRequest(id);
+            setSuccess('Community request deleted successfully');
+            fetchInitialData();
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to reject community');
+            setError(err.response?.data?.error || 'Failed to delete community request');
         }
     };
 
@@ -503,6 +520,12 @@ const AdminDashboard: React.FC = () => {
                 >
                     User Management
                 </button>
+                <button
+                    className={`px-6 py-3 font-medium whitespace-nowrap ${activeTab === 'messages' ? 'border-b-2 border-secondary text-secondary' : 'text-gray-500'}`}
+                    onClick={() => setActiveTab('messages')}
+                >
+                    Contact Messages
+                </button>
             </div>
 
             {loading ? (
@@ -528,7 +551,7 @@ const AdminDashboard: React.FC = () => {
                                         </thead>
                                         <tbody className="divide-y divide-gray-200">
                                             {communityRequests.map(req => (
-                                                <tr key={req.userId}>
+                                            <tr key={req.requestedCommunity?.id || req.userId}>
                                                     <td className="px-4 py-4">
                                                         <div className="text-sm font-medium">{req.firstName} {req.lastName}</div>
                                                         <div className="text-xs text-gray-500">{req.email}</div>
@@ -586,34 +609,20 @@ const AdminDashboard: React.FC = () => {
                                                     </td>
                                                     <td className="px-4 py-4 text-right">
                                                         <div className="flex flex-col gap-2 scale-90 origin-right">
-                                                            {req.requestedCommunity?.existingCommunityId && (
-                                                                <button
-                                                                    onClick={() => handleApproveCommunity(req.userId, req.requestedCommunity.existingCommunityId)}
-                                                                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 whitespace-nowrap"
-                                                                >
-                                                                    Approve Matched
-                                                                </button>
-                                                            )}
+                                                           
                                                             <button
-                                                                onClick={() => handleQuickCreateCommunity(
-                                                                    req.userId,
-                                                                    req.requestedCommunity?.name || '',
-                                                                    req.requestedCommunity?.city || '',
-                                                                    req.requestedCommunity?.state || '',
-                                                                    req.requestedCommunity?.description || '',
-                                                                    req.requestedCommunity?.shortName || '',
-                                                                    !!req.requestedCommunity?.isOnline
-                                                                )}
+                                                                onClick={() => handleOpenReview(req)}
                                                                 className="bg-secondary text-white px-3 py-1 rounded text-sm hover:bg-blue-700 whitespace-nowrap"
                                                             >
-                                                                Quick Create & Approve
+                                                                Review & Approve
                                                             </button>
                                                             <button
-                                                                onClick={() => handleRejectCommunity(req.userId)}
-                                                                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 whitespace-nowrap"
+                                                                onClick={() => req.requestedCommunity?.id && handleDeleteCommunityRequest(req.requestedCommunity.id)}
+                                                                className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 whitespace-nowrap"
                                                             >
-                                                                Reject Request
+                                                                Delete Request
                                                             </button>
+                                                         
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -631,7 +640,7 @@ const AdminDashboard: React.FC = () => {
                                 <div className="mb-4 flex items-center justify-between gap-3">
                                     <h3 className="text-lg font-bold text-gray-800">{editingCommunityId ? 'Edit Community' : 'Add New Community'}</h3>
                                     {editingCommunityId && (
-                                        <button type="button" onClick={() => { setEditingCommunityId(null); setCommunityForm({ name: '', fullName: '', shortName: '', city: '', state: '', isOnline: false, description: '' }); }} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                                        <button type="button" onClick={() => { setEditingCommunityId(null); setCommunityForm({ fullName: '', shortName: '', city: '', state: '', isOnline: false, description: '' }); }} className="text-sm font-medium text-gray-600 hover:text-gray-900">
                                             Cancel Edit
                                         </button>
                                     )}
@@ -721,8 +730,8 @@ const AdminDashboard: React.FC = () => {
                                                 <td className="px-4 py-4">
                                                     <div className="text-xs font-mono font-bold text-sky-700 bg-sky-50 px-2 py-1 rounded inline-block uppercase">{c.name}</div>
                                                 </td>
-                                                <td className="px-4 py-4 text-xs text-gray-600">{c.isOnline ? '-' : `${c.city}, ${c.state}`}</td>
-                                                <td className="px-4 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${c.isOnline ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{c.isOnline ? 'ONLINE' : 'LOCAL'}</span></td>
+                                                <td className="px-4 py-4 text-xs text-gray-600">{(c as any).isOnline ? '-' : `${c.city}, ${c.state}`}</td>
+                                                <td className="px-4 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${(c as any).isOnline ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{(c as any).isOnline ? 'ONLINE' : 'LOCAL'}</span></td>
                                                 <td className="px-4 py-4 text-right">
                                                     <button onClick={() => handleEditCommunity(c)} className="text-sky-600 hover:text-sky-800 text-xs font-bold mr-3">Edit</button>
                                                     <button onClick={() => handleDeleteCommunity(c.communityId)} className="text-red-600 hover:text-red-800 text-xs font-bold">Delete</button>
@@ -971,6 +980,164 @@ const AdminDashboard: React.FC = () => {
                             </div>
                         </div>
                     )}
+
+                    {activeTab === 'messages' && (
+                        <div className="p-6">
+                            <h2 className="text-xl font-bold mb-4">Contact Messages</h2>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User Info</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject & Message</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                            <th className="px-4 py-3"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {messages.map(msg => (
+                                            <tr key={msg.id} className={msg.status === 'new' ? 'bg-blue-50/30' : ''}>
+                                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {format(new Date(msg.createdAt), 'MMM dd, HH:mm')}
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="text-sm font-medium text-gray-900">{msg.name}</div>
+                                                    <div className="text-xs text-gray-500">
+                                                      <a href={`mailto:${msg.email}`} className="text-blue-600 hover:underline">{msg.email}</a>
+                                                    </div>
+                                                    {msg.userId && (
+                                                      <div className="text-[10px] text-blue-600 bg-blue-100 inline-block px-2 py-0.5 rounded mt-1">Registered User</div>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="text-sm font-bold text-gray-900">{msg.subject}</div>
+                                                    <div className="text-sm text-gray-700 mt-1 max-w-md whitespace-pre-wrap">{msg.message}</div>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <span className={`text-xs px-2 py-1 rounded font-bold ${
+                                                        msg.status === 'new' ? 'bg-amber-100 text-amber-700' :
+                                                        msg.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
+                                                        'bg-green-100 text-green-700'
+                                                    }`}>
+                                                        {msg.status.toUpperCase()}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-4 text-right whitespace-nowrap">
+                                                    <select
+                                                        value={msg.status}
+                                                        onChange={async (e) => {
+                                                            try {
+                                                                await apiService.updateContactMessageStatus(msg.id, e.target.value);
+                                                                setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, status: e.target.value } : m));
+                                                                setSuccess('Status updated');
+                                                            } catch (err) {
+                                                                setError('Failed to update status');
+                                                            }
+                                                        }}
+                                                        className="text-sm border border-gray-300 rounded-md shadow-sm focus:border-secondary focus:ring-secondary px-3 py-1"
+                                                    >
+                                                        <option value="new">New</option>
+                                                        <option value="in-progress">In Progress</option>
+                                                        <option value="resolved">Resolved</option>
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {messages.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No contact messages found.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+            
+            {reviewingRequest && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white border border-gray-200 w-full max-w-lg rounded-xl p-6 shadow-2xl">
+                        <h2 className="text-xl font-bold mb-6 text-gray-800">Review & Approve Request</h2>
+                        <div className="space-y-4 text-gray-700">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Short Name / Code</label>
+                                    <input 
+                                        className="w-full border rounded px-3 py-2 text-sm"
+                                        value={communityForm.shortName}
+                                        onChange={(e) => setCommunityForm({...communityForm, shortName: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Online Only</label>
+                                    <div 
+                                        onClick={() => setCommunityForm({...communityForm, isOnline: !communityForm.isOnline})}
+                                        className={`w-full cursor-pointer border rounded px-3 py-2 text-sm font-bold text-center transition ${communityForm.isOnline ? 'bg-sky-100 border-sky-500 text-sky-700' : 'bg-gray-50 border-gray-300 text-gray-500'}`}
+                                    >
+                                        {communityForm.isOnline ? 'YES' : 'NO'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Full Display Name</label>
+                                <input 
+                                    className="w-full border rounded px-3 py-2 text-sm"
+                                    value={communityForm.fullName}
+                                    onChange={(e) => setCommunityForm({...communityForm, fullName: e.target.value})}
+                                />
+                            </div>
+
+                            {!communityForm.isOnline && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">City</label>
+                                        <input 
+                                            className="w-full border rounded px-3 py-2 text-sm"
+                                            value={communityForm.city}
+                                            onChange={(e) => setCommunityForm({...communityForm, city: e.target.value})}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">State</label>
+                                        <input 
+                                            className="w-full border rounded px-3 py-2 text-sm"
+                                            value={communityForm.state}
+                                            onChange={(e) => setCommunityForm({...communityForm, state: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Description</label>
+                                <textarea 
+                                    className="w-full border rounded px-3 py-2 text-sm h-20"
+                                    value={communityForm.description}
+                                    onChange={(e) => setCommunityForm({...communityForm, description: e.target.value})}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between items-center mt-8">
+                            <button 
+                                onClick={() => { setReviewingRequest(null); setCommunityForm({ fullName: '', shortName: '', city: '', state: '', isOnline: false, description: '' }); }}
+                                className="text-sm font-bold text-gray-500 hover:text-gray-800"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                disabled={actionLoading}
+                                onClick={handleApproveReviewedRequest}
+                                className="bg-secondary hover:bg-blue-700 px-6 py-2 rounded-lg font-bold text-sm text-white"
+                            >
+                                {actionLoading ? 'Approving...' : 'Approve & Create'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

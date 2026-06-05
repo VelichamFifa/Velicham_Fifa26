@@ -15,7 +15,6 @@ const CommunityManagement: React.FC = () => {
     const [showForm, setShowForm] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
     const [reviewingRequest, setReviewingRequest] = useState<any>(null);
-    const [rejectionReason, setRejectionReason] = useState('');
 
     const [formData, setFormData] = useState({
         fullName: '',
@@ -96,12 +95,28 @@ const CommunityManagement: React.FC = () => {
         }
     };
 
+    const handleDeleteUserRequest = async (id: number) => {
+        if (!window.confirm('Are you sure you want to delete this community request?')) return;
+        try {
+            setActionLoading(true);
+            await apiService.adminDeleteUserCommunityRequest(id);
+            setSuccess('Request deleted successfully');
+            fetchData();
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Delete failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const handleApproveRequest = async () => {
         try {
             setActionLoading(true);
             // We use the createAndApprove logic to allow admin to edit data before creation
             await apiService.createAndApproveCommunity({
                 userId: reviewingRequest.userId,
+                requestId: reviewingRequest.requestedCommunity?.id,
+                name: formData.fullName || '',
                 ...formData
             });
             setSuccess('Request approved and community created');
@@ -109,24 +124,6 @@ const CommunityManagement: React.FC = () => {
             fetchData();
         } catch (err: any) {
             setError('Approval failed');
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleRejectRequest = async () => {
-        try {
-            setActionLoading(true);
-            await apiService.rejectCommunity({
-                userId: reviewingRequest.userId,
-                statusComment: rejectionReason
-            });
-            setSuccess('Request rejected');
-            setReviewingRequest(null);
-            setRejectionReason('');
-            fetchData();
-        } catch (err: any) {
-            setError('Rejection failed');
         } finally {
             setActionLoading(false);
         }
@@ -243,7 +240,7 @@ const CommunityManagement: React.FC = () => {
                             r.requestedCommunity?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             r.requestedCommunity?.state?.toLowerCase().includes(searchTerm.toLowerCase())
                         ).map((r) => (
-                        <div key={r.userId} className="bg-amber-400/5 border border-amber-400/20 rounded-xl p-4 flex justify-between items-center">
+                        <div key={r.requestedCommunity?.id || r.userId} className="bg-amber-400/5 border border-amber-400/20 rounded-xl p-4 flex justify-between items-center">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
                                 <div>
                                     <p className="text-[10px] font-black text-amber-400 uppercase mb-1">Request from {r.firstName} {r.lastName}</p>
@@ -258,12 +255,20 @@ const CommunityManagement: React.FC = () => {
                                     {r.requestedCommunity?.isOnline && <span className="text-[10px] text-emerald-400 font-bold">● ONLINE</span>}
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => openReview(r)}
-                                className="bg-amber-400 text-black px-4 py-2 rounded-lg font-bold text-xs"
-                            >
-                                Review Request
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => openReview(r)}
+                                    className="bg-amber-400 text-black px-4 py-2 rounded-lg font-bold text-xs hover:bg-amber-300 transition"
+                                >
+                                    Review Request
+                                </button>
+                                <button 
+                                    onClick={() => handleDeleteUserRequest(r.requestedCommunity.id)}
+                                    className="bg-rose-500 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-rose-400 transition"
+                                >
+                                    Delete
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -338,17 +343,6 @@ const CommunityManagement: React.FC = () => {
                                 />
                             </div>
 
-                            {reviewingRequest && (
-                                <div className="pt-4 border-t border-white/10">
-                                    <label className="block text-[10px] font-bold text-rose-400 uppercase mb-1">Rejection Reason (Only if rejecting)</label>
-                                    <input 
-                                        placeholder="Reason for rejection..."
-                                        className="w-full bg-rose-500/5 border border-rose-500/20 rounded-lg px-3 py-2 text-sm text-rose-200"
-                                        value={rejectionReason}
-                                        onChange={(e) => setRejectionReason(e.target.value)}
-                                    />
-                                </div>
-                            )}
                         </div>
 
                         <div className="flex justify-between items-center mt-8">
@@ -361,14 +355,6 @@ const CommunityManagement: React.FC = () => {
                             
                             <div className="flex gap-3">
                                 {reviewingRequest ? (
-                                    <>
-                                        <button 
-                                            disabled={actionLoading}
-                                            onClick={handleRejectRequest}
-                                            className="bg-rose-500 hover:bg-rose-400 px-6 py-2 rounded-lg font-bold text-sm"
-                                        >
-                                            Reject
-                                        </button>
                                         <button 
                                             disabled={actionLoading}
                                             onClick={handleApproveRequest}
@@ -376,7 +362,6 @@ const CommunityManagement: React.FC = () => {
                                         >
                                             {actionLoading ? 'Approving...' : 'Approve & Create'}
                                         </button>
-                                    </>
                                 ) : (
                                     <button 
                                         disabled={actionLoading}

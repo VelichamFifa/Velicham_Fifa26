@@ -10,7 +10,7 @@ interface SearchableDropdownProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  label?: string;
+  label?: React.ReactNode;
   disabled?: boolean;
   required?: boolean;
   theme?: 'light' | 'dark';

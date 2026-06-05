@@ -10,6 +10,7 @@ router.use(adminMiddleware);
 
 // Community Request routes
 router.get('/community-requests', adminController.getCommunityRequests);
+router.delete('/community-requests/:id', adminController.deleteUserCommunityRequest);
 
 router.post('/approve-community', adminController.approveCommunityRequest);
 router.post('/create-and-approve-community', adminController.createAndApproveCommunityRequest);
@@ -26,5 +27,9 @@ router.post('/finalize-match', adminController.finalizeMatch);
 // User management
 router.get('/users', adminController.getAllUsers);
 router.delete('/users/:userId', adminController.deleteUser);
+
+// Contact Messages
+router.get('/contact-messages', adminController.getContactMessages);
+router.put('/contact-messages/:id', adminController.updateContactMessageStatus);
 
 export default router;

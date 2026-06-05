@@ -88,6 +88,10 @@ const Header: React.FC = () => {
               Leaderboard
             </Link>
 
+          <Link to="/contact" className="hover:text-secondary transition">
+            Contact
+          </Link>
+
             {isLoggedIn ? (
               <>
                 <Link to="/dashboard" className="hover:text-secondary transition">
@@ -172,6 +176,14 @@ const Header: React.FC = () => {
             >
               Leaderboard
             </Link>
+
+          <Link
+            to="/contact"
+            className="block py-2 hover:text-secondary transition"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Contact
+          </Link>
 
             {isLoggedIn ? (
               <>

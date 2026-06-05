@@ -18,46 +18,19 @@ const communities: CommunitySeed[] = [
     isOnline: true,
     state: 'Global',
     city: 'Online',
-    address: 'Discord',
-    description: 'Community for fans of Asian national teams.',
+    address: '',
+    description: 'Velicham North America.',
   },
   {
     name: 'NANMA',
-    fullName: 'NANMMA',
+    fullName: 'North American Network of Malayalee Muslim Association',
     isOnline: true,
     state: 'Global',
     city: 'Online',
-    address: 'Telegram',
-    description: 'Community for fans of African national teams.',
+    address: '',
+    description: 'North American Network of Malayalee Muslim Association.',
   },
-  {
-    name: 'MMNJ',
-    fullName: 'MMNJ',
-    isOnline: true,
-    state: 'Global',
-    city: 'Online',
-    address: 'WhatsApp',
-    description: 'Community for fans of North/Central America and Caribbean teams.',
-  },
-  {
-    name: 'MMAC',
-    fullName: 'MMAC',
-    isOnline: true,
-    state: 'Global',
-    city: 'Online',
-    address: 'Discord',
-    description: 'Community for fans of South American national teams.',
-  },
-  {
-    name: 'GSO',
-    fullName: 'GSO',
-    isOnline: true,
-    state: 'Global',
-    city: 'Online',
-    address: 'Telegram',
-    description: 'Community for fans of European national teams.',
-  },
-  
+   
 ];
 
 async function main() {

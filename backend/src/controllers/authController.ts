@@ -261,20 +261,6 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       communityId1: user.communityId1 ? String(user.communityId1) : undefined,
       communityId2: user.communityId2 ? String(user.communityId2) : undefined,
       phoneNumber: user.phoneNumber,
-      requestedCommunity: user.communityRequests && user.communityRequests.length > 0
-        ? user.communityRequests.map((req: any) => ({
-            id: req.id,
-            name: req.name || '',
-            shortName: req.shortName || '',
-            description: req.description || '',
-            isOnline: !!req.isOnline,
-            city: req.city || '',
-            state: req.state || '',
-            existingCommunityId: req.existingCommunityId || undefined,
-            status: req.status || 'pending',
-            statusComment: req.statusComment || undefined,
-          }))
-        : undefined,
       role: user.role,
       status: user.status,
       isActive: user.isActive,
@@ -664,5 +650,28 @@ export const updateUserCommunityRequest = async (req: AuthRequest, res: Response
       userId: req.user?.userId,
     });
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update community request' });
+  }
+};
+
+export const submitContactMessage = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, email, subject, message } = req.body;
+    const userId = req.user?.userId ? Number(req.user.userId) : null;
+
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ error: 'Name, email, subject, and message are required' });
+    }
+
+    const contact = await prisma.contactMessage.create({
+      data: { userId, name, email, subject, message }
+    });
+
+    res.status(201).json({ message: 'Message sent successfully', contact });
+  } catch (error) {
+    const errorDetails = logger.error('submitContactMessage', error, {
+      method: req.method,
+      path: req.path,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to submit message' });
   }
 };

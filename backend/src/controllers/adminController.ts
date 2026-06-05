@@ -30,6 +30,7 @@ export const getCommunityRequests = async (req: AuthRequest, res: Response) => {
         communityId1: u.communityId1,
         communityId2: u.communityId2,
         requestedCommunity: {
+          id: cr.id,
           name: cr.name,
           shortName: cr.shortName,
           description: cr.description,
@@ -186,7 +187,7 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
 export const approveCommunityRequest = async (req: AuthRequest, res: Response) => {
   try {
-    const { userId, communityId } = req.body;
+    const { userId, communityId, requestId } = req.body;
     const userIdNum = Number(userId);
     if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
       return res.status(404).json({ error: 'User not found' });
@@ -216,7 +217,12 @@ export const approveCommunityRequest = async (req: AuthRequest, res: Response) =
       assigned = true;
     }
 
-    if (user.communityRequests && user.communityRequests.length > 0) {
+    if (requestId) {
+      await prisma.userCommunityRequest.update({
+        where: { id: Number(requestId) },
+        data: { status: 'Approved' }
+      });
+    } else if (user.communityRequests && user.communityRequests.length > 0) {
       await prisma.userCommunityRequest.updateMany({
         where: { userId: userIdNum, status: 'pending' },
         data: { status: 'Approved' }
@@ -241,7 +247,7 @@ export const approveCommunityRequest = async (req: AuthRequest, res: Response) =
 
 export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Response) => {
   try {
-    const { userId, name, fullName, state, city, address, isOnline, shortName, description } = req.body;
+    const { userId, requestId, name, fullName, state, city, address, isOnline, shortName, description } = req.body;
     const effectiveName = shortName || name;
     if (!effectiveName) return res.status(400).json({ error: 'Community Short Name/Code is required' });
 
@@ -283,7 +289,12 @@ export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Re
       await prisma.user.update({ where: { id: userIdNum }, data: { communityId2: communityId } });
     }
 
-    if (user.communityRequests && user.communityRequests.length > 0) {
+    if (requestId) {
+      await prisma.userCommunityRequest.update({
+        where: { id: Number(requestId) },
+        data: { status: 'Approved' }
+      });
+    } else if (user.communityRequests && user.communityRequests.length > 0) {
       await prisma.userCommunityRequest.updateMany({
         where: { userId: userIdNum, status: 'pending' },
         data: { status: 'Approved' }
@@ -304,7 +315,7 @@ export const createAndApproveCommunityRequest = async (req: AuthRequest, res: Re
 
 export const rejectCommunityRequest = async (req: AuthRequest, res: Response) => {
   try {
-    const { userId, statusComment } = req.body;
+    const { userId, requestId, statusComment } = req.body;
     const userIdNum = Number(userId);
     if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
       return res.status(404).json({ error: 'User not found' });
@@ -312,7 +323,15 @@ export const rejectCommunityRequest = async (req: AuthRequest, res: Response) =>
     const user = await prisma.user.findUnique({ where: { id: userIdNum }, include: { communityRequests: true } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (user.communityRequests && user.communityRequests.length > 0) {
+    if (requestId) {
+      await prisma.userCommunityRequest.update({
+        where: { id: Number(requestId) },
+        data: {
+          status: 'Admin Rejected',
+          statusComment: statusComment || 'Request does not meet requirements.',
+        },
+      });
+    } else if (user.communityRequests && user.communityRequests.length > 0) {
       await prisma.userCommunityRequest.updateMany({
         where: { userId: userIdNum, status: 'pending' },
         data: {
@@ -429,5 +448,78 @@ export const deleteCommunity = async (req: AuthRequest, res: Response) => {
       communityId: req.params.id,
     });
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to delete community' });
+  }
+};
+
+export const deleteUserCommunityRequest = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const requestId = Number(id);
+
+    if (!Number.isInteger(requestId) || requestId <= 0) {
+      return res.status(400).json({ error: 'Invalid request ID' });
+    }
+
+    const request = await prisma.userCommunityRequest.findUnique({
+      where: { id: requestId }
+    });
+
+    if (!request) return res.status(404).json({ error: 'Request not found' });
+
+    await prisma.userCommunityRequest.delete({
+      where: { id: requestId }
+    });
+
+    res.json({ message: 'Community request deleted successfully' });
+  } catch (error) {
+    const errorDetails = logger.error('deleteUserCommunityRequest', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to delete community request' });
+  }
+};
+
+export const getContactMessages = async (req: AuthRequest, res: Response) => {
+  try {
+    const messages = await prisma.contactMessage.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { firstName: true, lastName: true, email: true } } }
+    });
+    res.json({ messages });
+  } catch (error) {
+    const errorDetails = logger.error('getContactMessages', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch contact messages' });
+  }
+};
+
+export const updateContactMessageStatus = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const messageId = Number(id);
+
+    if (!Number.isInteger(messageId)) {
+      return res.status(400).json({ error: 'Invalid ID' });
+    }
+
+    const updated = await prisma.contactMessage.update({
+      where: { id: messageId },
+      data: { status }
+    });
+
+    res.json({ message: 'Status updated successfully', contactMessage: updated });
+  } catch (error) {
+    const errorDetails = logger.error('updateContactMessageStatus', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update contact message' });
   }
 };

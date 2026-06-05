@@ -6,7 +6,7 @@ export const schemas = {
     firstName: Joi.string().min(2).required(),
     lastName: Joi.string().min(2).required(),
     password: Joi.string().min(6).optional(),
-    phoneNumber: Joi.string().trim().required(),
+    phoneNumber: Joi.string().trim().allow('', null).optional(),
     city: Joi.string().allow('', null),
     state: Joi.string().allow('', null),
     country: Joi.string().allow('', null),
@@ -25,7 +25,7 @@ export const schemas = {
   updateProfile: Joi.object({
     firstName: Joi.string().min(2).optional(),
     lastName: Joi.string().min(2).optional(),
-    phoneNumber: Joi.string().trim().optional(),
+    phoneNumber: Joi.string().trim().allow('', null).optional(),
     city: Joi.string().allow('', null).optional(),
     state: Joi.string().allow('', null).optional(),
     country: Joi.string().allow('', null).optional(),

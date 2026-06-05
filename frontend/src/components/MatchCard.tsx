@@ -4,7 +4,19 @@ import { format } from 'date-fns';
 
 function formatLocalKickoff(date: Date) {
   try {
-    return date.toLocaleString(undefined, {
+    // Get browser languages to respect user preference where possible
+    const userLocales = typeof navigator !== 'undefined' && navigator.languages 
+      ? Array.from(navigator.languages) 
+      : [];
+      
+    // Look for a North American locale (US or Canada) in the user's preferences
+    // This ensures proper timezone abbreviations like PDT/EDT instead of GMT offsets
+    const naLocale = userLocales.find(lang => lang.includes('-US') || lang.includes('-CA'));
+    
+    // Default to 'en-US' if no NA locale is found in their browser settings
+    const localeToUse = naLocale || 'en-US';
+
+    return date.toLocaleString(localeToUse, {
       month: 'short',
       day: '2-digit',
       year: 'numeric',

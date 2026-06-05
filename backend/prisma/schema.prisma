@@ -34,6 +34,7 @@ model User {
   results          Result[]
   finalUserResult  FinalUserResult?
   communityRequests UserCommunityRequest[]
+  contactMessages  ContactMessage[]
 
   @@map("users")
 }
@@ -247,4 +248,19 @@ model DailyCommunityLeader {
   @@index([date])
   @@index([communityId, date])
   @@map("mv_match_community_leaders")
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name      String   @db.VarChar(200)
+  email     String   @db.VarChar(255)
+  subject   String   @db.VarChar(200)
+  message   String   @db.LongText
+  status    String   @default("new") @db.VarChar(20)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contact_messages")
 }

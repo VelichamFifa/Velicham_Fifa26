@@ -9,7 +9,7 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const googleClientId =
     import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-    '256211048883-phsgjqmft45dkbtdp43s202j6ep7tm25.apps.googleusercontent.com';
+    '130266253118-tqf64k2futoaoj843pcvu87sudjv9idg.apps.googleusercontent.com';
 
   const [error, setError] = useState('');
 

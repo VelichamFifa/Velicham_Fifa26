@@ -528,7 +528,7 @@ const Profile: React.FC = () => {
                                                     }}
                                                     className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-4 py-1.5 text-xs font-bold text-sky-100 transition hover:bg-sky-400/20 hover:border-sky-300/45 flex items-center gap-1"
                                                 >
-                                                    + Add New
+                                                    + Request New Community Onboarding
                                                 </button>
                                             )}
                                         </div>
