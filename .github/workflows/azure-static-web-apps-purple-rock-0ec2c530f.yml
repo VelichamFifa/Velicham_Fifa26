@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - release
-      paths:
+    paths:
       - frontend/**
       - .github/workflows/azure-static-web-apps-purple-rock-0ec2c530f.yml
   pull_request:
