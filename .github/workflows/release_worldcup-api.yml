@@ -9,7 +9,7 @@ on:
       - release
     paths:
       - backend/**
-      - .github/workflows/dev_fifa-aps.yml
+      - .github/workflows/release_worldcup-api.yml
   workflow_dispatch:
 
 concurrency:
