@@ -170,7 +170,7 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
         )
         log_step(logger, "match_publishing", function="finalize_match", matchId=match_id)
 
-        # ── Steps 2 & 3: Score predictions and write results ───────────────  Results
+        # ── Steps 2 & 3: Score predictions and write results ───────────────  Results 
         community_name_cache: dict[int, str | None] = {}
 
         def get_cached_community_name(community_id: int | None) -> str | None:
