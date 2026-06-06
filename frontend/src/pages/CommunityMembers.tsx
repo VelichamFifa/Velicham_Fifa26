@@ -15,6 +15,7 @@ const CommunityMembers: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
   const [searchParams] = useSearchParams();
   const communityName = searchParams.get('name') ?? 'Community';
+  const communityPts = searchParams.get('pts');
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -33,7 +34,19 @@ const CommunityMembers: React.FC = () => {
       setLoading(true);
       setError(null);
       const res = await apiService.getCommunityRanking(communityId!, false);
-      setRanking(res.data.ranking);
+      
+      // Recalculate rank within the community based on total points
+      const sortedData = [...res.data.ranking].sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0));
+      let currentRank = 0;
+      let previousPoints: number | null = null;
+      const communityRanking = sortedData.map(item => {
+        if (item.totalPoints !== previousPoints) {
+          currentRank++;
+          previousPoints = item.totalPoints;
+        }
+        return { ...item, rank: currentRank };
+      });
+      setRanking(communityRanking);
     } catch (err) {
       console.error('Failed to load ranking:', err);
       setError('Failed to load ranking details');
@@ -62,10 +75,16 @@ const CommunityMembers: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div>
+          <div className="flex-grow">
             <h1 className="text-white font-bold text-lg leading-tight">{communityName}</h1>
             <p className="text-blue-100 text-xs mt-0.5">Community Members</p>
           </div>
+          {communityPts && (
+            <div className="flex flex-col items-end">
+              <span className="text-xl sm:text-2xl font-black text-amber-400 leading-none">{communityPts}</span>
+              <span className="text-[10px] font-bold text-amber-400/80 uppercase tracking-widest mt-0.5">Total Pts</span>
+            </div>
+          )}
         </div>
       </div>
 

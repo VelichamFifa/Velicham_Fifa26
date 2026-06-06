@@ -123,6 +123,7 @@ const LeaderboardPage: React.FC = () => {
                 type="community"
                 title="Last Match Community Leaders"
                 subtitle={lastMatchTag ?? undefined}
+                disableNavigation={true}
               />
             </>
           )}

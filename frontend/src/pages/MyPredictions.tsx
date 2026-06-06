@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { Prediction, Match } from '../types';
 import PredictionForm from '../components/PredictionForm';
@@ -29,6 +30,7 @@ const MyPredictions: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
     const [editingPrediction, setEditingPrediction] = useState<Prediction | null>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchPredictions(1);
@@ -56,13 +58,24 @@ const MyPredictions: React.FC = () => {
         <div className="min-h-screen w-full">
             {/* Header Section */}
             <div className="relative overflow-hidden bg-white/5 border-b border-white/10">
-                <div className="relative max-w-7xl mx-auto px-4 py-5 sm:py-6">
-                    <h1 className="text-base sm:text-lg font-semibold text-white/80">
-                        📋 My Previous Predictions
-                    </h1>
-                    <p className="text-white/50 text-xs sm:text-sm mt-0.5">
-                        Track your predictions and rankings
-                    </p>
+                <div className="relative max-w-7xl mx-auto px-4 py-5 sm:py-6 flex items-center gap-3 sm:gap-4">
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition flex-shrink-0"
+                        aria-label="Back to Dashboard"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <div>
+                        <h1 className="text-base sm:text-lg font-semibold text-white/80 leading-tight">
+                            📋 My Previous Predictions
+                        </h1>
+                        <p className="text-white/50 text-xs sm:text-sm mt-0.5">
+                            Track your predictions and rankings
+                        </p>
+                    </div>
                 </div>
             </div>
 

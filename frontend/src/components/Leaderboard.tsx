@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LeaderboardEntry, CommunityLeaderboardEntry } from '../types';
 
 interface LeaderboardProps {
@@ -8,6 +9,7 @@ interface LeaderboardProps {
   subtitle?: string;
   showCommunityUnderName?: boolean;
   hideState?: boolean;
+  disableNavigation?: boolean;
 }
 
 const medalIcon = (rank: number) => {
@@ -24,7 +26,16 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   subtitle,
   showCommunityUnderName = false,
   hideState = false,
+  disableNavigation = false,
 }) => {
+  const navigate = useNavigate();
+
+  const handleRowClick = (entry: any) => {
+    if (type === 'community' && entry.communityId && !disableNavigation) {
+      navigate(`/community/${entry.communityId}/members?name=${encodeURIComponent(entry.communityName || '')}&pts=${entry.totalPoints || 0}`);
+    }
+  };
+
   return (
     <div className="rounded-xl shadow overflow-hidden border border-white/10">
       {/* Header */}
@@ -75,7 +86,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           return (
             <li
               key={key}
-              className={`flex items-center gap-3 px-4 py-3 ${isTop3 ? 'bg-white/5' : ''}`}
+              className={`flex items-center gap-3 px-4 py-3 ${isTop3 ? 'bg-white/5' : ''} ${type === 'community' && !disableNavigation ? 'cursor-pointer hover:bg-white/10' : ''}`}
+              onClick={() => type === 'community' && handleRowClick(entry)}
             >
               {/* Rank */}
               <div className="flex-shrink-0 w-10 text-center">
@@ -146,7 +158,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           `row-${entry.rank}`
                       )
                 }
-              className={`border-b border-white/[0.06] hover:bg-white/5 transition ${entry.rank <= 3 ? 'bg-white/5' : ''}`}
+              className={`border-b border-white/[0.06] transition ${entry.rank <= 3 ? 'bg-white/5' : ''} ${type === 'community' && !disableNavigation ? 'cursor-pointer hover:bg-white/10' : 'hover:bg-white/5'}`}
+              onClick={() => type === 'community' && handleRowClick(entry)}
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">

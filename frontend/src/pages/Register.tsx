@@ -162,7 +162,7 @@ const Register: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-white/80 mb-1">
-                City
+                City <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
@@ -170,11 +170,12 @@ const Register: React.FC = () => {
                 value={formData.city}
                 onChange={handleChange}
                 className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-white/80 mb-1">
-                State
+                State <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
@@ -182,19 +183,21 @@ const Register: React.FC = () => {
                 value={formData.state}
                 onChange={handleChange}
                 className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white placeholder:text-white/30 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
               />
             </div>
           </div>
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-white/80 mb-1">
-              Country
+              Country <span className="text-red-400">*</span>
             </label>
             <select
               name="country"
               value={formData.country}
               onChange={handleChange}
               className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+              required
             >
               <option value="" className="bg-gray-900 text-white">Select Country</option>
               <option value="USA" className="bg-gray-900 text-white">USA</option>
