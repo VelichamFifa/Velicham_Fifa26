@@ -254,9 +254,8 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
 export const getCommunityUserRanking = async (req: AuthRequest, res: Response) => {
   try {
     const { communityId } = req.params;
-    const { isDaily, limit = '50' } = req.query;
+    const { isDaily } = req.query;
 
-    const limitNum = parseInt(limit as string, 10);
     const dailyBool = isDaily === 'true';
 
     const communityIdNum = Number(communityId);
@@ -267,51 +266,32 @@ export const getCommunityUserRanking = async (req: AuthRequest, res: Response) =
     const users = await prisma.user.findMany({
       where: { OR: [{ communityId1: communityIdNum }, { communityId2: communityIdNum }] },
       select: { id: true, email: true, firstName: true, lastName: true, state: true, communityId1: true, communityId2: true },
-      take: limitNum,
     });
 
-    const userIds = users.map((u) => String(u.id));
-    if (userIds.length === 0) {
+    const userIdsNum = users.map((u) => u.id);
+    if (userIdsNum.length === 0) {
       return res.json({ ranking: [], communityId, isDaily: dailyBool });
     }
 
-    if (dailyBool) {
-      const latestDaily = await prisma.dailyLeader.findFirst({
-        where: { userId: { in: userIds } },
-        orderBy: [{ date: 'desc' }, { id: 'desc' }],
-        select: { date: true },
-      });
-
-      if (!latestDaily) {
-        return res.json({ ranking: [], communityId, isDaily: true });
-      }
-
-      const { startOfDay, endOfDay } = getDayRange(latestDaily.date);
-      const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
-      const leadersRaw = await prisma.dailyLeader.findMany({
-        where: {
-          userId: { in: userIds },
-          date: {
-            gte: startOfDay,
-            lt: endOfDay,
-          },
-        },
-        orderBy: [{ rank: 'asc' }, { totalPoints: 'desc' }, { id: 'desc' }],
-        take,
-      });
-      const ranking = distinctByKey(leadersRaw, (r) => r.userId, limitNum);
-      return res.json({ ranking, communityId, isDaily: true });
-    }
-
-    const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
-    const leadersRaw = await prisma.topLeader.findMany({
-      where: { userId: { in: userIds } },
-      orderBy: [{ rank: 'asc' }, { totalPoints: 'desc' }, { id: 'desc' }],
-      take,
+    const finalResults = await prisma.finalUserResult.findMany({
+      where: { userId: { in: userIdsNum } },
     });
-    const ranking = distinctByKey(leadersRaw, (r) => r.userId, limitNum);
 
-    return res.json({ ranking, communityId, isDaily: false });
+    const userMap = new Map(users.map(u => [u.id, u]));
+    let ranking = finalResults.map(fr => {
+      const u = userMap.get(fr.userId);
+      return {
+        userId: String(fr.userId),
+        name: u ? `${u.firstName} ${u.lastName}`.trim() : '',
+        totalPoints: fr.finalPoint || 0,
+        rank: fr.finalRank || 0,
+        state: u?.state || ''
+      };
+    });
+
+    ranking.sort((a, b) => b.totalPoints - a.totalPoints);
+
+    return res.json({ ranking, communityId, isDaily: dailyBool });
   } catch (error) {
     const errorDetails = logger.error('getCommunityUserRanking', error, {
       method: req.method,
