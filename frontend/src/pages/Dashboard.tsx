@@ -55,8 +55,18 @@ const Dashboard: React.FC = () => {
       return;
     }
 
+    // Redirect to profile setup if any of the mandatory location fields are missing
+    if (user && (
+      !user.city || user.city === 'Not Set' ||
+      !user.state || user.state === 'Not Set' ||
+      !user.country || user.country === 'Not Set'
+    )) {
+      navigate('/profile-setup');
+      return;
+    }
+
     loadDashboardData();
-  }, [isLoggedIn, navigate]);
+  }, [isLoggedIn, user, navigate]);
 
   const loadDashboardData = async () => {
     try {
@@ -77,9 +87,9 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDrillDown = (communityId: string, _isDaily: boolean, communityName: string) => {
+  const handleDrillDown = (communityId: string, _isDaily: boolean, communityName: string, points?: number) => {
     const name = communityName.replace(/ — Community Members$/, '');
-    navigate(`/community/${communityId}/members?name=${encodeURIComponent(name)}`);
+    navigate(`/community/${communityId}/members?name=${encodeURIComponent(name)}&pts=${points ?? 0}`);
   };
 
   const handlePredictionSubmit = (matchId: string, team1Score: number, team2Score: number) => {
@@ -259,27 +269,30 @@ const Dashboard: React.FC = () => {
                   'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,1) 28px, rgba(255,255,255,1) 29px)',
               }}
             />
-            <div className="flex items-center gap-3">
-              {/* History Document+Clock SVG icon */}
-              <svg className="w-6 h-6 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="8" cy="8" r="6" />
-                <path d="M8 5v3h2" />
-                <path d="M13.5 3H18a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-5.5" />
-                <path d="M15 10h2" />
-                <path d="M9 15h8" />
-                <path d="M9 19h8" />
-              </svg>
-               <Link
+            <Link
               to="/my-predictions"
-                className="text-sm text-sky-200 font-bold flex items-center gap-1 group hover:text-white transition-colors"
+              className="flex items-center justify-between w-full group"
             >
-              Previous Prediction
-               <svg className="w-3 h-3 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/90 border border-white/20 group-hover:bg-white/20 transition-colors">
+                  {/* History Document+Clock SVG icon */}
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="8" cy="8" r="6" />
+                    <path d="M8 5v3h2" />
+                    <path d="M13.5 3H18a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-5.5" />
+                    <path d="M15 10h2" />
+                    <path d="M9 15h8" />
+                    <path d="M9 19h8" />
+                  </svg>
+                </span>
+                <h3 className="text-sm font-extrabold tracking-wide text-white group-hover:text-sky-200 transition-colors">
+                  Previous Predictions
+                </h3>
+              </div>
+              <svg className="w-4 h-4 text-white/50 transform group-hover:translate-x-1 group-hover:text-sky-200 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
-              
-            </div>
 
           
           </div>
@@ -317,7 +330,7 @@ const Dashboard: React.FC = () => {
                     <p className="mb-2 text-xs font-extrabold tracking-wide text-white/90">{comm.name}</p>
                     <div className="grid grid-cols-1 gap-2">
                       <button
-                        onClick={() => handleDrillDown(comm.communityId, false, `${comm.name} — Community Members`)}
+                        onClick={() => handleDrillDown(comm.communityId, false, `${comm.name} — Community Members`, comm.overall?.totalPoints)}
                         className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-left hover:bg-sky-400/20 hover:border-sky-300/45 transition-all"
                       >
                         <span className="block text-[10px] font-bold tracking-wider text-white/55">Current Rank</span>

@@ -3,8 +3,8 @@ import Joi from 'joi';
 export const schemas = {
   register: Joi.object({
     email: Joi.string().email().required(),
-    firstName: Joi.string().min(2).required(),
-    lastName: Joi.string().min(2).required(),
+    firstName: Joi.string().allow('', null).optional(),
+    lastName: Joi.string().allow('', null).optional(),
     password: Joi.string().min(6).optional(),
     phoneNumber: Joi.string().trim().allow('', null).optional(),
     city: Joi.string().allow('', null),
@@ -23,8 +23,8 @@ export const schemas = {
   }),
 
   updateProfile: Joi.object({
-    firstName: Joi.string().min(2).optional(),
-    lastName: Joi.string().min(2).optional(),
+    firstName: Joi.string().allow('', null).optional(),
+    lastName: Joi.string().allow('', null).optional(),
     phoneNumber: Joi.string().trim().allow('', null).optional(),
     city: Joi.string().allow('', null).optional(),
     state: Joi.string().allow('', null).optional(),

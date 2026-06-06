@@ -41,7 +41,19 @@ const RankingDrillDown: React.FC<RankingDrillDownProps> = ({
       setLoading(true);
       setError(null);
       const res = await apiService.getCommunityRanking(communityId, isDaily);
-      setRanking(res.data.ranking);
+      
+      // Recalculate rank within the community based on total points
+      const sortedData = [...res.data.ranking].sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0));
+      let currentRank = 0;
+      let previousPoints: number | null = null;
+      const communityRanking = sortedData.map(item => {
+        if (item.totalPoints !== previousPoints) {
+          currentRank++;
+          previousPoints = item.totalPoints;
+        }
+        return { ...item, rank: currentRank };
+      });
+      setRanking(communityRanking);
     } catch (err) {
       console.error('Failed to load ranking:', err);
       setError('Failed to load ranking details');

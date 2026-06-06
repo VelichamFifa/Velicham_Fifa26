@@ -33,8 +33,7 @@ const ProfileSetup: React.FC = () => {
 
     useEffect(() => {
         // If user is already set up perfectly, redirect to dashboard
-        // If user is already set up perfectly, redirect to dashboard
-        if (user && user.city !== 'Not Set' && user.country !== 'Not Set') {
+        if (user && user.city && user.city !== 'Not Set' && user.state && user.state !== 'Not Set' && user.country && user.country !== 'Not Set') {
             navigate('/dashboard');
         }
 

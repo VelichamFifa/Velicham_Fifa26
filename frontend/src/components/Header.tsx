@@ -123,7 +123,7 @@ const Header: React.FC = () => {
                   {userMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5 animate-in fade-in slide-in-from-top-2">
                       <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="text-sm text-white/80 truncate">{user?.email}</p>
+                        <p className="text-sm text-gray-800 truncate">{user?.email}</p>
                       </div>
                       <Link
                         to="/profile"

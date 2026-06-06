@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import SearchableDropdown from '../components/SearchableDropdown';
 // import { useAuth } from '../hooks/useAuth';
 
 const Profile: React.FC = () => {
     // const { user: authUser, login } = useAuth();
+    const navigate = useNavigate();
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [editLoading, setEditLoading] = useState(false);
@@ -15,6 +17,7 @@ const Profile: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [showRequestForm, setShowRequestForm] = useState(false);
     const [userRequests, setUserRequests] = useState<any[]>([]);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -89,33 +92,35 @@ const Profile: React.FC = () => {
         setRequestData(prev => ({ ...prev, [name]: val }));
     };
 
-    const handleSaveProfile = async () => {
+    const handleSaveProfileClick = () => {
+        if (formData.communityId1 && formData.communityId2 && formData.communityId1 === formData.communityId2) {
+            setError('Community 1 and Community 2 must be different.');
+            return;
+        }
+
+        const comm1Changed = formData.communityId1 !== (profile.communityId1 || '');
+        const comm2Changed = formData.communityId2 !== (profile.communityId2 || '');
+
+        if (comm1Changed || comm2Changed) {
+            setShowConfirmModal(true);
+        } else {
+            executeSaveProfile();
+        }
+    };
+
+    const executeSaveProfile = async () => {
         try {
-            if (formData.communityId1 && formData.communityId2 && formData.communityId1 === formData.communityId2) {
-                setError('Community 1 and Community 2 must be different.');
-                return;
-            }
-
-            // Check if communities have changed
-            const comm1Changed = formData.communityId1 !== (profile.communityId1 || '');
-            const comm2Changed = formData.communityId2 !== (profile.communityId2 || '');
-
-            if (comm1Changed || comm2Changed) {
-                const confirmed = window.confirm(
-                    'Warning: Changing your community will NOT transfer your previous game points to the new community. Are you sure you want to proceed?'
-                );
-                if (!confirmed) return;
-            }
-
             setEditLoading(true);
             setError('');
             setSuccess('');
             await apiService.updateProfile(formData);
             setSuccess('Profile updated successfully');
             setIsEditing(false);
+            setShowConfirmModal(false);
             fetchData();
         } catch (err: any) {
             setError(err.response?.data?.error || 'Failed to update profile');
+            setShowConfirmModal(false);
         } finally {
             setEditLoading(false);
         }
@@ -209,9 +214,20 @@ const Profile: React.FC = () => {
                                 'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,1) 28px, rgba(255,255,255,1) 29px)',
                         }}
                     />
-                    <div>
-                        <h1 className="text-3xl font-bold">{profile.firstName} {profile.lastName}</h1>
-                        <p className="text-blue-200 mt-1 uppercase tracking-widest text-xs font-bold">{profile.role}</p>
+                    <div className="relative z-10 flex items-center gap-4">
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition flex-shrink-0"
+                            aria-label="Back to Dashboard"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <div>
+                            <h1 className="text-3xl font-bold">{profile.firstName} {profile.lastName}</h1>
+                            <p className="text-blue-200 mt-1 uppercase tracking-widest text-xs font-bold">{profile.role}</p>
+                        </div>
                     </div>
                 </div>
 
@@ -370,7 +386,7 @@ const Profile: React.FC = () => {
                                         Cancel
                                     </button>
                                     <button
-                                        onClick={handleSaveProfile}
+                                        onClick={handleSaveProfileClick}
                                         disabled={editLoading}
                                         className="bg-secondary text-white px-10 py-3 rounded-xl font-bold hover:bg-blue-600 transition shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
                                     >
@@ -648,6 +664,52 @@ const Profile: React.FC = () => {
 
             </div>
             </div>
+
+            {/* Custom Confirmation Modal */}
+            {showConfirmModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-slate-900 border border-amber-500/30 w-full max-w-md rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-400"></div>
+                        
+                        <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0 bg-amber-500/20 p-3 rounded-full">
+                                <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white mb-2">Change Community?</h3>
+                                <p className="text-sm text-gray-300 leading-relaxed">
+                                    Warning: Changing your community will <strong className="text-amber-400">NOT</strong> transfer your previous game points to the new community. 
+                                </p>
+                                <p className="text-sm text-gray-300 mt-2">
+                                    Are you sure you want to proceed?
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div className="mt-8 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowConfirmModal(false)}
+                                disabled={editLoading}
+                                className="px-5 py-2.5 rounded-xl font-bold text-gray-400 hover:text-white hover:bg-white/10 transition disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={executeSaveProfile}
+                                disabled={editLoading}
+                                className="bg-amber-500 hover:bg-amber-400 text-black px-6 py-2.5 rounded-xl font-bold transition shadow-lg shadow-amber-500/20 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {editLoading ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                                ) : null}
+                                {editLoading ? 'Saving...' : 'Yes, Proceed'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
