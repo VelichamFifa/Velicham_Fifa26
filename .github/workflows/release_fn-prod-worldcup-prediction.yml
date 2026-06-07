@@ -8,6 +8,9 @@ on:
   push:
     branches:
       - release
+    paths:
+      - azure_functions/**
+      - .github/workflows/release_fn-prod-worldcup-prediction.yml
   workflow_dispatch:
 
 env:
