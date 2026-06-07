@@ -3,7 +3,7 @@ name: Fifa Static Web Apps CI/CD
 on:
   push:
     branches:
-      - dev
+      - qa
     paths:
       - frontend/**
       - .github/workflows/azure-static-web-apps-polite-bay-08b90600f.yml
