@@ -42,7 +42,7 @@ def main(msg: func.QueueMessage) -> None:
     )
 
     # The Azure Storage SDK sends messages base64-encoded; the Functions
-    # runtime decodes them automatically, but handle both just in case.
+    # runtime decodes them automatically, but handle both just in case. Test
     try:
         body_str = raw.decode("utf-8")
     except Exception:
