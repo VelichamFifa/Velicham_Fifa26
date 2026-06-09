@@ -62,5 +62,9 @@ export async function enqueueFinalizeMatch(
   // Azure Storage Queue requires base64-encoded message content
   const payload = JSON.stringify({ matchId, team1Score, team2Score });
   const encoded = Buffer.from(payload).toString('base64');
+  //log the encoded queue message for debugging (will be decoded by the function)
+  console.log(`Enqueuing message to ${QUEUE_NAME}: ${encoded}`);
+  // Send the message to the queue
+  
   await queueClient.sendMessage(encoded);
 }

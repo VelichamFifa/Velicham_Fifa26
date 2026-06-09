@@ -210,7 +210,7 @@ const CommunityManagement: React.FC = () => {
                                         <p className="text-[10px] text-white/40 font-mono">ID: {c.communityId}</p>
                                     </div>
                                     <div className="flex items-center">
-                                        <span className="bg-sky-500/10 text-sky-400 border border-sky-500/20 px-3 py-1 rounded text-xs font-mono font-bold uppercase">{c.name}</span>
+                                        <span className="bg-sky-500/10 text-sky-400 border border-sky-500/20 px-3 py-1 rounded text-xs font-mono font-bold">{c.name}</span>
                                     </div>
                                     <div className="flex flex-col justify-center">
                                         <p className="text-xs text-white/60 uppercase tracking-wider">{c.city}, {c.state}</p>
@@ -248,7 +248,7 @@ const CommunityManagement: React.FC = () => {
                                     <p className="text-xs text-white/60 italic line-clamp-1">"{r.requestedCommunity?.description}"</p>
                                 </div>
                                 <div className="flex items-center">
-                                    <span className="bg-white/10 text-white/80 border border-white/20 px-3 py-1 rounded text-xs font-mono font-bold uppercase">{r.requestedCommunity?.shortName}</span>
+                                    <span className="bg-white/10 text-white/80 border border-white/20 px-3 py-1 rounded text-xs font-mono font-bold">{r.requestedCommunity?.shortName}</span>
                                 </div>
                                 <div className="flex flex-col justify-center">
                                     <p className="text-xs text-white/60 uppercase tracking-wider">{r.requestedCommunity?.city}, {r.requestedCommunity?.state}</p>
