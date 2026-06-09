@@ -7,7 +7,7 @@ name: Build and deploy Python project to Azure Function App - fn-fifa-prediction
 on:
   push:
     branches:
-      - dev
+      - qa
     paths:
       - azure_functions/**
       - .github/workflows/dev_fn-fifa-prediction.yml
