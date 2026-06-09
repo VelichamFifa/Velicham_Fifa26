@@ -7,12 +7,15 @@ name: Build and deploy Python project to Azure Function App - test-worldcup-prod
 on:
   push:
     branches:
-      - dev
+      - release1
+    paths:
+      - azure_functions/**
+      - .github/workflows/dev_test-worldcup-prod.yml
   workflow_dispatch:
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
-  PYTHON_VERSION: '3.13' # set this to the python version to use (supports 3.6, 3.7, 3.8)
+  PYTHON_VERSION: '3.12' # Azure Functions supports 3.10, 3.11, and 3.12
 
 jobs:
   build:
@@ -29,16 +32,15 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Create and start virtual environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-
       - name: Install dependencies
         working-directory: azure_functions
         run: |
+          python -m venv worker_venv
+          source worker_venv/bin/activate
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --target=".python_packages/lib/site-packages"
+          pip install -r requirements.txt
+          mkdir -p .python_packages/lib/site-packages
+          cp -r worker_venv/lib/python*/site-packages/* .python_packages/lib/site-packages/
 
       # Optional: Add step to run tests here
 
@@ -52,7 +54,7 @@ jobs:
           name: python-app
           path: |
             release.zip
-            !venv/
+            !worker_venv/
 
   deploy:
     runs-on: ubuntu-latest
