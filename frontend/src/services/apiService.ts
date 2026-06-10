@@ -167,6 +167,10 @@ class ApiService {
     return this.client.get(`/leaderboard/ranking/community/${communityId}`, { params: { isDaily } });
   }
 
+  getCommunityMembers(communityId: string) {
+    return this.client.get(`/leaderboard/community/${communityId}/members`);
+  }
+
   getUserStats() {
     return this.client.get('/leaderboard/stats');
   }
