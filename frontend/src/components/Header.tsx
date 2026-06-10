@@ -97,6 +97,9 @@ const Header: React.FC = () => {
                 <Link to="/dashboard" className="hover:text-secondary transition">
                   Dashboard
                 </Link>
+                <Link to="/communities" className="hover:text-secondary transition">
+                  Communities
+                </Link>
                 {user?.role === 'admin' && (
                   <Link to="/admin" className="hover:text-secondary font-bold text-yellow-400 transition">
                     Admin
@@ -193,6 +196,13 @@ const Header: React.FC = () => {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Dashboard
+                </Link>
+                <Link
+                  to="/communities"
+                  className="block py-2 hover:text-secondary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Communities
                 </Link>
                 {user?.role === 'admin' && (
                   <Link

@@ -562,7 +562,9 @@ const AdminDashboard: React.FC = () => {
                                                     </td>
                                                     <td className="px-4 py-4">
                                                         <div className="text-sm font-bold text-secondary">{req.requestedCommunity?.name || '-'}</div>
-                                                        <div className="text-[10px] text-gray-400 font-mono font-bold uppercase tracking-tighter">Short Name: {req.requestedCommunity?.shortName || '-'}</div>
+                                                        <div className="text-[10px] text-gray-400 font-mono font-bold tracking-tighter">
+                                                            <span className="uppercase">Short Name: </span>{req.requestedCommunity?.shortName || '-'}
+                                                        </div>
                                                         <div className="text-[10px] text-gray-500 max-w-[200px] truncate" title={req.requestedCommunity?.description}>
                                                             <span className="font-bold text-gray-400 uppercase text-[9px]">Description:</span> {req.requestedCommunity?.description || '-'}
                                                         </div>
@@ -728,7 +730,7 @@ const AdminDashboard: React.FC = () => {
                                                     <div className="text-[10px] text-gray-400 font-mono">ID: {c.communityId}</div>
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <div className="text-xs font-mono font-bold text-sky-700 bg-sky-50 px-2 py-1 rounded inline-block uppercase">{c.name}</div>
+                                                    <div className="text-xs font-mono font-bold text-sky-700 bg-sky-50 px-2 py-1 rounded inline-block">{c.name}</div>
                                                 </td>
                                                 <td className="px-4 py-4 text-xs text-gray-600">{(c as any).isOnline ? '-' : `${c.city}, ${c.state}`}</td>
                                                 <td className="px-4 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${(c as any).isOnline ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{(c as any).isOnline ? 'ONLINE' : 'LOCAL'}</span></td>

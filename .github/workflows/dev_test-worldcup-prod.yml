@@ -1,21 +1,21 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
 # More GitHub Actions for Azure: https://github.com/Azure/actions
-# More info on Python, GitHub Actions, and Azure Functions: https://aka.ms/python-webapps-actions trt
+# More info on Python, GitHub Actions, and Azure Functions: https://aka.ms/python-webapps-actions test
 
-name: Build and deploy Python project to Azure Function App - fn-fifa-prediction
+name: Build and deploy Python project to Azure Function App - test-worldcup-prod
 
 on:
   push:
     branches:
-      - qa
+      - release1
     paths:
       - azure_functions/**
-      - .github/workflows/dev_fn-fifa-prediction.yml
+      - .github/workflows/dev_test-worldcup-prod.yml
   workflow_dispatch:
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
-  PYTHON_VERSION: '3.12' # align with Azure Functions v4 supported Python runtime
+  PYTHON_VERSION: '3.12' # Azure Functions supports 3.10, 3.11, and 3.12
 
 jobs:
   build:
@@ -32,16 +32,15 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Create and start virtual environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-
       - name: Install dependencies
         working-directory: azure_functions
         run: |
+          python -m venv worker_venv
+          source worker_venv/bin/activate
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --target=".python_packages/lib/site-packages"
+          pip install -r requirements.txt
+          mkdir -p .python_packages/lib/site-packages
+          cp -r worker_venv/lib/python*/site-packages/* .python_packages/lib/site-packages/
 
       # Optional: Add step to run tests here
 
@@ -55,7 +54,7 @@ jobs:
           name: python-app
           path: |
             release.zip
-            !venv/
+            !worker_venv/
 
   deploy:
     runs-on: ubuntu-latest
@@ -78,15 +77,15 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_65D01E249A3D4419A2ECFA70B221826E }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_36844BA11F1F4C938401FCE88CFF0CE1 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3714391011B046AF88DE3E004E868B53 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_99BFC242D21D450382CBE87C46974222 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F9650EDC1A26443F91BE91AB9D182B05 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C5540C64BB944E34AB101332426E73B0 }}
 
       - name: 'Deploy to Azure Functions'
         uses: Azure/functions-action@v1
         id: deploy-to-function
         with:
-          app-name: 'fn-fifa-prediction'
+          app-name: 'test-worldcup-prod'
           slot-name: 'Production'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           
