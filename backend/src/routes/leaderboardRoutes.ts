@@ -9,6 +9,7 @@ router.get('/daily', leaderboardController.getDailyLeaderboard);
 router.get('/community', leaderboardController.getCommunityLeaderboard);
 router.get('/community/daily', leaderboardController.getDailyCommunityLeaderboard);
 router.get('/ranking/community/:communityId', leaderboardController.getCommunityUserRanking);
+router.get('/community/:communityId/members', leaderboardController.getCommunityMembers);
 router.get('/stats', authMiddleware, leaderboardController.getUserStats);
 
 export default router;
