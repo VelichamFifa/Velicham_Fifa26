@@ -6,7 +6,7 @@ name: fifa-aps Build and deploy Node.js app to Azure Web App - fifa-aps
 on:
   push:
     branches:
-      - dev
+      - qa
     paths:
       - backend/**
       - .github/workflows/dev_fifa-aps.yml
