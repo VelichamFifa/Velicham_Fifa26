@@ -302,3 +302,36 @@ export const getCommunityUserRanking = async (req: AuthRequest, res: Response) =
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch community user ranking' });
   }
 };
+
+export const getCommunityMembers = async (req: AuthRequest, res: Response) => {
+  try {
+    const { communityId } = req.params;
+
+    const communityIdNum = Number(communityId);
+    if (!Number.isInteger(communityIdNum) || communityIdNum <= 0) {
+      return res.status(400).json({ error: 'Invalid communityId' });
+    }
+
+    const users = await prisma.user.findMany({
+      where: { OR: [{ communityId1: communityIdNum }, { communityId2: communityIdNum }] },
+      select: { id: true, firstName: true, lastName: true },
+    });
+
+    const members = users.map(u => ({
+        userId: String(u.id),
+        name: `${u.firstName} ${u.lastName}`.trim(),
+    }));
+
+    members.sort((a, b) => a.name.localeCompare(b.name));
+
+    return res.json({ members, communityId });
+  } catch (error) {
+    const errorDetails = logger.error('getCommunityMembers', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+      communityId: req.params.communityId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch community members' });
+  }
+};
