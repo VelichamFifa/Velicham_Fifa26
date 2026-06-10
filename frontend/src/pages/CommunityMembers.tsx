@@ -6,9 +6,6 @@ import { apiService } from '../services/apiService';
 interface RankingItem {
   userId: string;
   name: string;
-  totalPoints: number;
-  rank: number;
-  state?: string;
 }
 
 const CommunityMembers: React.FC = () => {
@@ -33,33 +30,15 @@ const CommunityMembers: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await apiService.getCommunityRanking(communityId!, false);
+      const res = await (apiService as any).getCommunityMembers(communityId!);
       
-      // Recalculate rank within the community based on total points
-      const sortedData = [...res.data.ranking].sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0));
-      let currentRank = 0;
-      let previousPoints: number | null = null;
-      const communityRanking = sortedData.map(item => {
-        if (item.totalPoints !== previousPoints) {
-          currentRank++;
-          previousPoints = item.totalPoints;
-        }
-        return { ...item, rank: currentRank };
-      });
-      setRanking(communityRanking);
+      setRanking(res.data.members || []);
     } catch (err) {
       console.error('Failed to load ranking:', err);
       setError('Failed to load ranking details');
     } finally {
       setLoading(false);
     }
-  };
-
-  const medalColor = (rank: number) => {
-    if (rank === 1) return 'text-yellow-500';
-    if (rank === 2) return 'text-gray-400';
-    if (rank === 3) return 'text-amber-600';
-    return 'text-gray-400';
   };
 
   return (
@@ -113,17 +92,10 @@ const CommunityMembers: React.FC = () => {
                 const isMe = item.userId === user?.userId;
                 return (
                   <div
-                    key={`${item.userId}-${item.rank}-${item.totalPoints}`}
+                    key={item.userId}
                     className={`flex items-center gap-4 px-4 py-3 transition ${isMe ? 'bg-white/10' : 'hover:bg-white/5'}`}
                   >
-                    {/* Rank */}
-                    <div className="w-9 flex-shrink-0 text-center">
-                      <span className={`text-sm font-black ${medalColor(item.rank)}`}>
-                        #{item.rank}
-                      </span>
-                    </div>
-
-                    {/* Name + state */}
+                    {/* Name */}
                     <div className="flex-grow min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className={`text-sm font-bold truncate ${isMe ? 'text-secondary' : 'text-white'}`}>
@@ -135,14 +107,6 @@ const CommunityMembers: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      {item.state && (
-                        <p className="text-[10px] text-white/40 uppercase font-black mt-0.5">{item.state}</p>
-                      )}
-                    </div>
-
-                    {/* Points */}
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-black text-secondary">{item.totalPoints} pts</p>
                     </div>
                   </div>
                 );
