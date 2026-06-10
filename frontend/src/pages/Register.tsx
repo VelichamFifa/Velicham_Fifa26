@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../hooks/useAuth';
 import { Community } from '../types';
@@ -8,7 +8,9 @@ import SearchableDropdown from '../components/SearchableDropdown';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const sharedCommunityId = searchParams.get('c');
+  const { login, isLoggedIn } = useAuth();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -18,7 +20,7 @@ const Register: React.FC = () => {
     city: '',
     state: '',
     country: '',
-    communityId1: '',
+    communityId1: sharedCommunityId || '',
     communityId2: '',
     phoneNumber: '',
   });
@@ -27,6 +29,16 @@ const Register: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [loadingCommunities, setLoadingCommunities] = useState(true);
+
+  // Check login and store shared community link
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate('/profile-setup');
+    }
+    if (sharedCommunityId) {
+      sessionStorage.setItem('sharedCommunityId', sharedCommunityId);
+    }
+  }, [isLoggedIn, navigate, sharedCommunityId]);
 
   // Fetch communities on component mount
   useEffect(() => {
@@ -219,6 +231,22 @@ const Register: React.FC = () => {
             />
           </div>
 
+          <div className="mb-4">
+            <div className="rounded-xl border border-sky-300/25 bg-sky-400/10 p-4 shadow-sm">
+              <div className="flex gap-3">
+                <div className="bg-sky-400/20 p-1.5 rounded-full shrink-0 h-fit">
+                  <svg className="w-4 h-4 text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="text-[11px] text-sky-100/90 leading-relaxed">
+                  <span className="font-bold text-sky-200 block mb-1">Don't see your community?</span>
+                  If you are not finding your community, please complete the registration without selecting a community. Once registered, please access the <strong>Profile</strong> page from your Dashboard to request to onboard your community. Once the Admin approves the community, you will be notified and can then select the community in your profile.
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <SearchableDropdown
@@ -249,22 +277,6 @@ const Register: React.FC = () => {
               <p className="mt-2 text-xs text-white/60 font-medium min-h-[1rem]">
                 {formData.communityId2 ? getCommunityFullName(formData.communityId2) : ''}
               </p>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <div className="rounded-xl border border-sky-300/25 bg-sky-400/10 p-4 shadow-sm">
-              <div className="flex gap-3">
-                <div className="bg-sky-400/20 p-1.5 rounded-full shrink-0 h-fit">
-                  <svg className="w-4 h-4 text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="text-[11px] text-sky-100/90 leading-relaxed">
-                  <span className="font-bold text-sky-200 block mb-1">Don't see your community?</span>
-                  If you are not finding your community, please complete the registration without selecting a community. Once registered, please access the <strong>Profile</strong> page from your Dashboard to request to onboard your community. Once the Admin approves the community, you will be notified and can then select the community in your profile.
-                </div>
-              </div>
             </div>
           </div>
 

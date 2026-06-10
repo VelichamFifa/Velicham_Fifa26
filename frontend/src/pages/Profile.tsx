@@ -18,6 +18,7 @@ const Profile: React.FC = () => {
     const [showRequestForm, setShowRequestForm] = useState(false);
     const [userRequests, setUserRequests] = useState<any[]>([]);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [copiedId, setCopiedId] = useState<string | null>(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -161,6 +162,13 @@ const Profile: React.FC = () => {
     const getCommunityName = (communityId: string) => {
         const community = communities.find(c => c.communityId === communityId);
         return community ? (community.fullName || community.name) : 'Unknown';
+    };
+
+    const handleCopyLink = (communityId: string) => {
+        const link = `${window.location.origin}/login?c=${communityId}`;
+        navigator.clipboard.writeText(link);
+        setCopiedId(communityId);
+        setTimeout(() => setCopiedId(null), 2000);
     };
 
     const getCommunityFullName = (communityId: string) => {
@@ -347,7 +355,23 @@ const Profile: React.FC = () => {
                                             </p>
                                         </>
                                     ) : (
-                                        <p className="font-bold text-white">{profile.communityId1 ? getCommunityName(profile.communityId1) : 'None assigned'}</p>
+                                        <>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold text-white">{profile.communityId1 ? getCommunityName(profile.communityId1) : 'None assigned'}</p>
+                                                {profile.communityId1 && (
+                                                    <button
+                                                        onClick={() => handleCopyLink(profile.communityId1)}
+                                                        className="text-[10px] bg-sky-500/20 text-sky-400 px-2 py-1 rounded hover:bg-sky-500/40 transition flex items-center gap-1 font-bold uppercase tracking-wider"
+                                                        title="Copy Invite Link"
+                                                    >
+                                                        {copiedId === profile.communityId1 ? '✓ Copied' : '🔗 Invite'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {profile.communityId1 && (
+                                                <p className="text-[10px] text-white/40 mt-1.5 leading-tight">Copy the link and send it to your friends to join this community.</p>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -369,7 +393,23 @@ const Profile: React.FC = () => {
                                             </p>
                                         </>
                                     ) : (
-                                        <p className="font-bold text-white">{profile.communityId2 ? getCommunityName(profile.communityId2) : 'None assigned'}</p>
+                                        <>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold text-white">{profile.communityId2 ? getCommunityName(profile.communityId2) : 'None assigned'}</p>
+                                                {profile.communityId2 && (
+                                                    <button
+                                                        onClick={() => handleCopyLink(profile.communityId2)}
+                                                        className="text-[10px] bg-sky-500/20 text-sky-400 px-2 py-1 rounded hover:bg-sky-500/40 transition flex items-center gap-1 font-bold uppercase tracking-wider"
+                                                        title="Copy Invite Link"
+                                                    >
+                                                        {copiedId === profile.communityId2 ? '✓ Copied' : '🔗 Invite'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {profile.communityId2 && (
+                                                <p className="text-[10px] text-white/40 mt-1.5 leading-tight">Copy the link and send it to your friends to join this community.</p>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </div>

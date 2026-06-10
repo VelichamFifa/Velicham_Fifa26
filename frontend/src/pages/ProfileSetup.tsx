@@ -32,18 +32,28 @@ const ProfileSetup: React.FC = () => {
     const [loadingCommunities, setLoadingCommunities] = useState(true);
 
     useEffect(() => {
+        const sessionCommId = sessionStorage.getItem('sharedCommunityId');
+
         // If user is already set up perfectly, redirect to dashboard
-        if (user && user.city && user.city !== 'Not Set' && user.state && user.state !== 'Not Set' && user.country && user.country !== 'Not Set') {
+        if (user && user.city && user.city !== 'Not Set' && user.state && user.state !== 'Not Set' && user.country && user.country !== 'Not Set' && !sessionCommId) {
             navigate('/dashboard');
         }
 
         // Pre-fill if we have existing data (even if it's 'Not Set' we should clear it for the form)
         if (user) {
+            let formattedCountry = user.country === 'Not Set' ? '' : user.country || '';
+            // Fix case mismatch between DB (e.g. 'Usa') and select options ('USA')
+            if (formattedCountry.toLowerCase() === 'usa') formattedCountry = 'USA';
+            if (formattedCountry.toLowerCase() === 'canada') formattedCountry = 'Canada';
+
             setFormData(prev => ({
                 ...prev,
                 city: user.city === 'Not Set' ? '' : user.city || '',
                 state: user.state === 'Not Set' ? '' : user.state || '',
-                country: user.country === 'Not Set' ? '' : user.country || '',
+                country: formattedCountry,
+                phoneNumber: user.phoneNumber || prev.phoneNumber,
+                communityId1: user.communityId1 || sessionCommId || '',
+                communityId2: user.communityId2 || '',
             }));
         }
 
@@ -99,6 +109,7 @@ const ProfileSetup: React.FC = () => {
             // Update global user context with new details
             const token = localStorage.getItem('token') || '';
             login(token, response.data.user);
+            sessionStorage.removeItem('sharedCommunityId');
 
             navigate('/dashboard');
         } catch (err: any) {
@@ -214,6 +225,22 @@ const ProfileSetup: React.FC = () => {
                         </select>
                     </div>
 
+                    <div>
+                        <div className="rounded-xl border border-sky-300/25 bg-sky-400/10 p-4 shadow-sm">
+                            <div className="flex gap-3">
+                                <div className="bg-sky-400/20 p-1.5 rounded-full shrink-0 h-fit">
+                                    <svg className="w-4 h-4 text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div className="text-[11px] text-sky-100/90 leading-relaxed">
+                                    <span className="font-bold text-sky-200 block mb-1">Don't see your community?</span>
+                                    If you are not finding your community, please complete the profile without selecting a community. Once completed, please access the <strong>My Profile</strong> page from <strong>Dashboard</strong> to request to onboard your community. Once the Admin approves the community, you will be notified in My Profile page and can then select the community in your profile.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 gap-4">
                         <div>
                             <SearchableDropdown
@@ -246,22 +273,6 @@ const ProfileSetup: React.FC = () => {
                             <p className="mt-2 min-h-[1rem] text-xs font-medium text-white/70">
                                 {formData.communityId2 ? getCommunityFullName(formData.communityId2) : ''}
                             </p>
-                        </div>
-                    </div>
-
-                    <div className="mb-6">
-                        <div className="rounded-xl border border-sky-300/25 bg-sky-400/10 p-4 shadow-sm">
-                            <div className="flex gap-3">
-                                <div className="bg-sky-400/20 p-1.5 rounded-full shrink-0 h-fit">
-                                    <svg className="w-4 h-4 text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div className="text-[11px] text-sky-100/90 leading-relaxed">
-                                    <span className="font-bold text-sky-200 block mb-1">Don't see your community?</span>
-                                    If you are not finding your community, please complete the profile without selecting a community. Once completed, please access the <strong>My Profile</strong> page from <strong>Dashboard</strong> to request to onboard your community. Once the Admin approves the community, you will be notified in My Profile page and can then select the community in your profile.
-                                </div>
-                            </div>
                         </div>
                     </div>
 
