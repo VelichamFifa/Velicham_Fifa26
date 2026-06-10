@@ -1,17 +1,28 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../hooks/useAuth';
 import { GoogleLogin } from '@react-oauth/google';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const sharedCommunityId = searchParams.get('c');
+  const { login, isLoggedIn } = useAuth();
   const googleClientId =
     import.meta.env.VITE_GOOGLE_CLIENT_ID ||
     '130266253118-tqf64k2futoaoj843pcvu87sudjv9idg.apps.googleusercontent.com';
 
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate('/profile-setup');
+    }
+    if (sharedCommunityId) {
+      sessionStorage.setItem('sharedCommunityId', sharedCommunityId);
+    }
+  }, [isLoggedIn, navigate, sharedCommunityId]);
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     if (!credentialResponse.credential) return;
@@ -22,12 +33,7 @@ const Login: React.FC = () => {
       const user = response.data.user;
       login(response.data.token, user);
 
-      // Check if user needs to complete profile (backend sets these to 'Not Set' for new Google users)
-      if (user.city === 'Not Set' || user.state === 'Not Set' || user.country === 'Not Set') {
-        navigate('/profile-setup');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/profile-setup');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Google Login failed');
     }
