@@ -212,6 +212,10 @@ class ApiService {
     return this.client.delete(`/admin/communities/${id}`);
   }
 
+  archiveMatchPredictions(matchId: string) {
+    return this.client.post(`/admin/matches/${matchId}/archive`);
+  }
+
   finalizeMatch(data: { matchId: string; team1Score: number; team2Score: number }) {
     const functionsUrl = import.meta.env.VITE_FINALIZE_MATCH_URL as string | undefined;
     if (functionsUrl?.trim()) {
