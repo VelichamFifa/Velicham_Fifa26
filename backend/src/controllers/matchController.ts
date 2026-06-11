@@ -27,6 +27,7 @@ import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
 import { logger } from '../lib/logger';
 import { BlobServiceClient } from '@azure/storage-blob';
+import { DefaultAzureCredential } from '@azure/identity';
 
 const withApiMatchId = <T extends { id: number }>(match: T) => ({
   ...match,
@@ -290,14 +291,21 @@ export const archiveMatchPredictions = async (req: AuthRequest, res: Response) =
     const jsonString = JSON.stringify(archiveData, null, 2);
 
     // 3. Upload to Azure Blob Storage
+    const accountUrl = process.env.AZURE_STORAGE_ACCOUNT_URL;
     const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
     const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'match-archives';
 
-    if (!connectionString) {
-      return res.status(500).json({ error: 'Azure Storage connection string is missing' });
-    }
+    let blobServiceClient: BlobServiceClient;
 
-    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    if (accountUrl) {
+      // Use Managed Identity (Entra ID) - Required when Key Auth is disabled
+      const credential = new DefaultAzureCredential();
+      blobServiceClient = new BlobServiceClient(accountUrl, credential);
+    } else if (connectionString) {
+      blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    } else {
+      return res.status(500).json({ error: 'Azure Storage configuration (URL or Connection String) is missing' });
+    }
     const containerClient = blobServiceClient.getContainerClient(containerName);
 
     // Create container if it doesn't exist
