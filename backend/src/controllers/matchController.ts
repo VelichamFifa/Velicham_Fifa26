@@ -26,6 +26,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
 import { logger } from '../lib/logger';
+import { BlobServiceClient } from '@azure/storage-blob';
 
 const withApiMatchId = <T extends { id: number }>(match: T) => ({
   ...match,
@@ -245,5 +246,79 @@ export const updateMatch = async (req: AuthRequest, res: Response) => {
       matchId: req.params.matchId,
     });
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to update match' });
+  }
+};
+
+export const archiveMatchPredictions = async (req: AuthRequest, res: Response) => {
+  try {
+    const matchIdNum = Number(req.params.matchId);
+    if (!Number.isInteger(matchIdNum) || matchIdNum <= 0) {
+      return res.status(404).json({ error: 'Match not found' });
+    }
+
+    // 1. Fetch match and predictions
+    const match = await prisma.match.findUnique({ where: { id: matchIdNum } });
+    if (!match) return res.status(404).json({ error: 'Match not found' });
+
+    const predictions = await prisma.prediction.findMany({
+      where: { matchId: matchIdNum },
+      include: {
+        user: {
+          select: { email: true, firstName: true, lastName: true }
+        }
+      }
+    });
+
+    // 2. Format data to JSON
+    const archiveData = {
+      matchId: String(match.id),
+      team1: match.team1,
+      team2: match.team2,
+      archivedAt: new Date().toISOString(),
+      totalPredictions: predictions.length,
+      predictions: predictions.map((p: any) => ({
+        predictionId: p.id,
+        userId: p.userId,
+        userEmail: p.user?.email,
+        userName: `${p.user?.firstName} ${p.user?.lastName}`.trim(),
+        team1Score: p.team1Score,
+        team2Score: p.team2Score,
+        submittedAt: p.createdAt
+      }))
+    };
+
+    const jsonString = JSON.stringify(archiveData, null, 2);
+
+    // 3. Upload to Azure Blob Storage
+    const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+    const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'match-archives';
+
+    if (!connectionString) {
+      return res.status(500).json({ error: 'Azure Storage connection string is missing' });
+    }
+
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+
+    // Create container if it doesn't exist
+    await containerClient.createIfNotExists();
+
+    const blobName = `match_${match.id}_predictions_${Date.now()}.json`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    await blockBlobClient.upload(jsonString, Buffer.byteLength(jsonString));
+
+    res.json({
+      message: 'Predictions successfully generated and uploaded to Blob Storage',
+      blobName
+    });
+
+  } catch (error) {
+    const errorDetails = logger.error('archiveMatchPredictions', error, {
+      method: req.method,
+      path: req.path,
+      matchId: req.params.matchId
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to archive match predictions to blob storage' });
   }
 };
