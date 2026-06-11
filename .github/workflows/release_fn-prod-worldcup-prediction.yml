@@ -7,10 +7,7 @@ name: Build and deploy Python project to Azure Function App - fn-prod-worldcup-p
 on:
   push:
     branches:
-      - release
-    paths:
-      - azure_functions/**
-      - .github/workflows/release_fn-prod-worldcup-prediction.yml
+      - release1
   workflow_dispatch:
 
 env:
