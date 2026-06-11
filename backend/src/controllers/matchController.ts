@@ -291,7 +291,7 @@ export const archiveMatchPredictions = async (req: AuthRequest, res: Response) =
     const jsonString = JSON.stringify(archiveData, null, 2);
 
     // 3. Upload to Azure Blob Storage
-    const accountUrl = process.env.AZURE_STORAGE_ACCOUNT_URL;
+    const accountUrl = process.env.AZURE_BLOB_STORAGE_ACCOUNT_URL;
     const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
     const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'match-archives';
 
