@@ -371,6 +371,25 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+    const handleArchivePredictions = async (matchId: string) => {
+        const match = [...onboardedMatches, ...scheduledMatches, ...completedMatches].find(m => m.matchId === matchId);
+        const matchName = match ? `${getTeamDisplayName(match, 'team1')} vs ${getTeamDisplayName(match, 'team2')}` : 'this match';
+
+        if (!window.confirm(`Are you sure you want to generate JSON and upload predictions to Blob Storage for ${matchName}?`)) {
+            return;
+        }
+
+        try {
+            setActionLoading(true);
+            await apiService.archiveMatchPredictions(matchId);
+            setSuccess('Predictions successfully generated and uploaded to Blob Storage');
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Failed to archive predictions');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const handleCreateMatchEntry = async (event: React.FormEvent) => {
         event.preventDefault();
 
@@ -914,19 +933,30 @@ const AdminDashboard: React.FC = () => {
                                                             </button>
                                                         </div>
                                                     ) : (
-                                                        <button
-                                                            onClick={() => {
-                                                                if (match.status === 'publishing') return;
-                                                                const s1 = (document.getElementById(`s1-${match.matchId}`) as HTMLInputElement).value;
-                                                                const s2 = (document.getElementById(`s2-${match.matchId}`) as HTMLInputElement).value;
-                                                                handleFinalizeMatch(match.matchId, s1, s2);
-                                                            }}
-                                                            className={`bg-secondary text-white px-3 py-1 rounded text-sm ${match.status === 'publishing' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
-                                                            disabled={match.status === 'publishing'}
-                                                            title={match.status === 'publishing' ? 'Cannot finalize while match is publishing' : ''}
-                                                        >
-                                                            {match.status === 'completed' ? 'Recalculate' : 'Finalize'}
-                                                        </button>
+                                                        <div className="flex justify-end gap-2 items-center">
+                                                            {matchTab === 'scheduled' && (
+                                                                <button
+                                                                    onClick={() => handleArchivePredictions(match.matchId)}
+                                                                    disabled={actionLoading || match.status === 'publishing'}
+                                                                    className={`bg-purple-600 text-white px-3 py-1 rounded text-sm whitespace-nowrap ${(actionLoading || match.status === 'publishing') ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-700'}`}
+                                                                >
+                                                                    Export JSON to Blob
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (match.status === 'publishing') return;
+                                                                    const s1 = (document.getElementById(`s1-${match.matchId}`) as HTMLInputElement).value;
+                                                                    const s2 = (document.getElementById(`s2-${match.matchId}`) as HTMLInputElement).value;
+                                                                    handleFinalizeMatch(match.matchId, s1, s2);
+                                                                }}
+                                                                className={`bg-secondary text-white px-3 py-1 rounded text-sm ${match.status === 'publishing' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+                                                                disabled={match.status === 'publishing'}
+                                                                title={match.status === 'publishing' ? 'Cannot finalize while match is publishing' : ''}
+                                                            >
+                                                                {match.status === 'completed' ? 'Recalculate' : 'Finalize'}
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </td>
                                             </tr>
