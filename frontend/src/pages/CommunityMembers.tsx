@@ -6,6 +6,9 @@ import { apiService } from '../services/apiService';
 interface RankingItem {
   userId: string;
   name: string;
+  rank?: number | string;
+  totalPoints?: number;
+  state?: string;
 }
 
 const CommunityMembers: React.FC = () => {
@@ -30,9 +33,20 @@ const CommunityMembers: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await (apiService as any).getCommunityMembers(communityId!);
+      const res = await apiService.getCommunityRanking(communityId!);
       
-      setRanking(res.data.members || []);
+      const sortedData = [...(res.data.ranking || [])].sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0));
+      let currentRank = 0;
+      let previousPoints: number | null = null;
+      const communityRanking = sortedData.map(item => {
+        if (item.totalPoints !== previousPoints) {
+          currentRank++;
+          previousPoints = item.totalPoints;
+        }
+        return { ...item, rank: currentRank };
+      });
+      
+      setRanking(communityRanking);
     } catch (err) {
       console.error('Failed to load ranking:', err);
       setError('Failed to load ranking details');
@@ -93,20 +107,25 @@ const CommunityMembers: React.FC = () => {
                 return (
                   <div
                     key={item.userId}
-                    className={`flex items-center gap-4 px-4 py-3 transition ${isMe ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                    className={`flex items-center justify-between gap-4 px-4 py-3 transition ${isMe ? 'bg-white/10' : 'hover:bg-white/5'}`}
                   >
-                    {/* Name */}
-                    <div className="flex-grow min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`text-sm font-bold truncate ${isMe ? 'text-secondary' : 'text-white'}`}>
-                          {item.name}
-                        </p>
-                        {isMe && (
-                          <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded">
-                            YOU
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-4 min-w-0">
+                        <div className="flex shrink-0 items-center justify-center w-8 h-8 rounded-full bg-sky-500/20 text-sky-300 font-bold text-sm">
+                            {item.rank || '-'}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <p className={`text-sm font-bold truncate ${isMe ? 'text-secondary' : 'text-white'}`}>
+                                    {item.name}
+                                </p>
+                                {isMe && <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded">YOU</span>}
+                            </div>
+                            <p className="text-xs text-white/50 truncate">{item.state || 'Unknown Location'}</p>
+                        </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                        <span className="text-lg font-black text-amber-400">{item.totalPoints ?? 0}</span>
+                        <span className="text-xs text-white/50 ml-1">pts</span>
                     </div>
                   </div>
                 );
