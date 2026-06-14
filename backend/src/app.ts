@@ -16,6 +16,9 @@ import adminRoutes from './routes/adminRoutes';
 
 const app: Express = express();
 
+// Trust the first proxy. Essential for rate limiting when deployed behind a reverse proxy (e.g., Azure).
+app.set('trust proxy', 1);
+
 /** Production Static Web App (browser origin) — always allow alongside `FRONTEND_URL`. */
 const AZURE_STATIC_WEB_APP_ORIGIN = 'https://blue-meadow-054418e0f.7.azurestaticapps.net';
 
