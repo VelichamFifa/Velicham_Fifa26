@@ -54,6 +54,14 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    let ip = req.ip || 'unknown';
+    // Azure App Service sometimes appends the port to the IP address in X-Forwarded-For
+    if (typeof ip === 'string' && ip.match(/^\d+\.\d+\.\d+\.\d+:\d+$/)) {
+      ip = ip.split(':')[0];
+    }
+    return ip;
+  },
 });
 app.use('/api/', limiter);
 
