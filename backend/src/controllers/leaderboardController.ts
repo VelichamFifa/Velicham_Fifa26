@@ -335,3 +335,75 @@ export const getCommunityMembers = async (req: AuthRequest, res: Response) => {
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch community members' });
   }
 };
+
+export const rebuildMatchLeaders = async (req: AuthRequest, res: Response) => {
+  try {
+    const { matchId } = req.body;
+    if (!matchId) {
+      return res.status(400).json({ error: 'matchId is required' });
+    }
+
+    const matchIdNum = Number(matchId);
+    if (!Number.isInteger(matchIdNum) || matchIdNum <= 0) {
+      return res.status(400).json({ error: 'Invalid matchId' });
+    }
+
+    await prisma.$executeRawUnsafe(`DELETE FROM mv_match_leaders`);
+
+    const insertQuery = `
+      INSERT INTO mv_match_leaders (
+        \`rank\`, totalPoints, name, state, community1, community2, userId, email, \`date\`, createdAt, updatedAt
+      )
+      SELECT
+        rk,
+        matchPoints,
+        name,
+        COALESCE(state, ''),
+        community1,
+        community2,
+        userId,
+        COALESCE(email, ''),
+        UTC_DATE(),
+        UTC_TIMESTAMP(),
+        UTC_TIMESTAMP()
+      FROM (
+        SELECT
+          DENSE_RANK() OVER (ORDER BY matchPoints DESC) AS rk,
+          matchPoints,
+          name,
+          state,
+          community1,
+          community2,
+          userId,
+          email
+        FROM (
+          SELECT
+            CAST(u.id AS CHAR) AS userId,
+            TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
+            COALESCE(r.matchPoints, 0) AS matchPoints,
+            UPPER(u.state) AS state,
+            c1.name AS community1,
+            c2.name AS community2,
+            u.email AS email
+          FROM results r
+          INNER JOIN users u ON u.id = r.userId
+          LEFT JOIN communities c1 ON c1.id = u.communityId1
+          LEFT JOIN communities c2 ON c2.id = u.communityId2
+          WHERE r.matchId = ${matchIdNum}
+        ) match_totals
+      ) ranked
+      ORDER BY rk ASC
+    `;
+
+    await prisma.$executeRawUnsafe(insertQuery);
+
+    res.json({ message: 'mv_match_leaders rebuilt successfully', matchId: matchIdNum });
+  } catch (error) {
+    const errorDetails = logger.error('rebuildMatchLeaders', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to rebuild mv_match_leaders' });
+  }
+};

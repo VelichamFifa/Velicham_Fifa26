@@ -299,6 +299,25 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+    const handleRebuildMatchLeaders = async (matchId: string) => {
+        const match = [...onboardedMatches, ...scheduledMatches, ...completedMatches].find(m => m.matchId === matchId);
+        const matchName = match ? `${getTeamDisplayName(match, 'team1')} vs ${getTeamDisplayName(match, 'team2')}` : 'this match';
+
+        if (!window.confirm(`Are you sure you want to repopulate the mv_match_leaders table for ${matchName}?`)) {
+            return;
+        }
+
+        try {
+            setActionLoading(true);
+            await apiService.rebuildMatchLeaders(matchId);
+            setSuccess('Match leaders repopulated successfully');
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Failed to repopulate match leaders');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const handleDeleteCommunityRequest = async (id: number) => {
         if (!window.confirm('Are you sure you want to delete this community request?')) return;
         try {
@@ -941,6 +960,15 @@ const AdminDashboard: React.FC = () => {
                                                                     className={`bg-purple-600 text-white px-3 py-1 rounded text-sm whitespace-nowrap ${(actionLoading || match.status === 'publishing') ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-700'}`}
                                                                 >
                                                                     Export JSON to Blob
+                                                                </button>
+                                                            )}
+                                                            {matchTab === 'completed' && (
+                                                                <button
+                                                                    onClick={() => handleRebuildMatchLeaders(match.matchId)}
+                                                                    disabled={actionLoading}
+                                                                    className={`bg-indigo-600 text-white px-3 py-1 rounded text-sm whitespace-nowrap ${actionLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700'}`}
+                                                                >
+                                                                    Repopulate Leaders
                                                                 </button>
                                                             )}
                                                             <button
