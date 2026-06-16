@@ -54,6 +54,28 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    let ip = req.ip || 'unknown';
+
+    if (ip.includes("::ffff:")) {
+      ip = ip.replace("::ffff:", "");
+    }
+
+    if (ip.includes(":")) {
+      const parts = ip.split(":");
+      if (parts.length > 2) {
+        const maybePort = parts[parts.length - 1];
+        if (/^\d+$/.test(maybePort)) {
+          parts.pop();
+        }
+        ip = parts.join(":");
+      } else {
+        ip = parts[0];
+      }
+    }
+
+    return ip;
+  },
 });
 app.use('/api/', limiter);
 

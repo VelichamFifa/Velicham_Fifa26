@@ -233,6 +233,10 @@ class ApiService {
     return this.client.post('/admin/finalize-match', data);
   }
 
+  rebuildMatchLeaders(matchId: string) {
+    return this.client.post('/admin/rebuild-match-leaders', { matchId });
+  }
+
   rebuildLeaderboards(date?: string) {
     const functionsUrl = import.meta.env.VITE_REBUILD_LEADERBOARDS_URL as string | undefined;
     if (!functionsUrl?.trim()) {
