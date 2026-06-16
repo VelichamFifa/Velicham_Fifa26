@@ -87,11 +87,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDrillDown = (communityId: string, _isDaily: boolean, communityName: string, points?: number) => {
-    const name = communityName.replace(/ — Community Members$/, '');
-    navigate(`/community/${communityId}/members?name=${encodeURIComponent(name)}&pts=${points ?? 0}`);
-  };
-
   const handlePredictionSubmit = (matchId: string, team1Score: number, team2Score: number) => {
     const submittedTime = new Date().toISOString();
 
@@ -225,8 +220,18 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Leaderboard Highlights Banner */}
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4">Matches to Predict</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Matches to Predict</h2>
+            <Link
+              to="/my-predictions"
+              className="group inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/70 shadow-lg backdrop-blur-sm transition-all duration-200 hover:border-sky-400/50 hover:bg-white/10 hover:text-white"
+            >
+              <span>Previous Predictions</span>
+              <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-secondary"></div>
@@ -257,45 +262,6 @@ const Dashboard: React.FC = () => {
 
         {/* Right Sidebar: Stats */}
         <div className="lg:col-span-1 space-y-4">
-          <div
-            className="relative overflow-hidden rounded-2xl border border-white/10 p-4 shadow-2xl transition hover:border-white/20 flex items-center justify-between"
-            style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
-          >
-            <div
-              className="pointer-events-none absolute inset-0 opacity-[0.03]"
-              style={{
-                backgroundImage:
-                  'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%), ' +
-                  'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,1) 28px, rgba(255,255,255,1) 29px)',
-              }}
-            />
-            <Link
-              to="/my-predictions"
-              className="flex items-center justify-between w-full group"
-            >
-              <div className="flex items-center gap-2">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/90 border border-white/20 group-hover:bg-white/20 transition-colors">
-                  {/* History Document+Clock SVG icon */}
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="8" cy="8" r="6" />
-                    <path d="M8 5v3h2" />
-                    <path d="M13.5 3H18a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-5.5" />
-                    <path d="M15 10h2" />
-                    <path d="M9 15h8" />
-                    <path d="M9 19h8" />
-                  </svg>
-                </span>
-                <h3 className="text-sm font-extrabold tracking-wide text-white group-hover:text-sky-200 transition-colors">
-                  Previous Predictions
-                </h3>
-              </div>
-              <svg className="w-4 h-4 text-white/50 transform group-hover:translate-x-1 group-hover:text-sky-200 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-
-          
-          </div>
           <div
             className="relative overflow-hidden rounded-2xl border border-white/10 p-4 shadow-2xl"
             style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
@@ -329,20 +295,22 @@ const Dashboard: React.FC = () => {
                   <div key={comm.communityId} className="rounded-xl border border-white/15 bg-white/5 px-3 py-3 backdrop-blur-sm">
                     <p className="mb-2 text-xs font-extrabold tracking-wide text-white/90">{comm.name}</p>
                     <div className="grid grid-cols-1 gap-2">
-                      <button
-                        onClick={() => handleDrillDown(comm.communityId, false, `${comm.name} — Community Members`, comm.overall?.totalPoints)}
-                        className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-left hover:bg-sky-400/20 hover:border-sky-300/45 transition-all"
-                      >
-                        <span className="block text-[10px] font-bold tracking-wider text-white/55">Current Rank</span>
-                        <div className="mt-1 flex items-baseline gap-2">
-                          <span className="block text-lg font-black text-sky-200">
-                            {comm.overall?.rank === '-' ? '–' : `#${comm.overall?.rank}`}
-                          </span>
-                          <span className="rounded-md bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">
-                            {comm.overall?.totalPoints ?? 0} pts
-                          </span>
-                        </div>
-                      </button>
+                      {(() => {
+                        const name = comm.name.replace(/ — Community Members$/, '');
+                        const points = comm.overall?.totalPoints ?? 0;
+                        return (
+                          <Link
+                            to={`/community/${comm.communityId}/members?name=${encodeURIComponent(name)}&pts=${points}`}
+                            className="block rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-left hover:bg-sky-400/20 hover:border-sky-300/45 transition-all"
+                          >
+                            <span className="block text-[10px] font-bold tracking-wider text-white/55">Current Rank</span>
+                            <div className="mt-1 flex items-baseline gap-2">
+                              <span className="block text-lg font-black text-sky-200">{comm.overall?.rank === '-' ? '–' : `#${comm.overall?.rank}`}</span>
+                              <span className="rounded-md bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">{points} pts</span>
+                            </div>
+                          </Link>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))

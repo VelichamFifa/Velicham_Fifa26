@@ -30,7 +30,7 @@ function getDayRange(date: Date): { startOfDay: Date; endOfDay: Date } {
 
 export const getTopLeaderboard = async (req: AuthRequest, res: Response) => {
   try {
-    const { limit = '30' } = req.query;
+    const { limit = '500' } = req.query;
     const limitNum = parseInt(limit as string, 10);
 
     const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
@@ -53,9 +53,9 @@ export const getTopLeaderboard = async (req: AuthRequest, res: Response) => {
 
 export const getDailyLeaderboard = async (req: AuthRequest, res: Response) => {
   try {
-    const { limit = '30' } = req.query;
+    const { limit = '500' } = req.query;
     const parsedLimit = parseInt(limit as string, 10);
-    const limitNum = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 30;
+    const limitNum = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 500;
 
     const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
     const rows = await prisma.dailyLeader.findMany({
@@ -77,7 +77,7 @@ export const getDailyLeaderboard = async (req: AuthRequest, res: Response) => {
 
 export const getCommunityLeaderboard = async (req: AuthRequest, res: Response) => {
   try {
-    const { limit = '30' } = req.query;
+    const { limit = '100' } = req.query;
     const limitNum = parseInt(limit as string, 10);
 
     const take = Math.min(LEADERBOARD_OVERFETCH_CAP, Math.max(limitNum * 80, limitNum));
@@ -100,9 +100,9 @@ export const getCommunityLeaderboard = async (req: AuthRequest, res: Response) =
 
 export const getDailyCommunityLeaderboard = async (req: AuthRequest, res: Response) => {
   try {
-    const { limit = '30' } = req.query;
+    const { limit = '100' } = req.query;
     const parsedLimit = parseInt(limit as string, 10);
-    const limitNum = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 30;
+    const limitNum = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 100;
 
     const latestDaily = await prisma.dailyCommunityLeader.findFirst({
       orderBy: [{ date: 'desc' }, { id: 'desc' }],
