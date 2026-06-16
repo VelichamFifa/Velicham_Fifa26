@@ -56,10 +56,24 @@ const limiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     let ip = req.ip || 'unknown';
-    // Azure App Service sometimes appends the port to the IP address in X-Forwarded-For
-    if (typeof ip === 'string' && ip.match(/^\d+\.\d+\.\d+\.\d+:\d+$/)) {
-      ip = ip.split(':')[0];
+
+    if (ip.includes("::ffff:")) {
+      ip = ip.replace("::ffff:", "");
     }
+
+    if (ip.includes(":")) {
+      const parts = ip.split(":");
+      if (parts.length > 2) {
+        const maybePort = parts[parts.length - 1];
+        if (/^\d+$/.test(maybePort)) {
+          parts.pop();
+        }
+        ip = parts.join(":");
+      } else {
+        ip = parts[0];
+      }
+    }
+
     return ip;
   },
 });
