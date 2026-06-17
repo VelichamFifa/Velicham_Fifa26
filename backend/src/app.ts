@@ -16,6 +16,9 @@ import adminRoutes from './routes/adminRoutes';
 
 const app: Express = express();
 
+// Trust the first proxy. Essential for rate limiting when deployed behind a reverse proxy (e.g., Azure).
+app.set('trust proxy', 1);
+
 /** Production Static Web App (browser origin) — always allow alongside `FRONTEND_URL`. */
 const AZURE_STATIC_WEB_APP_ORIGIN = 'https://blue-meadow-054418e0f.7.azurestaticapps.net';
 
@@ -51,6 +54,28 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    let ip = req.ip || 'unknown';
+
+    if (ip.includes("::ffff:")) {
+      ip = ip.replace("::ffff:", "");
+    }
+
+    if (ip.includes(":")) {
+      const parts = ip.split(":");
+      if (parts.length > 2) {
+        const maybePort = parts[parts.length - 1];
+        if (/^\d+$/.test(maybePort)) {
+          parts.pop();
+        }
+        ip = parts.join(":");
+      } else {
+        ip = parts[0];
+      }
+    }
+
+    return ip;
+  },
 });
 app.use('/api/', limiter);
 

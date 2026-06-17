@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authMiddleware, adminMiddleware } from '../middleware/auth';
 import * as adminController from '../controllers/adminController';
 import { archiveMatchPredictions } from '../controllers/matchController';
+import { rebuildMatchLeaders } from '../controllers/leaderboardController';
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.delete('/communities/:id', adminController.deleteCommunity);
 // Match management
 router.post('/finalize-match', adminController.finalizeMatch);
 router.post('/matches/:matchId/archive', archiveMatchPredictions);
+router.post('/rebuild-match-leaders', rebuildMatchLeaders);
 
 // User management
 router.get('/users', adminController.getAllUsers);

@@ -21,10 +21,10 @@ const LeaderboardPage: React.FC = () => {
       setLoading(true);
 
       const [topRes, dailyRes, communityRes, dailyCommunityRes, lastMatchRes] = await Promise.all([
-        apiService.getTopLeaderboard(30),
-        apiService.getDailyLeaderboard(30),
-        apiService.getCommunityLeaderboard(30),
-        apiService.getDailyCommunityLeaderboard(30),
+        apiService.getTopLeaderboard(500),
+        apiService.getDailyLeaderboard(500),
+        apiService.getCommunityLeaderboard(100),
+        apiService.getDailyCommunityLeaderboard(100),
         apiService.getLatestCompletedMatch().catch(() => null),
       ]);
 
