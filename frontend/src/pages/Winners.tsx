@@ -9,6 +9,9 @@ interface Winner {
   photoId: string | null;
   roundName: string;
   rank: number;
+  city: string;
+  state: string;
+  country: string;
 }
 
 /** Preferred display order — rounds not in this list appear at the end in the order they arrive. */
@@ -62,7 +65,7 @@ const WinnerPhoto: React.FC<{ photoId: string; initials: string }> = ({ photoId,
   }, [photoId]);
 
   const fallback = (
-    <div className="w-20 h-20 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-2xl font-bold text-white">
+    <div className="w-24 h-24 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white">
       {initials}
     </div>
   );
@@ -73,7 +76,7 @@ const WinnerPhoto: React.FC<{ photoId: string; initials: string }> = ({ photoId,
     <img
       src={objectUrl}
       alt="winner"
-      className="w-20 h-20 rounded-full object-cover border-2 border-white/20 shadow-lg"
+      className="w-24 h-24 rounded-full object-cover border-2 border-white/20 shadow-lg"
       onError={() => setFailed(true)}
     />
   );
@@ -181,6 +184,10 @@ const WinnersPage: React.FC = () => {
                   .sort((a, b) => a.rank - b.rank)
                   .map((winner) => {
                     const medal = RANK_MEDAL[winner.rank];
+                    const address = [winner.city, winner.state, winner.country]
+                      .map((v) => (v || '').trim())
+                      .filter((v) => v.length > 0)
+                      .join(', ');
                     return (
                       <div
                         key={winner.id}
@@ -214,7 +221,7 @@ const WinnersPage: React.FC = () => {
                               initials={winner.firstName.charAt(0).toUpperCase()}
                             />
                           ) : (
-                            <div className="w-20 h-20 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-2xl font-bold text-white">
+                            <div className="w-24 h-24 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white">
                               {winner.firstName.charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -225,6 +232,9 @@ const WinnersPage: React.FC = () => {
                           <p className="text-white font-semibold text-base leading-tight">
                             {winner.firstName} {winner.lastName}
                           </p>
+                          {address && (
+                            <p className="text-xs text-white/50 mt-1">{address}</p>
+                          )}
                           {medal && (
                             <p className={`text-xs font-medium mt-0.5 ${medal.color}`}>
                               {winner.rank === 1 ? '1st Place' : winner.rank === 2 ? '2nd Place' : '3rd Place'}

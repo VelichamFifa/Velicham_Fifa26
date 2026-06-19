@@ -330,11 +330,25 @@ export const getWinners = async (req: AuthRequest, res: Response) => {
         photoId: string | null;
         roundName: string;
         rank: number;
+        city: string;
+        state: string;
+        country: string;
       }>
     >`
-      SELECT id, userId, firstName, lastName, photoId, roundName, \`rank\`
-      FROM user_winners
-      ORDER BY roundName ASC, \`rank\` ASC
+      SELECT
+        uw.id,
+        uw.userId,
+        uw.firstName,
+        uw.lastName,
+        uw.photoId,
+        uw.roundName,
+        uw.\`rank\`,
+        COALESCE(u.city, '') AS city,
+        COALESCE(u.state, '') AS state,
+        COALESCE(u.country, '') AS country
+      FROM user_winners uw
+      LEFT JOIN users u ON u.id = uw.userId
+      ORDER BY uw.roundName ASC, uw.\`rank\` ASC
     `;
 
     // Group by roundName
@@ -377,6 +391,7 @@ export const getWinnerPhoto = async (req: AuthRequest, res: Response) => {
 
     let foundName: string | null = null;
     for (const candidate of candidates) {
+      logger.info('getWinnerPhoto', 'Checking for winner photo', { candidate });
       const exists = await containerClient.getBlobClient(candidate).exists();
       if (exists) {
         foundName = candidate;
