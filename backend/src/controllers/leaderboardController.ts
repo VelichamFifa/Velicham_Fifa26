@@ -2,6 +2,22 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
 import { logger } from '../lib/logger';
+import { BlobServiceClient } from '@azure/storage-blob';
+import { DefaultAzureCredential } from '@azure/identity';
+
+const WINNER_PHOTO_CONTAINER = 'winner-photos';
+
+function getBlobServiceClient(): BlobServiceClient {
+  const accountUrl = process.env.AZURE_BLOB_STORAGE_ACCOUNT_URL;
+  const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+  if (accountUrl) {
+    return new BlobServiceClient(accountUrl, new DefaultAzureCredential());
+  }
+  if (connectionString) {
+    return BlobServiceClient.fromConnectionString(connectionString);
+  }
+  throw new Error('Azure Storage configuration (URL or Connection String) is missing');
+}
 
 /** Rows must already be ordered best-first (e.g. rank asc, points desc). Keeps first row per key. */
 function distinctByKey<T>(rows: T[], keyOf: (row: T) => string, limit: number): T[] {
@@ -300,6 +316,93 @@ export const getCommunityUserRanking = async (req: AuthRequest, res: Response) =
       communityId: req.params.communityId,
     });
     res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch community user ranking' });
+  }
+};
+
+export const getWinners = async (req: AuthRequest, res: Response) => {
+  try {
+    const winners = await prisma.$queryRaw<
+      Array<{
+        id: number;
+        userId: number;
+        firstName: string;
+        lastName: string;
+        photoId: string | null;
+        roundName: string;
+        rank: number;
+      }>
+    >`
+      SELECT id, userId, firstName, lastName, photoId, roundName, \`rank\`
+      FROM user_winners
+      ORDER BY roundName ASC, \`rank\` ASC
+    `;
+
+    // Group by roundName
+    const grouped: Record<string, typeof winners> = {};
+    for (const w of winners) {
+      if (!grouped[w.roundName]) grouped[w.roundName] = [];
+      grouped[w.roundName].push(w);
+    }
+
+    return res.json({ grouped });
+  } catch (error) {
+    const errorDetails = logger.error('getWinners', error, {
+      method: req.method,
+      path: req.path,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch winners' });
+  }
+};
+
+export const getWinnerPhoto = async (req: AuthRequest, res: Response) => {
+  try {
+    const { photoId } = req.params;
+    if (!photoId || photoId.trim() === '') {
+      return res.status(400).json({ error: 'photoId is required' });
+    }
+
+    // Prevent path traversal
+    const safeName = photoId.replace(/[^a-zA-Z0-9._-]/g, '');
+    if (!safeName) {
+      return res.status(400).json({ error: 'Invalid photoId' });
+    }
+
+    const blobServiceClient = getBlobServiceClient();
+    const containerClient = blobServiceClient.getContainerClient(WINNER_PHOTO_CONTAINER);
+
+    const hasExtension = safeName.includes('.');
+    const candidates = hasExtension
+      ? [safeName]
+      : [safeName, `${safeName}.jpg`, `${safeName}.jpeg`, `${safeName}.png`, `${safeName}.webp`];
+
+    let foundName: string | null = null;
+    for (const candidate of candidates) {
+      const exists = await containerClient.getBlobClient(candidate).exists();
+      if (exists) {
+        foundName = candidate;
+        break;
+      }
+    }
+
+    if (!foundName) {
+      return res.status(404).json({ error: 'Photo not found' });
+    }
+
+    const blobClient = containerClient.getBlobClient(foundName);
+    const downloadResponse = await blobClient.download();
+    const contentType = downloadResponse.contentType || 'application/octet-stream';
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+
+    downloadResponse.readableStreamBody!.pipe(res);
+  } catch (error) {
+    const errorDetails = logger.error('getWinnerPhoto', error, {
+      method: req.method,
+      path: req.path,
+      photoId: req.params.photoId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch winner photo' });
   }
 };
 
