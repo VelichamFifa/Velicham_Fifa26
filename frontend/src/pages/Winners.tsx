@@ -65,7 +65,7 @@ const WinnerPhoto: React.FC<{ photoId: string; initials: string }> = ({ photoId,
   }, [photoId]);
 
   const fallback = (
-    <div className="w-20 h-20 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-2xl font-bold text-white">
+    <div className="w-24 h-24 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white">
       {initials}
     </div>
   );
@@ -76,7 +76,7 @@ const WinnerPhoto: React.FC<{ photoId: string; initials: string }> = ({ photoId,
     <img
       src={objectUrl}
       alt="winner"
-      className="w-20 h-20 rounded-full object-cover border-2 border-white/20 shadow-lg"
+      className="w-24 h-24 rounded-full object-cover border-2 border-white/20 shadow-lg"
       onError={() => setFailed(true)}
     />
   );
@@ -221,7 +221,7 @@ const WinnersPage: React.FC = () => {
                               initials={winner.firstName.charAt(0).toUpperCase()}
                             />
                           ) : (
-                            <div className="w-20 h-20 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-2xl font-bold text-white">
+                            <div className="w-24 h-24 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white">
                               {winner.firstName.charAt(0).toUpperCase()}
                             </div>
                           )}
