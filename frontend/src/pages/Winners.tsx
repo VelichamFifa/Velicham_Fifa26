@@ -9,6 +9,9 @@ interface Winner {
   photoId: string | null;
   roundName: string;
   rank: number;
+  city: string;
+  state: string;
+  country: string;
 }
 
 /** Preferred display order — rounds not in this list appear at the end in the order they arrive. */
@@ -181,6 +184,10 @@ const WinnersPage: React.FC = () => {
                   .sort((a, b) => a.rank - b.rank)
                   .map((winner) => {
                     const medal = RANK_MEDAL[winner.rank];
+                    const address = [winner.city, winner.state, winner.country]
+                      .map((v) => (v || '').trim())
+                      .filter((v) => v.length > 0)
+                      .join(', ');
                     return (
                       <div
                         key={winner.id}
@@ -225,6 +232,9 @@ const WinnersPage: React.FC = () => {
                           <p className="text-white font-semibold text-base leading-tight">
                             {winner.firstName} {winner.lastName}
                           </p>
+                          {address && (
+                            <p className="text-xs text-white/50 mt-1">{address}</p>
+                          )}
                           {medal && (
                             <p className={`text-xs font-medium mt-0.5 ${medal.color}`}>
                               {winner.rank === 1 ? '1st Place' : winner.rank === 2 ? '2nd Place' : '3rd Place'}
