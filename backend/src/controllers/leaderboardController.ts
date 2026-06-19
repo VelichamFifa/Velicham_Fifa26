@@ -377,6 +377,8 @@ export const getWinnerPhoto = async (req: AuthRequest, res: Response) => {
 
     let foundName: string | null = null;
     for (const candidate of candidates) {
+      //log candidate content here for debugging
+      logger.info('Checking for winner photo', { candidate });
       const exists = await containerClient.getBlobClient(candidate).exists();
       if (exists) {
         foundName = candidate;
