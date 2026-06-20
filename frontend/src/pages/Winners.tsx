@@ -14,6 +14,19 @@ interface Winner {
   country: string;
 }
 
+interface CommunityWinner {
+  id: number;
+  communityId: number;
+  communityShortName: string;
+  communityLongName: string | null;
+  photoId: string | null;
+  roundName: string;
+  rank: number;
+  city: string;
+  state: string;
+  country: string;
+}
+
 /** Preferred display order — rounds not in this list appear at the end in the order they arrive. */
 const PREFERRED_ORDER = ['GR1', 'GR2', 'GR3', 'Group Round 1', 'Group Round 2', 'Group Round 3', 'R32', 'R16', 'R8', 'Semi', 'Third', 'Final'];
 
@@ -83,22 +96,32 @@ const WinnerPhoto: React.FC<{ photoId: string; initials: string }> = ({ photoId,
 };
 
 const WinnersPage: React.FC = () => {
-  const [grouped, setGrouped] = useState<Record<string, Winner[]>>({});
+  const [groupedUsers, setGroupedUsers] = useState<Record<string, Winner[]>>({});
+  const [groupedCommunities, setGroupedCommunities] = useState<Record<string, CommunityWinner[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeRound, setActiveRound] = useState<string>('');
+  const [activeUserRound, setActiveUserRound] = useState<string>('');
+  const [activeCommunityRound, setActiveCommunityRound] = useState<string>('');
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         const res = await apiService.getWinners();
-        const data: Record<string, Winner[]> = res.data.grouped || {};
-        setGrouped(data);
-        // Set default active round to the last available round
-        const availableRounds = sortRounds(Object.keys(data).filter((r) => data[r]?.length > 0));
-        if (availableRounds.length > 0) {
-          setActiveRound(availableRounds[availableRounds.length - 1]);
+        const usersData: Record<string, Winner[]> = res.data.groupedUsers || res.data.grouped || {};
+        const communitiesData: Record<string, CommunityWinner[]> = res.data.groupedCommunities || {};
+
+        setGroupedUsers(usersData);
+        setGroupedCommunities(communitiesData);
+
+        const availableUserRounds = sortRounds(Object.keys(usersData).filter((r) => usersData[r]?.length > 0));
+        if (availableUserRounds.length > 0) {
+          setActiveUserRound(availableUserRounds[availableUserRounds.length - 1]);
+        }
+
+        const availableCommunityRounds = sortRounds(Object.keys(communitiesData).filter((r) => communitiesData[r]?.length > 0));
+        if (availableCommunityRounds.length > 0) {
+          setActiveCommunityRound(availableCommunityRounds[availableCommunityRounds.length - 1]);
         }
       } catch (err) {
         setError('Failed to load winners. Please try again later.');
@@ -109,14 +132,16 @@ const WinnersPage: React.FC = () => {
     load();
   }, []);
 
-  const availableRounds = sortRounds(Object.keys(grouped).filter((r) => grouped[r]?.length > 0));
+  const availableUserRounds = sortRounds(Object.keys(groupedUsers).filter((r) => groupedUsers[r]?.length > 0));
+  const availableCommunityRounds = sortRounds(Object.keys(groupedCommunities).filter((r) => groupedCommunities[r]?.length > 0));
+  const hasAnyWinners = availableUserRounds.length > 0 || availableCommunityRounds.length > 0;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 sm:py-10">
       {/* Page header */}
       <div className="mb-8 text-center">
         <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">🏆 Round Winners</h1>
-        <p className="text-white/50 text-sm sm:text-base">Top predictors for each stage of the tournament</p>
+        <p className="text-white/50 text-sm sm:text-base">Top users and communities for each stage of the tournament</p>
       </div>
 
       {loading && (
@@ -130,7 +155,7 @@ const WinnersPage: React.FC = () => {
         <div className="text-center py-16 text-red-400">{error}</div>
       )}
 
-      {!loading && !error && availableRounds.length === 0 && (
+      {!loading && !error && !hasAnyWinners && (
         <div className="text-center py-16 text-white/40">
           <div className="text-5xl mb-4">🏆</div>
           <p className="text-lg font-medium">No winners announced yet</p>
@@ -138,117 +163,216 @@ const WinnersPage: React.FC = () => {
         </div>
       )}
 
-      {!loading && !error && availableRounds.length > 0 && (
+      {!loading && !error && hasAnyWinners && (
         <>
-          {/* Round tabs — mobile dropdown */}
-          <div className="sm:hidden mb-6">
-            <select
-              value={activeRound}
-              onChange={(e) => setActiveRound(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-3 py-2.5 text-sm font-medium text-white bg-[#1a2744] focus:outline-none focus:ring-2 focus:ring-sky-500"
-            >
-              {availableRounds.map((r) => (
-                <option key={r} value={r} className="bg-gray-900 text-white">
-                  {r}
-                </option>
-              ))}
-            </select>
-          </div>
+          {availableUserRounds.length > 0 && (
+            <section className="mb-12">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-5 text-center">Top Leaders</h2>
 
-          {/* Round tabs — desktop tab bar */}
-          <div className="hidden sm:flex flex-wrap gap-2 mb-8 border-b border-white/10 pb-0">
-            {availableRounds.map((r) => (
-              <button
-                key={r}
-                onClick={() => setActiveRound(r)}
-                className={`px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap -mb-px ${
-                  activeRound === r
-                    ? 'border-sky-400 text-sky-400'
-                    : 'border-transparent text-white/60 hover:text-white'
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-
-          {/* Winners grid for active round */}
-          {activeRound && grouped[activeRound] && (
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white mb-6 text-center">
-                {activeRound}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-                {grouped[activeRound]
-                  .slice()
-                  .sort((a, b) => a.rank - b.rank)
-                  .map((winner) => {
-                    const medal = RANK_MEDAL[winner.rank];
-                    const address = [winner.city, winner.state, winner.country]
-                      .map((v) => (v || '').trim())
-                      .filter((v) => v.length > 0)
-                      .join(', ');
-                    return (
-                      <div
-                        key={winner.id}
-                        className={`relative overflow-hidden rounded-2xl border p-5 shadow-xl flex flex-col items-center gap-3 transition-all duration-300 hover:scale-[1.02] ${
-                          medal ? medal.bg : 'bg-white/5 border-white/10'
-                        }`}
-                        style={
-                          !medal
-                            ? { background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 60%, #0c1a1a 100%)' }
-                            : undefined
-                        }
-                      >
-                        {/* Rank badge */}
-                        <div className="absolute top-3 left-3">
-                          {medal ? (
-                            <span className="text-2xl">{medal.icon}</span>
-                          ) : (
-                            <span
-                              className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-white/10 text-white/60 border border-white/10`}
-                            >
-                              #{winner.rank}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Photo */}
-                        <div className="mt-2">
-                          {winner.photoId ? (
-                            <WinnerPhoto
-                              photoId={winner.photoId}
-                              initials={winner.firstName.charAt(0).toUpperCase()}
-                            />
-                          ) : (
-                            <div className="w-24 h-24 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white">
-                              {winner.firstName.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Name */}
-                        <div className="text-center">
-                          <p className="text-white font-semibold text-base leading-tight">
-                            {winner.firstName} {winner.lastName}
-                          </p>
-                          {address && (
-                            <p className="text-xs text-white/50 mt-1">{address}</p>
-                          )}
-                          {medal && (
-                            <p className={`text-xs font-medium mt-0.5 ${medal.color}`}>
-                              {winner.rank === 1 ? '1st Place' : winner.rank === 2 ? '2nd Place' : '3rd Place'}
-                            </p>
-                          )}
-                          {!medal && (
-                            <p className="text-xs text-white/40 mt-0.5">Rank #{winner.rank}</p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+              <div className="sm:hidden mb-6">
+                <select
+                  value={activeUserRound}
+                  onChange={(e) => setActiveUserRound(e.target.value)}
+                  className="w-full border border-white/20 rounded-lg px-3 py-2.5 text-sm font-medium text-white bg-[#1a2744] focus:outline-none focus:ring-2 focus:ring-sky-500"
+                >
+                  {availableUserRounds.map((r) => (
+                    <option key={r} value={r} className="bg-gray-900 text-white">
+                      {r}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
+
+              <div className="hidden sm:flex flex-wrap gap-2 mb-8 border-b border-white/10 pb-0">
+                {availableUserRounds.map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setActiveUserRound(r)}
+                    className={`px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap -mb-px ${
+                      activeUserRound === r
+                        ? 'border-sky-400 text-sky-400'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+
+              {activeUserRound && groupedUsers[activeUserRound] && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                  {groupedUsers[activeUserRound]
+                    .slice()
+                    .sort((a, b) => a.rank - b.rank)
+                    .map((winner) => {
+                      const medal = RANK_MEDAL[winner.rank];
+                      const address = [winner.city, winner.state, winner.country]
+                        .map((v) => (v || '').trim())
+                        .filter((v) => v.length > 0)
+                        .join(', ');
+                      return (
+                        <div
+                          key={winner.id}
+                          className={`relative overflow-hidden rounded-2xl border p-5 shadow-xl flex flex-col items-center gap-3 transition-all duration-300 hover:scale-[1.02] ${
+                            medal ? medal.bg : 'bg-white/5 border-white/10'
+                          }`}
+                          style={
+                            !medal
+                              ? { background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 60%, #0c1a1a 100%)' }
+                              : undefined
+                          }
+                        >
+                          <div className="absolute top-3 left-3">
+                            {medal ? (
+                              <span className="text-2xl">{medal.icon}</span>
+                            ) : (
+                              <span
+                                className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-white/10 text-white/60 border border-white/10`}
+                              >
+                                #{winner.rank}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="mt-2">
+                            {winner.photoId ? (
+                              <WinnerPhoto
+                                photoId={winner.photoId}
+                                initials={winner.firstName.charAt(0).toUpperCase()}
+                              />
+                            ) : (
+                              <div className="w-24 h-24 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white">
+                                {winner.firstName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="text-center">
+                            <p className="text-white font-semibold text-base leading-tight">
+                              {winner.firstName} {winner.lastName}
+                            </p>
+                            {address && (
+                              <p className="text-xs text-white/50 mt-1">{address}</p>
+                            )}
+                            {medal && (
+                              <p className={`text-xs font-medium mt-0.5 ${medal.color}`}>
+                                {winner.rank === 1 ? '1st Place' : winner.rank === 2 ? '2nd Place' : '3rd Place'}
+                              </p>
+                            )}
+                            {!medal && (
+                              <p className="text-xs text-white/40 mt-0.5">Rank #{winner.rank}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </section>
+          )}
+
+          {availableCommunityRounds.length > 0 && (
+            <section>
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-5 text-center">Community Winners</h2>
+
+              <div className="sm:hidden mb-6">
+                <select
+                  value={activeCommunityRound}
+                  onChange={(e) => setActiveCommunityRound(e.target.value)}
+                  className="w-full border border-white/20 rounded-lg px-3 py-2.5 text-sm font-medium text-white bg-[#1a2744] focus:outline-none focus:ring-2 focus:ring-sky-500"
+                >
+                  {availableCommunityRounds.map((r) => (
+                    <option key={r} value={r} className="bg-gray-900 text-white">
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="hidden sm:flex flex-wrap gap-2 mb-8 border-b border-white/10 pb-0">
+                {availableCommunityRounds.map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setActiveCommunityRound(r)}
+                    className={`px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap -mb-px ${
+                      activeCommunityRound === r
+                        ? 'border-sky-400 text-sky-400'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+
+              {activeCommunityRound && groupedCommunities[activeCommunityRound] && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                  {groupedCommunities[activeCommunityRound]
+                    .slice()
+                    .sort((a, b) => a.rank - b.rank)
+                    .map((winner) => {
+                      const medal = RANK_MEDAL[winner.rank];
+                      const address = [winner.city, winner.state, winner.country]
+                        .map((v) => (v || '').trim())
+                        .filter((v) => v.length > 0)
+                        .join(', ');
+                      const displayName = winner.communityLongName?.trim() || winner.communityShortName;
+                      const initials = winner.communityShortName?.charAt(0).toUpperCase() || 'C';
+                      return (
+                        <div
+                          key={winner.id}
+                          className={`relative overflow-hidden rounded-2xl border p-5 shadow-xl flex flex-col items-center gap-3 transition-all duration-300 hover:scale-[1.02] ${
+                            medal ? medal.bg : 'bg-white/5 border-white/10'
+                          }`}
+                          style={
+                            !medal
+                              ? { background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 60%, #0c1a1a 100%)' }
+                              : undefined
+                          }
+                        >
+                          <div className="absolute top-3 left-3">
+                            {medal ? (
+                              <span className="text-2xl">{medal.icon}</span>
+                            ) : (
+                              <span
+                                className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-white/10 text-white/60 border border-white/10`}
+                              >
+                                #{winner.rank}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="mt-2">
+                            {winner.photoId ? (
+                              <WinnerPhoto photoId={winner.photoId} initials={initials} />
+                            ) : (
+                              <div className="w-24 h-24 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white">
+                                {initials}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="text-center">
+                            <p className="text-white font-semibold text-base leading-tight">{displayName}</p>
+                            <p className="text-xs text-white/60 mt-1">{winner.communityShortName}</p>
+                            {address && (
+                              <p className="text-xs text-white/50 mt-1">{address}</p>
+                            )}
+                            {medal && (
+                              <p className={`text-xs font-medium mt-0.5 ${medal.color}`}>
+                                {winner.rank === 1 ? '1st Place' : winner.rank === 2 ? '2nd Place' : '3rd Place'}
+                              </p>
+                            )}
+                            {!medal && (
+                              <p className="text-xs text-white/40 mt-0.5">Rank #{winner.rank}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </section>
           )}
         </>
       )}
