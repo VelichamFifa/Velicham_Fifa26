@@ -35,6 +35,7 @@ model User {
   finalUserResult  FinalUserResult?
   communityRequests UserCommunityRequest[]
   contactMessages  ContactMessage[]
+  userWinners      UserWinner[]
 
   @@map("users")
 }
@@ -70,6 +71,7 @@ model Community {
   updatedAt    DateTime @updatedAt
   usersAsCommunity1 User[] @relation("UserCommunity1")
   usersAsCommunity2 User[] @relation("UserCommunity2")
+  communityWinners CommunityWinner[]
 
   @@map("communities")
 }
@@ -161,6 +163,15 @@ model FinalUserResult {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   finalPoint  Int      @default(0)
   finalRank   Int?
+  GR1         Int      @default(0)
+  GR2         Int      @default(0)
+  GR3         Int      @default(0)
+  R32         Int      @default(0)
+  R16         Int      @default(0)
+  R8          Int      @default(0)
+  Semi        Int      @default(0)
+  Third       Int      @default(0)
+  Final       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -263,4 +274,55 @@ model ContactMessage {
   updatedAt DateTime @updatedAt
 
   @@map("contact_messages")
+}
+
+model FinalCommunityResult {
+  id            Int      @id @default(autoincrement())
+  rank          Int
+  totalpoints   Int
+  Communityid   String   @unique @db.VarChar(255)
+  Communityname String   @db.VarChar(255)
+  GR1           Int      @default(0)
+  GR2           Int      @default(0)
+  GR3           Int      @default(0)
+  R32           Int      @default(0)
+  R16           Int      @default(0)
+  R8            Int      @default(0)
+  Semi          Int      @default(0)
+  Third         Int      @default(0)
+  Final         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("final_community_results")
+}
+
+model UserWinner {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName   String   @db.VarChar(200)
+  lastName    String   @db.VarChar(200)
+  photoId     String?  @db.VarChar(500)
+  roundName   String   @db.VarChar(100)
+  rank        Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_winners")
+}
+
+model CommunityWinner {
+  id                 Int       @id @default(autoincrement())
+  communityId        Int
+  community          Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  communityShortName String    @db.VarChar(200)
+  communityLongName  String?   @db.VarChar(500)
+  photoId            String?   @db.VarChar(500)
+  roundName          String    @db.VarChar(100)
+  rank               Int
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@map("community_winners")
 }

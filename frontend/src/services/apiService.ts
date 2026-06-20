@@ -273,6 +273,17 @@ class ApiService {
   getCommunity(communityId: string) {
     return this.client.get(`/communities/${communityId}`);
   }
+
+  // Winners endpoints
+  getWinners() {
+    return this.client.get('/leaderboard/winners');
+  }
+
+  getWinnerPhoto(photoId: string) {
+    return this.client.get(`/leaderboard/winners/photo/${encodeURIComponent(photoId)}`, {
+      responseType: 'blob',
+    });
+  }
 }
 
 export const apiService = new ApiService();

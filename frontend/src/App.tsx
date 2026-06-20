@@ -15,6 +15,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import CommunityMembers from './pages/CommunityMembers';
 import Contact from './pages/Contact';
 import Communities from './pages/Communities';
+import WinnersPage from './pages/Winners';
 
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
             <Route path="/community/:communityId/members" element={<CommunityMembers />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/communities" element={<Communities />} />
+            <Route path="/winners" element={<WinnersPage />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/contact" element={<Contact />} />
           </Routes>

@@ -11,5 +11,7 @@ router.get('/community/daily', leaderboardController.getDailyCommunityLeaderboar
 router.get('/ranking/community/:communityId', leaderboardController.getCommunityUserRanking);
 router.get('/community/:communityId/members', leaderboardController.getCommunityMembers);
 router.get('/stats', authMiddleware, leaderboardController.getUserStats);
+router.get('/winners', leaderboardController.getWinners);
+router.get('/winners/photo/:photoId', leaderboardController.getWinnerPhoto);
 
 export default router;
