@@ -321,7 +321,7 @@ export const getCommunityUserRanking = async (req: AuthRequest, res: Response) =
 
 export const getWinners = async (req: AuthRequest, res: Response) => {
   try {
-    const winners = await prisma.$queryRaw<
+    const userWinners = await prisma.$queryRaw<
       Array<{
         id: number;
         userId: number;
@@ -351,14 +351,51 @@ export const getWinners = async (req: AuthRequest, res: Response) => {
       ORDER BY uw.roundName ASC, uw.\`rank\` ASC
     `;
 
+    const communityWinners = await prisma.$queryRaw<
+      Array<{
+        id: number;
+        communityId: number;
+        communityShortName: string;
+        communityLongName: string | null;
+        photoId: string | null;
+        roundName: string;
+        rank: number;
+        city: string;
+        state: string;
+        country: string;
+      }>
+    >`
+      SELECT
+        cw.id,
+        cw.communityId,
+        cw.communityShortName,
+        cw.communityLongName,
+        cw.photoId,
+        cw.roundName,
+        cw.\`rank\`,
+        COALESCE(c.city, '') AS city,
+        COALESCE(c.state, '') AS state,
+        '' AS country
+      FROM community_winners cw
+      LEFT JOIN communities c ON c.id = cw.communityId
+      ORDER BY cw.roundName ASC, cw.\`rank\` ASC
+    `;
+
     // Group by roundName
-    const grouped: Record<string, typeof winners> = {};
-    for (const w of winners) {
-      if (!grouped[w.roundName]) grouped[w.roundName] = [];
-      grouped[w.roundName].push(w);
+    const groupedUsers: Record<string, typeof userWinners> = {};
+    for (const w of userWinners) {
+      if (!groupedUsers[w.roundName]) groupedUsers[w.roundName] = [];
+      groupedUsers[w.roundName].push(w);
     }
 
-    return res.json({ grouped });
+    const groupedCommunities: Record<string, typeof communityWinners> = {};
+    for (const w of communityWinners) {
+      if (!groupedCommunities[w.roundName]) groupedCommunities[w.roundName] = [];
+      groupedCommunities[w.roundName].push(w);
+    }
+
+    // Keep `grouped` for backwards compatibility with current frontend contract.
+    return res.json({ grouped: groupedUsers, groupedUsers, groupedCommunities });
   } catch (error) {
     const errorDetails = logger.error('getWinners', error, {
       method: req.method,

@@ -133,13 +133,13 @@ const Home: React.FC = () => {
                 to="/leaderboard"
                 className="w-40 py-2.5 bg-white/5 border border-sky-400/50 text-white/70 font-bold rounded-xl hover:bg-white/15 hover:text-white hover:border-sky-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
               >
-                View Leaderboard
+                Leaderboard
               </Link>
               <Link
                 to="/winners"
                 className="w-40 py-2.5 bg-white/5 border border-yellow-400/50 text-yellow-300/80 font-bold rounded-xl hover:bg-yellow-500/10 hover:text-yellow-200 hover:border-yellow-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
               >
-                🏆 Winners
+                Winners
               </Link>
             </div>
         </div>
