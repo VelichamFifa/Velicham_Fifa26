@@ -36,6 +36,25 @@ const withApiMatchId = <T extends { id: number }>(match: T) => ({
 
 const buildMatchTag = (team1: string, team2: string) => `#${team1}_${team2}`;
 
+const deriveKnockoutFromRoundGroup = (round?: string | null, group?: string | null): boolean => {
+  if (group && String(group).trim() !== '') return false;
+  const normalizedRound = String(round || '').trim().toLowerCase();
+  if (!normalizedRound) return false;
+  if (normalizedRound.startsWith('group')) return false;
+  if (/^gr\d+$/i.test(normalizedRound)) return false;
+  return true;
+};
+
+const normalizeBooleanInput = (value: unknown): boolean | undefined => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+  }
+  return undefined;
+};
+
 export const getAllTeams = async (req: AuthRequest, res: Response) => {
   try {
     const teams = await prisma.team.findMany({
@@ -154,8 +173,10 @@ export const getLatestCompletedMatch = async (req: AuthRequest, res: Response) =
 
 export const createMatch = async (req: AuthRequest, res: Response) => {
   try {
-    const { sequence, team1, team2, matchTime, predictionsEndingTime, round, group, matchTag, comment } = req.body;
+    const { sequence, team1, team2, matchTime, predictionsEndingTime, round, group, matchTag, comment, isKnockoutMatch } = req.body;
     const resolvedMatchTag = matchTag || buildMatchTag(team1, team2);
+    const explicitKnockout = normalizeBooleanInput(isKnockoutMatch);
+    const resolvedKnockout = explicitKnockout ?? deriveKnockoutFromRoundGroup(round, group);
 
     const match = await prisma.match.create({
       data: {
@@ -166,6 +187,7 @@ export const createMatch = async (req: AuthRequest, res: Response) => {
         predictionsEndingTime: new Date(predictionsEndingTime),
         round,
         group,
+        isKnockoutMatch: resolvedKnockout,
         matchTag: resolvedMatchTag,
         comment,
         status: 'onboarded',
@@ -201,10 +223,12 @@ export const updateMatch = async (req: AuthRequest, res: Response) => {
       predictionsEndingTime,
       round,
       group,
+      isKnockoutMatch,
       matchTag,
       comment,
       team1Score,
       team2Score,
+      penaltyShootoutWinner,
       status,
     } = req.body;
 
@@ -212,6 +236,11 @@ export const updateMatch = async (req: AuthRequest, res: Response) => {
     if (!match) {
       return res.status(404).json({ error: 'Match not found' });
     }
+
+    const effectiveRound = round !== undefined ? round : match.round;
+    const effectiveGroup = group !== undefined ? group : match.group;
+    const explicitKnockout = normalizeBooleanInput(isKnockoutMatch);
+    const resolvedKnockout = explicitKnockout ?? deriveKnockoutFromRoundGroup(effectiveRound, effectiveGroup);
 
     const updated = await prisma.match.update({
       where: { id: matchIdNum },
@@ -223,12 +252,14 @@ export const updateMatch = async (req: AuthRequest, res: Response) => {
         ...(predictionsEndingTime !== undefined ? { predictionsEndingTime: new Date(predictionsEndingTime) } : {}),
         ...(round !== undefined ? { round } : {}),
         ...(group !== undefined ? { group } : {}),
+        ...(isKnockoutMatch !== undefined || round !== undefined || group !== undefined ? { isKnockoutMatch: resolvedKnockout } : {}),
         ...(comment !== undefined ? { comment } : {}),
         ...((team1 !== undefined || team2 !== undefined || matchTag !== undefined)
           ? { matchTag: matchTag || buildMatchTag(team1 ?? match.team1, team2 ?? match.team2) }
           : {}),
         ...(team1Score !== undefined ? { team1Score } : {}),
         ...(team2Score !== undefined ? { team2Score } : {}),
+        ...(penaltyShootoutWinner !== undefined ? { penaltyShootoutWinner } : {}),
         ...(status ? { status } : {}),
         ...(status === 'completed' ? { completedAt: new Date() } : {}),
         ...(status !== undefined && status !== 'completed' ? { completedAt: null } : {}),

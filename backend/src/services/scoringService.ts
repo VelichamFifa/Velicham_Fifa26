@@ -5,6 +5,7 @@ interface ScoringCriteria {
   correctTeam1Score: number;
   correctTeam2Score: number;
   correctGoalDifference: number;
+  correctPenaltyShootoutWinner: number;
 }
 
 const SCORING: ScoringCriteria = {
@@ -12,6 +13,7 @@ const SCORING: ScoringCriteria = {
   correctTeam1Score: 2,
   correctTeam2Score: 2,
   correctGoalDifference: 1,
+  correctPenaltyShootoutWinner: 2,
 };
 
 export const calculatePredictionPoints = (
@@ -69,14 +71,29 @@ export const processMatchResults = async (matchId: number) => {
 
   const predictions = await prisma.prediction.findMany({ where: { matchId } });
   const communityPointsMap = new Map<string, number>();
+  const knockout = Boolean(match.isKnockoutMatch);
+  const actualPenaltyWinner = (match.penaltyShootoutWinner || '').trim();
 
   for (const prediction of predictions) {
-    const points = calculatePredictionPoints(
+    const basePoints = calculatePredictionPoints(
       prediction.team1Score,
       prediction.team2Score,
       match.team1Score,
       match.team2Score
     );
+
+    const predictedDraw = prediction.team1Score === prediction.team2Score;
+    const actualDraw = match.team1Score === match.team2Score;
+    const bonusPenaltyPoints =
+      knockout &&
+      predictedDraw &&
+      actualDraw &&
+      !!actualPenaltyWinner &&
+      prediction.penaltyShootoutWinner === actualPenaltyWinner
+        ? SCORING.correctPenaltyShootoutWinner
+        : 0;
+
+    const points = basePoints + bonusPenaltyPoints;
 
     await prisma.prediction.update({
       where: { id: prediction.id },
@@ -109,6 +126,9 @@ export const processMatchResults = async (matchId: number) => {
         finalPoints: points,
         team1PredictedScore: prediction.team1Score,
         team2PredictedScore: prediction.team2Score,
+        predictedPenaltyShootoutWinner: prediction.penaltyShootoutWinner,
+        actualPenaltyShootoutWinner: actualPenaltyWinner || null,
+        penaltyShootoutPoints: bonusPenaltyPoints,
         communityName1,
         communityName2,
       },
@@ -119,6 +139,9 @@ export const processMatchResults = async (matchId: number) => {
         finalPoints: points,
         team1PredictedScore: prediction.team1Score,
         team2PredictedScore: prediction.team2Score,
+        predictedPenaltyShootoutWinner: prediction.penaltyShootoutWinner,
+        actualPenaltyShootoutWinner: actualPenaltyWinner || null,
+        penaltyShootoutPoints: bonusPenaltyPoints,
         communityName1,
         communityName2,
       },
