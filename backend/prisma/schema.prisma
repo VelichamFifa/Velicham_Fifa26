@@ -187,7 +187,7 @@ model FinalUserResult {
 model CommunityResult {
   id                      Int      @id @default(autoincrement())
   communityId             String   @db.VarChar(128)
-  communityWeightagePoint Int      @default(1)
+  communityWeightagePoint Int      @default(0)
   matchId                 Int
   matchTag                String   @db.VarChar(200)
   communityMatchPoint     Int      @default(0)

@@ -356,19 +356,21 @@ def _finalize(
         )
         log_step(logger, "results_ranks_updated", function="finalize_match", matchId=match_id)
 
-        # ── Step 4: Community results ───────────────────────────────────────
-        # communityMatchPoint = AVG match points of all community members for this match
-        # Uses UNION to cover both communityId1 and communityId2 memberships.
+                # Step 4: Community results ───────────────────────────────────────
+                # communityWeightagePoint = 1 point per full 10 members in the community.
+                # communityMatchPoint = AVG member match points + communityWeightagePoint bonus.
+                # Uses UNION to cover both communityId1 and communityId2 memberships.
         cur.execute(
             """
             INSERT INTO community_results (
-              communityId, matchId, matchTag, communityMatchPoint, totalCommunityPoint, createdAt, updatedAt
+                            communityId, matchId, matchTag, communityWeightagePoint, communityMatchPoint, totalCommunityPoint, createdAt, updatedAt
             )
             SELECT
               CAST(members.communityId AS CHAR),
               %s,
               %s,
-              ROUND(AVG(r.matchPoints)),
+                            FLOOR(COUNT(DISTINCT members.userId) / 10),
+                            ROUND(AVG(r.matchPoints)) + FLOOR(COUNT(DISTINCT members.userId) / 10),
               0,
               UTC_TIMESTAMP(),
               UTC_TIMESTAMP()
@@ -382,6 +384,7 @@ def _finalize(
             GROUP BY members.communityId
             ON DUPLICATE KEY UPDATE
               matchTag            = VALUES(matchTag),
+                            communityWeightagePoint = VALUES(communityWeightagePoint),
               communityMatchPoint = VALUES(communityMatchPoint),
               updatedAt           = UTC_TIMESTAMP()
             """,
