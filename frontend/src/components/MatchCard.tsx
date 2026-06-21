@@ -37,6 +37,35 @@ interface MatchCardProps {
   onPredictionSubmit?: (matchId: string, team1Score: number, team2Score: number) => void;
 }
 
+interface GroupStandingRow {
+  teamId: string;
+  teamName: string;
+  teamLogo?: string | null;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+}
+
+function normalizeGroupKey(group?: string | null): string | null {
+  if (!group) return null;
+  const trimmed = group.trim();
+  if (!trimmed) return null;
+  return trimmed.replace(/^group\s+/i, '').trim().toUpperCase();
+}
+
+function toDisplayGroupLabel(groupKey: string): string {
+  return `Group ${groupKey}`;
+}
+
+function isNumericScore(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
 // ── Countdown hook ─────────────────────────────────────────────────────────────
 function useCountdown(targetDate: string) {
   const calc = () => {
@@ -98,6 +127,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState('');
   const [submitted, setSubmitted]   = useState(false);
+  const [showGroupTable, setShowGroupTable] = useState(false);
+  const [groupTableLoading, setGroupTableLoading] = useState(false);
+  const [groupTableError, setGroupTableError] = useState('');
+  const [groupStandings, setGroupStandings] = useState<GroupStandingRow[]>([]);
 
   const countdown = useCountdown(match.predictionsEndingTime);
 
@@ -141,11 +174,106 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
   const t1Name = match.team1Info?.teamName ?? match.team1;
   const t2Name = match.team2Info?.teamName ?? match.team2;
   const roundLabel = /^\d+$/.test(match.round.trim()) ? `Round ${match.round}` : match.round;
-  const groupLabel = match.group
-    ? /^group\s+/i.test(match.group.trim())
-      ? match.group.trim()
-      : `Group ${match.group.trim()}`
-    : null;
+  const groupKey = normalizeGroupKey(match.group);
+  const groupLabel = groupKey ? toDisplayGroupLabel(groupKey) : null;
+
+  const loadGroupStandings = async () => {
+    if (!groupKey) return;
+
+    try {
+      setGroupTableLoading(true);
+      setGroupTableError('');
+
+      const res = await apiService.getAllMatches(undefined, 1, 500);
+      const allMatches: Match[] = res.data?.matches || [];
+      const groupMatches = allMatches.filter((m) => normalizeGroupKey(m.group) === groupKey);
+
+      const table = new Map<string, GroupStandingRow>();
+
+      const upsertTeam = (teamId: string, teamName: string, teamLogo?: string | null) => {
+        if (!table.has(teamId)) {
+          table.set(teamId, {
+            teamId,
+            teamName,
+            teamLogo,
+            played: 0,
+            won: 0,
+            drawn: 0,
+            lost: 0,
+            goalsFor: 0,
+            goalsAgainst: 0,
+            goalDifference: 0,
+            points: 0,
+          });
+        }
+      };
+
+      for (const gm of groupMatches) {
+        const team1Id = gm.team1;
+        const team2Id = gm.team2;
+        const team1Name = gm.team1Info?.teamName ?? gm.team1;
+        const team2Name = gm.team2Info?.teamName ?? gm.team2;
+        const team1Logo = gm.team1Info?.countryLogo;
+        const team2Logo = gm.team2Info?.countryLogo;
+
+        upsertTeam(team1Id, team1Name, team1Logo);
+        upsertTeam(team2Id, team2Name, team2Logo);
+
+        const t1 = table.get(team1Id)!;
+        const t2 = table.get(team2Id)!;
+
+        if (!isNumericScore(gm.team1Score) || !isNumericScore(gm.team2Score)) {
+          continue;
+        }
+
+        const s1 = gm.team1Score;
+        const s2 = gm.team2Score;
+
+        t1.played += 1;
+        t2.played += 1;
+
+        t1.goalsFor += s1;
+        t1.goalsAgainst += s2;
+        t2.goalsFor += s2;
+        t2.goalsAgainst += s1;
+
+        if (s1 > s2) {
+          t1.won += 1;
+          t2.lost += 1;
+          t1.points += 3;
+        } else if (s2 > s1) {
+          t2.won += 1;
+          t1.lost += 1;
+          t2.points += 3;
+        } else {
+          t1.drawn += 1;
+          t2.drawn += 1;
+          t1.points += 1;
+          t2.points += 1;
+        }
+      }
+
+      const rows = Array.from(table.values()).map((row) => ({
+        ...row,
+        goalDifference: row.goalsFor - row.goalsAgainst,
+      }));
+
+      rows.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+        if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+        return a.teamName.localeCompare(b.teamName);
+      });
+
+      setGroupStandings(rows);
+      setShowGroupTable(true);
+    } catch (err) {
+      setGroupTableError('Unable to load group standings right now.');
+      setShowGroupTable(true);
+    } finally {
+      setGroupTableLoading(false);
+    }
+  };
 
   const statusBadge = isCompleted
     ? <span className="px-2 py-0.5 rounded-full bg-gray-500/70 text-[10px] font-bold text-white">Full Time</span>
@@ -178,9 +306,17 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
         </span>
         <div className="flex items-center gap-2 shrink-0">
           {groupLabel && (
-            <span className="px-2 py-0.5 rounded-full bg-indigo-500/25 text-[10px] font-semibold text-indigo-100 border border-indigo-300/25">
-              {groupLabel}
-            </span>
+            <button
+              type="button"
+              onClick={loadGroupStandings}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-500/25 text-[10px] font-semibold text-indigo-100 border border-indigo-300/25 hover:bg-indigo-500/35 transition"
+              title={`Show ${groupLabel} table`}
+            >
+              <svg className="w-3.5 h-3.5 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M3 12h18M3 18h18M8 4v16M16 4v16" />
+              </svg>
+              <span>{groupLabel}</span>
+            </button>
           )}
           <span className="text-[10px] text-white/30 font-medium">{roundLabel}</span>
           {statusBadge}
@@ -340,6 +476,89 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
           </div>
         )}
       </div>
+
+      {showGroupTable && groupLabel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onClick={() => setShowGroupTable(false)}>
+          <div
+            className="w-full max-w-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
+            style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 60%, #0c1a1a 100%)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+              <h3 className="text-white font-bold text-lg">{groupLabel} Standings</h3>
+              <button
+                type="button"
+                onClick={() => setShowGroupTable(false)}
+                className="text-white/70 hover:text-white text-sm font-semibold"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="p-4">
+              {groupTableLoading && <p className="text-white/70 text-sm">Loading standings...</p>}
+              {!groupTableLoading && groupTableError && (
+                <p className="text-red-300 text-sm">{groupTableError}</p>
+              )}
+              {!groupTableLoading && !groupTableError && groupStandings.length === 0 && (
+                <p className="text-white/60 text-sm">No teams available for this group yet.</p>
+              )}
+
+              {!groupTableLoading && !groupTableError && groupStandings.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs sm:text-sm text-white/90">
+                    <thead>
+                      <tr className="text-white/50 border-b border-white/10">
+                        <th className="py-2 pr-2 text-left">#</th>
+                        <th className="py-2 pr-2 text-left">Team</th>
+                        <th className="py-2 px-1 text-center">P</th>
+                        <th className="py-2 px-1 text-center">W</th>
+                        <th className="py-2 px-1 text-center">D</th>
+                        <th className="py-2 px-1 text-center">L</th>
+                        <th className="py-2 px-1 text-center">GF</th>
+                        <th className="py-2 px-1 text-center">GA</th>
+                        <th className="py-2 px-1 text-center">GD</th>
+                        <th className="py-2 pl-2 text-right">Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {groupStandings.map((row, idx) => (
+                        <tr key={row.teamId} className="border-b border-white/5 last:border-0">
+                          <td className="py-2 pr-2 text-white/70">{idx + 1}</td>
+                          <td className="py-2 pr-2">
+                            <div className="flex items-center gap-2 min-w-[120px]">
+                              {row.teamLogo ? (
+                                <img
+                                  src={row.teamLogo}
+                                  alt={row.teamName}
+                                  className="w-5 h-5 rounded-full object-cover border border-white/20"
+                                />
+                              ) : (
+                                <span className="w-5 h-5 rounded-full bg-white/10 border border-white/20 inline-flex items-center justify-center text-[10px] font-bold">
+                                  {row.teamName.slice(0, 1).toUpperCase()}
+                                </span>
+                              )}
+                              <span className="truncate">{row.teamName}</span>
+                            </div>
+                          </td>
+                          <td className="py-2 px-1 text-center">{row.played}</td>
+                          <td className="py-2 px-1 text-center">{row.won}</td>
+                          <td className="py-2 px-1 text-center">{row.drawn}</td>
+                          <td className="py-2 px-1 text-center">{row.lost}</td>
+                          <td className="py-2 px-1 text-center">{row.goalsFor}</td>
+                          <td className="py-2 px-1 text-center">{row.goalsAgainst}</td>
+                          <td className="py-2 px-1 text-center">{row.goalDifference}</td>
+                          <td className="py-2 pl-2 text-right font-bold">{row.points}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
