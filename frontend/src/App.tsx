@@ -1,6 +1,8 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import { trackPageView } from './services/appInsights';
 
 // Pages
 import Home from './pages/Home';
@@ -17,10 +19,28 @@ import Contact from './pages/Contact';
 import Communities from './pages/Communities';
 import WinnersPage from './pages/Winners';
 
+function RouteTelemetry() {
+  const location = useLocation();
+  const lastTrackedPathRef = useRef<string>('');
+
+  useEffect(() => {
+    const path = `${location.pathname}${location.search}${location.hash}`;
+    if (path === lastTrackedPathRef.current) {
+      return;
+    }
+
+    lastTrackedPathRef.current = path;
+    trackPageView(location.pathname || 'unknown', window.location.href);
+  }, [location.pathname, location.search, location.hash]);
+
+  return null;
+}
+
 
 function App() {
   return (
     <Router>
+      <RouteTelemetry />
       <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 60%, #0c1a1a 100%)' }}>
         <Header />
         <main className="flex-1">

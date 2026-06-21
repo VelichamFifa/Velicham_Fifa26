@@ -1,5 +1,6 @@
 // Load `.env` before `./app` so `FRONTEND_URL` and DB settings exist when `app.ts` reads `config`.
 import './config/loadEnv';
+import './config/appInsights';
 
 import { initializeApp } from './app';
 import { logger } from './lib/logger';
