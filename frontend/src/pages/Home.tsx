@@ -157,17 +157,20 @@ const Home: React.FC = () => {
             </div>
         </div>
 
-        {/* Rule Changes Notification — shown for all users */}
-        <div className="mb-4 p-3 sm:p-4 rounded-lg border border-yellow-500/40 bg-yellow-500/10 flex items-start gap-3">
-          <span className="text-lg">⚠️</span>
-          <div className="flex-1">
-            <p className="text-yellow-100 text-sm sm:text-base font-medium">
-              <strong>Rule Changes:</strong> We have added 2 new scoring rules with updated points!
-            </p>
-            <p className="text-yellow-100/80 text-xs sm:text-sm mt-1">
-              Check the <strong>Scoring Rules</strong> section below to see details on Knockout matches and Community Weightage points.
-            </p>
-          </div>
+        {/* Scoring notification — shown for all users */}
+        <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="rounded-md border border-yellow-400/40 bg-yellow-500/15 px-3 py-2 flex items-start gap-2">
+              <span className="text-sm leading-none mt-0.5">⚠️</span>
+              <p className="text-yellow-100/90 text-xs sm:text-sm">
+                <strong>Knockout Matches:</strong> Get +2 points for correctly predicting the penalty shootout winner.
+              </p>
+            </div>
+            <div className="rounded-md border border-yellow-400/40 bg-yellow-500/15 px-3 py-2 flex items-start gap-2">
+              <span className="text-sm leading-none mt-0.5">⚠️</span>
+              <p className="text-yellow-100/90 text-xs sm:text-sm">
+                <strong>Community Weightage Point:</strong> Communities earn +1 point for every 10 members participating in predictions, starting from Group Stage Round 3.
+              </p>
+            </div>
         </div>
 
         {/* Match Prediction Tiles — shown only when logged in */}
