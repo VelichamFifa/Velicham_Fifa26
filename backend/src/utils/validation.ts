@@ -55,6 +55,7 @@ export const schemas = {
     matchId: Joi.string().required(),
     team1Score: Joi.number().min(0).required(),
     team2Score: Joi.number().min(0).required(),
+    penaltyShootoutWinner: Joi.string().trim().allow('', null).optional(),
     comment: Joi.string().allow('', null).optional(),
   }),
 
@@ -67,6 +68,7 @@ export const schemas = {
     predictionsEndingTime: Joi.date().required(),
     round: Joi.string().trim().required(),
     group: Joi.string().trim().allow('', null).optional(),
+    isKnockoutMatch: Joi.boolean().optional(),
     matchTag: Joi.string().allow('', null).optional(),
     comment: Joi.string().allow('', null).optional(),
   }),

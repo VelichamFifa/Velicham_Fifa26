@@ -5,6 +5,7 @@ interface ScoringCriteria {
   correctTeam1Score: number;
   correctTeam2Score: number;
   correctGoalDifference: number;
+  correctPenaltyShootoutWinner: number;
 }
 
 const SCORING: ScoringCriteria = {
@@ -12,6 +13,7 @@ const SCORING: ScoringCriteria = {
   correctTeam1Score: 2,
   correctTeam2Score: 2,
   correctGoalDifference: 1,
+  correctPenaltyShootoutWinner: 2,
 };
 
 export const calculatePredictionPoints = (
@@ -69,14 +71,30 @@ export const processMatchResults = async (matchId: number) => {
 
   const predictions = await prisma.prediction.findMany({ where: { matchId } });
   const communityPointsMap = new Map<string, number>();
+  const communityPredictorIdsMap = new Map<string, Set<number>>();
+  const knockout = Boolean(match.isKnockoutMatch);
+  const actualPenaltyWinner = (match.penaltyShootoutWinner || '').trim();
 
   for (const prediction of predictions) {
-    const points = calculatePredictionPoints(
+    const basePoints = calculatePredictionPoints(
       prediction.team1Score,
       prediction.team2Score,
       match.team1Score,
       match.team2Score
     );
+
+    const predictedDraw = prediction.team1Score === prediction.team2Score;
+    const actualDraw = match.team1Score === match.team2Score;
+    const bonusPenaltyPoints =
+      knockout &&
+      predictedDraw &&
+      actualDraw &&
+      !!actualPenaltyWinner &&
+      prediction.penaltyShootoutWinner === actualPenaltyWinner
+        ? SCORING.correctPenaltyShootoutWinner
+        : 0;
+
+    const points = basePoints + bonusPenaltyPoints;
 
     await prisma.prediction.update({
       where: { id: prediction.id },
@@ -109,6 +127,9 @@ export const processMatchResults = async (matchId: number) => {
         finalPoints: points,
         team1PredictedScore: prediction.team1Score,
         team2PredictedScore: prediction.team2Score,
+        predictedPenaltyShootoutWinner: prediction.penaltyShootoutWinner,
+        actualPenaltyShootoutWinner: actualPenaltyWinner || null,
+        penaltyShootoutPoints: bonusPenaltyPoints,
         communityName1,
         communityName2,
       },
@@ -119,6 +140,9 @@ export const processMatchResults = async (matchId: number) => {
         finalPoints: points,
         team1PredictedScore: prediction.team1Score,
         team2PredictedScore: prediction.team2Score,
+        predictedPenaltyShootoutWinner: prediction.penaltyShootoutWinner,
+        actualPenaltyShootoutWinner: actualPenaltyWinner || null,
+        penaltyShootoutPoints: bonusPenaltyPoints,
         communityName1,
         communityName2,
       },
@@ -127,25 +151,45 @@ export const processMatchResults = async (matchId: number) => {
     if (user.communityId1) {
       const cid1 = String(user.communityId1);
       communityPointsMap.set(cid1, (communityPointsMap.get(cid1) || 0) + points);
+      if (!communityPredictorIdsMap.has(cid1)) {
+        communityPredictorIdsMap.set(cid1, new Set<number>());
+      }
+      communityPredictorIdsMap.get(cid1)!.add(user.id);
     }
     if (user.communityId2 && user.communityId2 !== user.communityId1) {
       const cid2 = String(user.communityId2);
       communityPointsMap.set(cid2, (communityPointsMap.get(cid2) || 0) + points);
+      if (!communityPredictorIdsMap.has(cid2)) {
+        communityPredictorIdsMap.set(cid2, new Set<number>());
+      }
+      communityPredictorIdsMap.get(cid2)!.add(user.id);
     }
   }
 
+  const communityWeightageMap = new Map<string, number>();
+  for (const communityId of communityPointsMap.keys()) {
+    const predictorCount = communityPredictorIdsMap.get(communityId)?.size || 0;
+    // 1 weightage point for each full 10 predictors in this match.
+    communityWeightageMap.set(communityId, Math.floor(predictorCount / 10));
+  }
+
   for (const [communityId, communityMatchPoint] of communityPointsMap) {
+    const communityWeightagePoint = communityWeightageMap.get(communityId) || 0;
+    const weightedCommunityMatchPoint = communityMatchPoint + communityWeightagePoint;
+
     await prisma.communityResult.upsert({
       where: { communityId_matchId: { communityId, matchId } },
       create: {
         communityId,
         matchId,
         matchTag: match.matchTag,
-        communityMatchPoint,
+        communityWeightagePoint,
+        communityMatchPoint: weightedCommunityMatchPoint,
       },
       update: {
         matchTag: match.matchTag,
-        communityMatchPoint,
+        communityWeightagePoint,
+        communityMatchPoint: weightedCommunityMatchPoint,
       },
     });
   }

@@ -47,13 +47,25 @@ const Home: React.FC = () => {
     return active.length > 0 ? sort(active) : sort(matches);
   }, [matches]);
 
-  const handlePredictionSubmit = (matchId: string, team1Score: number, team2Score: number) => {
+  const handlePredictionSubmit = (
+    matchId: string,
+    team1Score: number,
+    team2Score: number,
+    penaltyShootoutWinner?: string
+  ) => {
     const submittedTime = new Date().toISOString();
     setUserPredictions((prev) => {
       const idx = prev.findIndex((p) => getPredictionMatchId(p) === matchId);
       if (idx >= 0) {
         const next = [...prev];
-        next[idx] = { ...next[idx], matchId, team1Score, team2Score, submittedTime };
+        next[idx] = {
+          ...next[idx],
+          matchId,
+          team1Score,
+          team2Score,
+          penaltyShootoutWinner: penaltyShootoutWinner || null,
+          submittedTime,
+        };
         return next;
       }
       const optimistic: Prediction = {
@@ -63,6 +75,7 @@ const Home: React.FC = () => {
         matchTag: '',
         team1Score,
         team2Score,
+        penaltyShootoutWinner: penaltyShootoutWinner || null,
         submittedTime,
         points: 0,
       };
@@ -233,6 +246,10 @@ const Home: React.FC = () => {
               <li className="flex items-center gap-3">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/20 text-sky-400 text-[10px] border border-sky-500/20 font-bold">1</span>
                 <span><strong>Correct Goal Difference:</strong> 1 point</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] border border-emerald-500/20 font-bold">+2</span>
+                <span><strong>Knockout Draw Bonus:</strong> Correct penalty shootout winner</span>
               </li>
             </ul>
           </div>

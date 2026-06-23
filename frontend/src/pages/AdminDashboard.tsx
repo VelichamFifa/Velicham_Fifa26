@@ -344,7 +344,31 @@ const AdminDashboard: React.FC = () => {
                 setError('Please enter valid scores');
                 return;
             }
-            await apiService.finalizeMatch({ matchId, team1Score, team2Score });
+
+            let penaltyShootoutWinner: string | undefined;
+            if (match && Boolean(match.isKnockoutMatch) && team1Score === team2Score) {
+                const team1Name = getTeamDisplayName(match, 'team1');
+                const team2Name = getTeamDisplayName(match, 'team2');
+                const winnerInput = window.prompt(
+                    `Knockout draw detected. Enter penalty shootout winner:\n1 = ${team1Name}\n2 = ${team2Name}`,
+                    '1'
+                );
+
+                if (!winnerInput) {
+                    setError('Penalty shootout winner is required for knockout draw results');
+                    return;
+                }
+
+                const normalized = winnerInput.trim();
+                if (normalized === '1') penaltyShootoutWinner = match.team1;
+                else if (normalized === '2') penaltyShootoutWinner = match.team2;
+                else {
+                    setError('Invalid shootout winner. Enter 1 or 2.');
+                    return;
+                }
+            }
+
+            await apiService.finalizeMatch({ matchId, team1Score, team2Score, penaltyShootoutWinner });
             setSuccess(
               import.meta.env.VITE_FINALIZE_MATCH_URL
                                 ? 'Match moved to publishing. It will switch to completed after Azure Function finishes scoring and leaderboard rebuild.'

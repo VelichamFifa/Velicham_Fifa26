@@ -52,6 +52,8 @@ export interface Match {
   team2: string;
   team1Score?: number;
   team2Score?: number;
+  penaltyShootoutWinner?: string | null;
+  isKnockoutMatch?: boolean;
   matchTime: string;
   predictionsEndingTime: string;
   round: string;
@@ -70,6 +72,7 @@ export interface Prediction {
   matchTag: string;
   team1Score: number;
   team2Score: number;
+  penaltyShootoutWinner?: string | null;
   submittedTime: string;
   points: number;
   comment?: string;
