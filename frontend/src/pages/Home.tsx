@@ -157,22 +157,24 @@ const Home: React.FC = () => {
             </div>
         </div>
 
+        {/* Rule Changes Notification — shown for all users */}
+        <div className="mb-4 p-3 sm:p-4 rounded-lg border border-yellow-500/40 bg-yellow-500/10 flex items-start gap-3">
+          <span className="text-lg">⚠️</span>
+          <div className="flex-1">
+            <p className="text-yellow-100 text-sm sm:text-base font-medium">
+              <strong>Rule Changes:</strong> We have added 2 new scoring rules with updated points!
+            </p>
+            <p className="text-yellow-100/80 text-xs sm:text-sm mt-1">
+              Check the <strong>Scoring Rules</strong> section below to see details on Knockout matches and Community Weightage points.
+            </p>
+          </div>
+        </div>
+
         {/* Match Prediction Tiles — shown only when logged in */}
         {isLoggedIn && (
           <div className="mb-12 sm:mb-16">
             <div className="flex items-center mb-4">
               <h2 className="text-base sm:text-lg font-bold text-white">⚽ Matches to Predict</h2>
-            </div>
-            <div className="mb-4 p-3 sm:p-4 rounded-lg border border-yellow-500/40 bg-yellow-500/10 flex items-start gap-3">
-              <span className="text-lg">⚠️</span>
-              <div className="flex-1">
-                <p className="text-yellow-100 text-sm sm:text-base font-medium">
-                  <strong>Rule Changes:</strong> We have added 2 new scoring rules with updated points!
-                </p>
-                <p className="text-yellow-100/80 text-xs sm:text-sm mt-1">
-                  Check the <strong>Scoring Rules</strong> section below to see details on Knockout matches and Community Weightage points.
-                </p>
-              </div>
             </div>
             {loadingMatches ? (
               <div className="text-center py-10">

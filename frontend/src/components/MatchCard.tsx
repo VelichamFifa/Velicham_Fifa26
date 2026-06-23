@@ -414,11 +414,11 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
               <select
                 value={penaltyShootoutWinner}
                 onChange={(e) => setPenaltyShootoutWinner(e.target.value)}
-                className="bg-white/10 border border-white/25 rounded px-2 py-1 text-[10px] text-white focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                className="min-w-[170px] h-9 bg-white/10 border border-white/25 rounded-md px-3 py-1.5 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-sky-400/60"
               >
-                <option value="" className="bg-slate-900">Select winner</option>
-                <option value={match.team1} className="bg-slate-900">{t1Name}</option>
-                <option value={match.team2} className="bg-slate-900">{t2Name}</option>
+                <option value="" className="bg-slate-900 text-sm">Select winner</option>
+                <option value={match.team1} className="bg-slate-900 text-sm">{t1Name}</option>
+                <option value={match.team2} className="bg-slate-900 text-sm">{t2Name}</option>
               </select>
               <span className="text-[9px] text-white/45 text-center leading-tight max-w-[140px]">
                 Correct winner earns +2 points.
