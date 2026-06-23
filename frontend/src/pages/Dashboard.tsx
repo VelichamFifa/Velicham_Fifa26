@@ -162,7 +162,7 @@ const Dashboard: React.FC = () => {
                 aria-expanded={activeScoringPopup === 'knockout'}
                 aria-controls="rule-change-popup"
               >
-                <span>Knockout points</span>
+                <span>Knockout Matches</span>
               </button>
 
               <button
@@ -186,7 +186,7 @@ const Dashboard: React.FC = () => {
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-xs font-black uppercase tracking-wider text-amber-200">
-                    {activeScoringPopup === 'knockout' ? 'Knockout Points' : 'Community Weightage Point'}
+                    {activeScoringPopup === 'knockout' ? 'Knockout Matches' : 'Community Weightage Point'}
                   </p>
                   <button
                     type="button"
@@ -200,15 +200,15 @@ const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="mt-1 rounded-md border border-amber-300/40 bg-amber-400/10 px-3 py-2 flex items-start gap-2">
+                <div className="mt-1 flex items-start gap-2">
                   <span className="text-sm leading-none mt-0.5">⚠️</span>
                   {activeScoringPopup === 'knockout' ? (
                     <p className="text-sm text-white/90">
-                      <span className="font-semibold text-amber-200">Knockout Matches:</span> Get +2 points for correctly predicting the penalty shootout winner.
+                      <span className="font-semibold text-amber-200"></span> Get +2 points for correctly predicting the penalty shootout winner.
                     </p>
                   ) : (
                     <p className="text-sm text-white/80 leading-relaxed">
-                      <span className="font-semibold text-amber-200">Community Weightage Point:</span> 1 point per 10 community members starting from Group Stage Round 3.
+                      <span className="font-semibold text-amber-200"></span> Communities earn +1 point for every 10 members participating in predictions, starting from Group Stage Round 3.
                     </p>
                   )}
                 </div>
