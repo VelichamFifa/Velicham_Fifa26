@@ -71,6 +71,7 @@ def main(msg: func.QueueMessage) -> None:
     match_id = payload.get("matchId")
     team1_score = payload.get("team1Score")
     team2_score = payload.get("team2Score")
+    penalty_shootout_winner = payload.get("penaltyShootoutWinner")
 
     if match_id is None or team1_score is None or team2_score is None:
         logger.error(
@@ -98,7 +99,7 @@ def main(msg: func.QueueMessage) -> None:
     # Reuse the finalize logic (scores predictions + rebuilds leaderboards)
     log_step(logger, "invoke_finalize", function="process_match_queue", matchId=match_id)
     try:
-        result = _finalize(match_id, team1_score, team2_score)
+        result = _finalize(match_id, team1_score, team2_score, penalty_shootout_winner)
     except Exception:
         logger.exception(
             "process_match_queue: finalize threw exception (matchId=%s, messageId=%s, dequeueCount=%s)",

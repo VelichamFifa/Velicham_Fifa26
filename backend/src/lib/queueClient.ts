@@ -54,13 +54,14 @@ export function isQueueConfigured(): boolean {
 export async function enqueueFinalizeMatch(
   matchId: number,
   team1Score: number,
-  team2Score: number
+  team2Score: number,
+  penaltyShootoutWinner?: string
 ): Promise<void> {
   const queueClient = getServiceClient().getQueueClient(QUEUE_NAME);
   // Ensure queue exists (no-op if already created)
   await queueClient.createIfNotExists();
   // Azure Storage Queue requires base64-encoded message content
-  const payload = JSON.stringify({ matchId, team1Score, team2Score });
+  const payload = JSON.stringify({ matchId, team1Score, team2Score, penaltyShootoutWinner });
   const encoded = Buffer.from(payload).toString('base64');
   //log the encoded queue message for debugging (will be decoded by the function)
   console.log(`Enqueuing message to ${QUEUE_NAME}: ${encoded}`);

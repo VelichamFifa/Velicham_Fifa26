@@ -410,6 +410,7 @@ const MyPredictions: React.FC = () => {
                         initialPrediction={{
                             team1Score: editingPrediction.team1Score,
                             team2Score: editingPrediction.team2Score,
+                            penaltyShootoutWinner: editingPrediction.penaltyShootoutWinner,
                             comment: editingPrediction.comment
                         }}
                         onSuccess={handleEditSuccess}

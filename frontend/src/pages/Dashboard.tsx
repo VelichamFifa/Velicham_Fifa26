@@ -87,7 +87,12 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handlePredictionSubmit = (matchId: string, team1Score: number, team2Score: number) => {
+  const handlePredictionSubmit = (
+    matchId: string,
+    team1Score: number,
+    team2Score: number,
+    penaltyShootoutWinner?: string
+  ) => {
     const submittedTime = new Date().toISOString();
 
     setUserPredictions((prev) => {
@@ -99,6 +104,7 @@ const Dashboard: React.FC = () => {
           matchId,
           team1Score,
           team2Score,
+          penaltyShootoutWinner: penaltyShootoutWinner || null,
           submittedTime,
         };
         return next;
@@ -111,6 +117,7 @@ const Dashboard: React.FC = () => {
         matchTag: '',
         team1Score,
         team2Score,
+        penaltyShootoutWinner: penaltyShootoutWinner || null,
         submittedTime,
         points: 0,
       };

@@ -7,6 +7,7 @@ interface PredictionFormProps {
   initialPrediction?: {
     team1Score: number | '';
     team2Score: number | '';
+    penaltyShootoutWinner?: string | null;
     comment?: string;
   };
   onSuccess?: (prediction: Prediction) => void;
@@ -16,14 +17,21 @@ interface PredictionFormProps {
 const PredictionForm: React.FC<PredictionFormProps> = ({ match, initialPrediction, onSuccess, onClose }) => {
   const [team1Score, setTeam1Score] = useState<number | ''>(initialPrediction?.team1Score ?? '');
   const [team2Score, setTeam2Score] = useState<number | ''>(initialPrediction?.team2Score ?? '');
+  const [penaltyShootoutWinner, setPenaltyShootoutWinner] = useState(initialPrediction?.penaltyShootoutWinner ?? '');
   const [comment, setComment] = useState(initialPrediction?.comment ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const knockoutMatch = Boolean(match.isKnockoutMatch);
+  const predictedDraw = team1Score !== '' && team2Score !== '' && Number(team1Score) === Number(team2Score);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (team1Score === '' || team2Score === '') {
       setError('Please enter both scores');
+      return;
+    }
+    if (knockoutMatch && predictedDraw && !penaltyShootoutWinner.trim()) {
+      setError('Please select a penalty shootout winner for knockout draw predictions');
       return;
     }
     setError('');
@@ -34,6 +42,7 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ match, initialPredictio
         matchId: match.matchId,
         team1Score: Number(team1Score),
         team2Score: Number(team2Score),
+        penaltyShootoutWinner: knockoutMatch && predictedDraw ? penaltyShootoutWinner.trim() : null,
         comment,
       });
 
@@ -103,6 +112,26 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ match, initialPredictio
             required
           />
         </div>
+
+        {knockoutMatch && predictedDraw && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <label className="block text-sm font-semibold text-amber-900 mb-2">
+              Penalty shootout winner
+            </label>
+            <select
+              value={penaltyShootoutWinner}
+              onChange={(e) => setPenaltyShootoutWinner(e.target.value)}
+              className="w-full px-4 py-2 border border-amber-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white text-gray-800"
+            >
+              <option value="">Select winner (only needed if you predict a draw)</option>
+              <option value={match.team1}>{match.team1}</option>
+              <option value={match.team2}>{match.team2}</option>
+            </select>
+            <p className="mt-2 text-xs text-amber-800">
+              If your knockout prediction is a draw, this selection is required and earns +2 points when correct.
+            </p>
+          </div>
+        )}
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
