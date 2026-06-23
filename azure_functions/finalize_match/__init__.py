@@ -18,6 +18,9 @@ from shared.scoring import (
 
 logger = get_logger(__name__)
 
+# Load community weightage divisor from environment (1 point per N members)
+COMMUNITY_WEIGHTAGE_DIVISOR = int(os.environ.get("COMMUNITY_WEIGHTAGE_DIVISOR", "10"))
+
 
 def _archive_predictions_to_blob(predictions: list, match_id: int, match_tag: str) -> None:
     """Serialize predictions for a match to JSON and upload to Azure Blob Storage."""
@@ -357,11 +360,11 @@ def _finalize(
         log_step(logger, "results_ranks_updated", function="finalize_match", matchId=match_id)
 
                 # Step 4: Community results ───────────────────────────────────────
-                # communityWeightagePoint = 1 point per full 10 members in the community.
+                # communityWeightagePoint = 1 point per full N members in the community (N = COMMUNITY_WEIGHTAGE_DIVISOR).
                 # communityMatchPoint = AVG member match points + communityWeightagePoint bonus.
                 # Uses UNION to cover both communityId1 and communityId2 memberships.
         cur.execute(
-            """
+            f"""
             INSERT INTO community_results (
                             communityId, matchId, matchTag, communityWeightagePoint, communityMatchPoint, totalCommunityPoint, createdAt, updatedAt
             )
@@ -369,8 +372,8 @@ def _finalize(
               CAST(members.communityId AS CHAR),
               %s,
               %s,
-                            FLOOR(COUNT(DISTINCT members.userId) / 10),
-                            ROUND(AVG(r.matchPoints)) + FLOOR(COUNT(DISTINCT members.userId) / 10),
+                            FLOOR(COUNT(DISTINCT members.userId) / {COMMUNITY_WEIGHTAGE_DIVISOR}),
+                            ROUND(AVG(r.matchPoints)) + FLOOR(COUNT(DISTINCT members.userId) / {COMMUNITY_WEIGHTAGE_DIVISOR}),
               0,
               UTC_TIMESTAMP(),
               UTC_TIMESTAMP()
