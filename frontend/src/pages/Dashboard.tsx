@@ -148,7 +148,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
-      <div className="mb-6 sm:mb-8">
+      <div className="mb-2 sm:mb-3">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">Welcome, {user?.firstName}!</h1>
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm sm:text-base text-white/60">Make predictions on upcoming matches and climb the leaderboard</p>
@@ -156,12 +156,12 @@ const Dashboard: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowRuleChangePopup((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/45 bg-amber-400/20 px-2.5 py-1 text-[11px] font-bold tracking-wide text-amber-100 shadow-[0_0_0_1px_rgba(251,191,36,0.12)] animate-pulse"
+              className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/45 bg-amber-400/20 px-3 py-1.5 text-xs font-bold tracking-wide text-amber-100 shadow-[0_0_0_1px_rgba(251,191,36,0.12)] animate-pulse"
               aria-label="Rule Change guidance"
               aria-expanded={showRuleChangePopup}
               aria-controls="rule-change-popup"
             >
-              <svg className="h-3.5 w-3.5 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <svg className="h-4 w-4 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86l-8 13.86A1 1 0 0 0 3.16 19h17.68a1 1 0 0 0 .87-1.5l-8-13.64a1 1 0 0 0-1.74 0Z" />
               </svg>
               <span>Rule Change</span>
@@ -175,7 +175,7 @@ const Dashboard: React.FC = () => {
                 className="absolute left-0 top-[calc(100%+8px)] z-20 w-[min(88vw,320px)] rounded-xl border border-amber-300/40 bg-slate-900/95 p-3 shadow-xl backdrop-blur"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-[11px] font-black uppercase tracking-wider text-amber-200">Rule Changes</p>
+                  <p className="text-xs font-black uppercase tracking-wider text-amber-200">Rule Changes</p>
                   <button
                     type="button"
                     onClick={() => setShowRuleChangePopup(false)}
@@ -188,11 +188,11 @@ const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                <p className="mt-1 text-xs text-white/90">
+                <p className="mt-1 text-sm text-white/90">
                   We have added 2 new scoring rules with updated points.
                 </p>
-                <p className="mt-2 text-xs text-white/75 leading-relaxed">
-                  Check the <span className="font-semibold text-amber-200">Scoring Rules</span> section in Home page to see details on Knockout matches and Community Weightage points.
+                <p className="mt-2 text-sm text-white/75 leading-relaxed">
+                  Check the <span className="font-semibold text-amber-200">Scoring Rules</span> section in <Link to="/" className="font-semibold text-sky-400 hover:text-sky-300 underline">Home</Link> page to see details on Knockout matches and Community Weightage points.
                 </p>
               </div>
             )}
