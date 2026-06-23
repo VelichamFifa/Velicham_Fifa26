@@ -13,7 +13,7 @@ const Dashboard: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [userPredictions, setUserPredictions] = useState<Prediction[]>([]);
-  const [showRuleChangePopup, setShowRuleChangePopup] = useState(false);
+  const [activeScoringPopup, setActiveScoringPopup] = useState<'knockout' | 'community' | null>(null);
 
 
 
@@ -153,34 +153,46 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm sm:text-base text-white/60">Make predictions on upcoming matches and climb the leaderboard</p>
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowRuleChangePopup((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/45 bg-amber-400/20 px-3 py-1.5 text-xs font-bold tracking-wide text-amber-100 shadow-[0_0_0_1px_rgba(251,191,36,0.12)] animate-pulse"
-              aria-label="Rule Change guidance"
-              aria-expanded={showRuleChangePopup}
-              aria-controls="rule-change-popup"
-            >
-              <svg className="h-4 w-4 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86l-8 13.86A1 1 0 0 0 3.16 19h17.68a1 1 0 0 0 .87-1.5l-8-13.64a1 1 0 0 0-1.74 0Z" />
-              </svg>
-              <span>Rule Change</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveScoringPopup((prev) => (prev === 'knockout' ? null : 'knockout'))}
+                className="inline-flex items-center rounded-full border border-amber-300/45 bg-amber-400/20 px-3 py-1.5 text-xs font-bold tracking-wide text-amber-100 shadow-[0_0_0_1px_rgba(251,191,36,0.12)]"
+                aria-label="Knockout points guidance"
+                aria-expanded={activeScoringPopup === 'knockout'}
+                aria-controls="rule-change-popup"
+              >
+                <span>Knockout points</span>
+              </button>
 
-            {showRuleChangePopup && (
+              <button
+                type="button"
+                onClick={() => setActiveScoringPopup((prev) => (prev === 'community' ? null : 'community'))}
+                className="inline-flex items-center rounded-full border border-amber-300/45 bg-amber-400/20 px-3 py-1.5 text-xs font-bold tracking-wide text-amber-100 shadow-[0_0_0_1px_rgba(251,191,36,0.12)]"
+                aria-label="Community weightage point guidance"
+                aria-expanded={activeScoringPopup === 'community'}
+                aria-controls="rule-change-popup"
+              >
+                <span>Community Weightage Point</span>
+              </button>
+            </div>
+
+            {activeScoringPopup && (
               <div
                 id="rule-change-popup"
                 role="dialog"
-                aria-label="Rule Change details"
+                aria-label="Scoring updates details"
                 className="absolute left-0 top-[calc(100%+8px)] z-20 w-[min(88vw,320px)] rounded-xl border border-amber-300/40 bg-slate-900/95 p-3 shadow-xl backdrop-blur"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-xs font-black uppercase tracking-wider text-amber-200">Rule Changes</p>
+                  <p className="text-xs font-black uppercase tracking-wider text-amber-200">
+                    {activeScoringPopup === 'knockout' ? 'Knockout Points' : 'Community Weightage Point'}
+                  </p>
                   <button
                     type="button"
-                    onClick={() => setShowRuleChangePopup(false)}
+                    onClick={() => setActiveScoringPopup(null)}
                     className="rounded p-0.5 text-white/70 hover:text-white"
-                    aria-label="Close Rule Change popup"
+                    aria-label="Close scoring popup"
                   >
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M6 18L18 6" />
@@ -188,12 +200,18 @@ const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                <p className="mt-1 text-sm text-white/90">
-                  We have added 2 new scoring rules with updated points.
-                </p>
-                <p className="mt-2 text-sm text-white/75 leading-relaxed">
-                  Check the <span className="font-semibold text-amber-200">Scoring Rules</span> section in <Link to="/" className="font-semibold text-sky-400 hover:text-sky-300 underline">Home</Link> page to see details on Knockout matches and Community Weightage points.
-                </p>
+                <div className="mt-1 rounded-md border border-amber-300/40 bg-amber-400/10 px-3 py-2 flex items-start gap-2">
+                  <span className="text-sm leading-none mt-0.5">⚠️</span>
+                  {activeScoringPopup === 'knockout' ? (
+                    <p className="text-sm text-white/90">
+                      <span className="font-semibold text-amber-200">Knockout Matches:</span> Get +2 points for correctly predicting the penalty shootout winner.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-white/80 leading-relaxed">
+                      <span className="font-semibold text-amber-200">Community Weightage Point:</span> 1 point per 10 community members starting from Group Stage Round 3.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>
