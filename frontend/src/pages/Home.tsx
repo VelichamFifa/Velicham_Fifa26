@@ -163,6 +163,17 @@ const Home: React.FC = () => {
             <div className="flex items-center mb-4">
               <h2 className="text-base sm:text-lg font-bold text-white">⚽ Matches to Predict</h2>
             </div>
+            <div className="mb-4 p-3 sm:p-4 rounded-lg border border-yellow-500/40 bg-yellow-500/10 flex items-start gap-3">
+              <span className="text-lg">⚠️</span>
+              <div className="flex-1">
+                <p className="text-yellow-100 text-sm sm:text-base font-medium">
+                  <strong>Rule Changes:</strong> We have added 2 new scoring rules with updated points!
+                </p>
+                <p className="text-yellow-100/80 text-xs sm:text-sm mt-1">
+                  Check the <strong>Scoring Rules</strong> section below to see details on Knockout matches and Community Weightage points.
+                </p>
+              </div>
+            </div>
             {loadingMatches ? (
               <div className="text-center py-10">
                 <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-secondary"></div>
@@ -247,9 +258,13 @@ const Home: React.FC = () => {
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/20 text-sky-400 text-[10px] border border-sky-500/20 font-bold">1</span>
                 <span><strong>Correct Goal Difference:</strong> 1 point</span>
               </li>
-              <li className="flex items-center gap-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] border border-emerald-500/20 font-bold">+2</span>
-                <span><strong>Knockout Draw Bonus:</strong> Correct penalty shootout winner</span>
+              <li className="flex items-center gap-3 p-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/40 text-emerald-300 text-[10px] border border-emerald-500/60 font-bold">+2</span>
+                <span className="text-emerald-100"><strong>✨ Correct penalty shootout winner in Knockout matches:</strong> 2 points</span>
+              </li>
+              <li className="flex items-center gap-3 p-3 rounded-lg border border-purple-500/40 bg-purple-500/10">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/40 text-purple-300 text-[10px] border border-purple-500/60 font-bold">1</span>
+                <span className="text-purple-100"><strong>✨ Community Weightage:</strong> 1 point per 10 community members</span>
               </li>
             </ul>
           </div>
