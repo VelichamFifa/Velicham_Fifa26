@@ -7,7 +7,7 @@ name: Build and deploy Python project to Azure Function App - test-worldcup-prod
 on:
   push:
     branches:
-      - release
+      - dev
     paths:
       - azure_functions/**
       - .github/workflows/dev_test-worldcup-prod.yml
