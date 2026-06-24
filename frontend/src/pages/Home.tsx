@@ -47,13 +47,25 @@ const Home: React.FC = () => {
     return active.length > 0 ? sort(active) : sort(matches);
   }, [matches]);
 
-  const handlePredictionSubmit = (matchId: string, team1Score: number, team2Score: number) => {
+  const handlePredictionSubmit = (
+    matchId: string,
+    team1Score: number,
+    team2Score: number,
+    penaltyShootoutWinner?: string
+  ) => {
     const submittedTime = new Date().toISOString();
     setUserPredictions((prev) => {
       const idx = prev.findIndex((p) => getPredictionMatchId(p) === matchId);
       if (idx >= 0) {
         const next = [...prev];
-        next[idx] = { ...next[idx], matchId, team1Score, team2Score, submittedTime };
+        next[idx] = {
+          ...next[idx],
+          matchId,
+          team1Score,
+          team2Score,
+          penaltyShootoutWinner: penaltyShootoutWinner || null,
+          submittedTime,
+        };
         return next;
       }
       const optimistic: Prediction = {
@@ -63,6 +75,7 @@ const Home: React.FC = () => {
         matchTag: '',
         team1Score,
         team2Score,
+        penaltyShootoutWinner: penaltyShootoutWinner || null,
         submittedTime,
         points: 0,
       };
@@ -141,6 +154,22 @@ const Home: React.FC = () => {
               >
                 Winners
               </Link>
+            </div>
+        </div>
+
+        {/* Scoring notification — shown for all users */}
+        <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="rounded-md border border-yellow-400/40 bg-yellow-500/15 px-3 py-2 flex items-start gap-2">
+              <span className="text-sm leading-none mt-0.5">⚠️</span>
+              <p className="text-yellow-100/90 text-xs sm:text-sm">
+                <strong>Knockout Matches:</strong> Get +2 points for correctly predicting the penalty shootout winner.
+              </p>
+            </div>
+            <div className="rounded-md border border-yellow-400/40 bg-yellow-500/15 px-3 py-2 flex items-start gap-2">
+              <span className="text-sm leading-none mt-0.5">⚠️</span>
+              <p className="text-yellow-100/90 text-xs sm:text-sm">
+                <strong>Community Weightage Point:</strong> Communities earn +1 point for every 10 members participating in predictions, starting from Group Stage Round 3.
+              </p>
             </div>
         </div>
 
@@ -233,6 +262,14 @@ const Home: React.FC = () => {
               <li className="flex items-center gap-3">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/20 text-sky-400 text-[10px] border border-sky-500/20 font-bold">1</span>
                 <span><strong>Correct Goal Difference:</strong> 1 point</span>
+              </li>
+              <li className="flex items-center gap-3 p-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/40 text-emerald-300 text-[10px] border border-emerald-500/60 font-bold">+2</span>
+                <span className="text-emerald-100"><strong>✨ Correct penalty shootout winner in Knockout matches:</strong> 2 points</span>
+              </li>
+              <li className="flex items-center gap-3 p-3 rounded-lg border border-purple-500/40 bg-purple-500/10">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/40 text-purple-300 text-[10px] border border-purple-500/60 font-bold">1</span>
+                <span className="text-purple-100"><strong>✨ Community Weightage:</strong> 1 point per 10 community members</span>
               </li>
             </ul>
           </div>

@@ -59,7 +59,7 @@ export const getCommunityRequests = async (req: AuthRequest, res: Response) => {
 
 export const finalizeMatch = async (req: AuthRequest, res: Response) => {
   try {
-    const { matchId, team1Score, team2Score } = req.body;
+    const { matchId, team1Score, team2Score, penaltyShootoutWinner } = req.body;
     if (team1Score === undefined || team2Score === undefined) {
       return res.status(400).json({ error: 'Both team scores are required' });
     }
@@ -78,15 +78,35 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
     const match = await prisma.match.findUnique({ where: { id: matchIdNum } });
     if (!match) return res.status(404).json({ error: 'Match not found' });
 
+    const knockout = Boolean(match.isKnockoutMatch);
+    const drawAfterRegAndExtra = team1ScoreNum === team2ScoreNum;
+    const normalizedPenaltyWinner = typeof penaltyShootoutWinner === 'string' ? penaltyShootoutWinner.trim() : '';
+
+    if (knockout && drawAfterRegAndExtra) {
+      if (!normalizedPenaltyWinner) {
+        return res.status(400).json({ error: 'Penalty shootout winner is required for knockout draw results' });
+      }
+      if (normalizedPenaltyWinner !== match.team1 && normalizedPenaltyWinner !== match.team2) {
+        return res.status(400).json({ error: 'Penalty shootout winner must be one of the match teams' });
+      }
+    }
+
+    const resolvedPenaltyWinner = knockout && drawAfterRegAndExtra ? normalizedPenaltyWinner : null;
+
     if (isQueueConfigured()) {
       const publishingMatch = await prisma.match.update({
         where: { id: matchIdNum },
-        data: { team1Score: team1ScoreNum, team2Score: team2ScoreNum, status: 'publishing' },
+        data: {
+          team1Score: team1ScoreNum,
+          team2Score: team2ScoreNum,
+          penaltyShootoutWinner: resolvedPenaltyWinner,
+          status: 'publishing',
+        },
       });
 
       // Async path: enqueue for Azure Function queue trigger to process
       try {
-        await enqueueFinalizeMatch(matchIdNum, team1ScoreNum, team2ScoreNum);
+        await enqueueFinalizeMatch(matchIdNum, team1ScoreNum, team2ScoreNum, resolvedPenaltyWinner || undefined);
       } catch (enqueueError) {
         // Roll back to pre-finalize state if queue enqueue fails.
         await prisma.match.update({
@@ -94,6 +114,7 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
           data: {
             team1Score: match.team1Score,
             team2Score: match.team2Score,
+            penaltyShootoutWinner: match.penaltyShootoutWinner,
             status: match.status,
           },
         });
@@ -109,7 +130,12 @@ export const finalizeMatch = async (req: AuthRequest, res: Response) => {
     // Fallback: process synchronously (local dev without Azure Storage)
     const publishingMatch = await prisma.match.update({
       where: { id: matchIdNum },
-      data: { team1Score: team1ScoreNum, team2Score: team2ScoreNum, status: 'publishing' },
+      data: {
+        team1Score: team1ScoreNum,
+        team2Score: team2ScoreNum,
+        penaltyShootoutWinner: resolvedPenaltyWinner,
+        status: 'publishing',
+      },
     });
 
     await processMatchResults(matchIdNum);

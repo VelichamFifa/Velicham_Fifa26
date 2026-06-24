@@ -5,7 +5,7 @@ import { logger } from '../lib/logger';
 
 export const submitPrediction = async (req: AuthRequest, res: Response) => {
   try {
-    const { matchId, team1Score, team2Score, comment } = req.body;
+    const { matchId, team1Score, team2Score, penaltyShootoutWinner, comment } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -32,6 +32,18 @@ export const submitPrediction = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Prediction deadline has passed' });
     }
 
+    const predictedDraw = Number(team1Score) === Number(team2Score);
+    const knockout = Boolean(match.isKnockoutMatch);
+    const normalizedPenaltyWinner = typeof penaltyShootoutWinner === 'string' ? penaltyShootoutWinner.trim() : '';
+    if (knockout && predictedDraw) {
+      if (!normalizedPenaltyWinner) {
+        return res.status(400).json({ error: 'Penalty shootout winner is required for knockout draw predictions' });
+      }
+      if (normalizedPenaltyWinner !== match.team1 && normalizedPenaltyWinner !== match.team2) {
+        return res.status(400).json({ error: 'Penalty shootout winner must be one of the match teams' });
+      }
+    }
+
     // Check if user already predicted for this match - if so, update it (upsert pattern)
     const existingPrediction = await prisma.prediction.findUnique({
       where: { userId_matchId: { userId: userIdNum, matchId: matchIdNum } },
@@ -42,6 +54,7 @@ export const submitPrediction = async (req: AuthRequest, res: Response) => {
         data: {
           team1Score,
           team2Score,
+          penaltyShootoutWinner: knockout && predictedDraw ? normalizedPenaltyWinner : null,
           comment,
           submittedTime: new Date(),
           matchTag: match.matchTag,
@@ -61,6 +74,7 @@ export const submitPrediction = async (req: AuthRequest, res: Response) => {
         matchTag: match.matchTag,
         team1Score,
         team2Score,
+        penaltyShootoutWinner: knockout && predictedDraw ? normalizedPenaltyWinner : null,
         comment,
         points: 0,
       },
@@ -217,6 +231,7 @@ export const getUserPredictions = async (req: AuthRequest, res: Response) => {
         matchTag: true,
         team1Score: true,
         team2Score: true,
+        penaltyShootoutWinner: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -235,7 +250,7 @@ export const getUserPredictions = async (req: AuthRequest, res: Response) => {
 export const updatePrediction = async (req: AuthRequest, res: Response) => {
   try {
     const { predictionId } = req.params;
-    const { team1Score, team2Score, comment } = req.body;
+    const { team1Score, team2Score, penaltyShootoutWinner, comment } = req.body;
     const userId = req.user?.userId;
 
     const prediction = await prisma.prediction.findUnique({ where: { id: Number(predictionId) } });
@@ -252,11 +267,33 @@ export const updatePrediction = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Cannot update prediction after deadline' });
     }
 
+    const nextTeam1 = team1Score !== undefined ? Number(team1Score) : prediction.team1Score;
+    const nextTeam2 = team2Score !== undefined ? Number(team2Score) : prediction.team2Score;
+    const predictedDraw = nextTeam1 === nextTeam2;
+    const knockout = Boolean(match?.isKnockoutMatch);
+    const normalizedPenaltyWinner = typeof penaltyShootoutWinner === 'string' ? penaltyShootoutWinner.trim() : '';
+    const nextPenaltyWinner =
+      penaltyShootoutWinner !== undefined ? normalizedPenaltyWinner : prediction.penaltyShootoutWinner || '';
+
+    if (knockout && predictedDraw) {
+      if (!nextPenaltyWinner) {
+        return res.status(400).json({ error: 'Penalty shootout winner is required for knockout draw predictions' });
+      }
+      if (match && nextPenaltyWinner !== match.team1 && nextPenaltyWinner !== match.team2) {
+        return res.status(400).json({ error: 'Penalty shootout winner must be one of the match teams' });
+      }
+    }
+
     const updated = await prisma.prediction.update({
       where: { id: prediction.id },
       data: {
         ...(team1Score !== undefined ? { team1Score } : {}),
         ...(team2Score !== undefined ? { team2Score } : {}),
+        ...(
+          penaltyShootoutWinner !== undefined || (knockout && predictedDraw)
+            ? { penaltyShootoutWinner: knockout && predictedDraw ? nextPenaltyWinner : null }
+            : {}
+        ),
         ...(comment !== undefined ? { comment } : {}),
       },
     });

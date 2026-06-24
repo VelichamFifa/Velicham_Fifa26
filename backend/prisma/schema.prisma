@@ -97,10 +97,12 @@ model Match {
   team2                 String   @db.VarChar(64)
   team1Score            Int?
   team2Score            Int?
+  penaltyShootoutWinner String?  @db.VarChar(64)
   matchTime             DateTime
   predictionsEndingTime DateTime
   round                 String   @db.VarChar(100)
   group                 String?  @map("group") @db.VarChar(100)
+  isKnockoutMatch       Boolean  @default(false)
   comment               String?  @db.LongText
   matchTag              String   @db.VarChar(200)
   status                String   @default("scheduled") @db.VarChar(20)
@@ -122,6 +124,7 @@ model Prediction {
   matchTag       String   @db.VarChar(200)
   team1Score     Int
   team2Score     Int
+  penaltyShootoutWinner String? @db.VarChar(64)
   submittedTime  DateTime @default(now())
   points         Int      @default(0)
   comment        String?  @db.LongText
@@ -146,6 +149,9 @@ model Result {
   communityName2         String?  @db.VarChar(500)
   team1PredictedScore    Int?
   team2PredictedScore    Int?
+  predictedPenaltyShootoutWinner String? @db.VarChar(64)
+  actualPenaltyShootoutWinner String? @db.VarChar(64)
+  penaltyShootoutPoints  Int      @default(0)
   matchRank              Int?
   finalRank              Int?
   predictionTime         DateTime?
@@ -181,7 +187,7 @@ model FinalUserResult {
 model CommunityResult {
   id                      Int      @id @default(autoincrement())
   communityId             String   @db.VarChar(128)
-  communityWeightagePoint Int      @default(1)
+  communityWeightagePoint Int      @default(0)
   matchId                 Int
   matchTag                String   @db.VarChar(200)
   communityMatchPoint     Int      @default(0)

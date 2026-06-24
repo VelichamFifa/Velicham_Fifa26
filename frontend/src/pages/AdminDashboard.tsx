@@ -117,6 +117,7 @@ const AdminDashboard: React.FC = () => {
         group: '',
         matchTag: '',
         comment: '',
+        isKnockoutMatch: false,
     });
 
     const serializeEnteredUtcTime = (value: string) => {
@@ -344,7 +345,31 @@ const AdminDashboard: React.FC = () => {
                 setError('Please enter valid scores');
                 return;
             }
-            await apiService.finalizeMatch({ matchId, team1Score, team2Score });
+
+            let penaltyShootoutWinner: string | undefined;
+            if (match && Boolean(match.isKnockoutMatch) && team1Score === team2Score) {
+                const team1Name = getTeamDisplayName(match, 'team1');
+                const team2Name = getTeamDisplayName(match, 'team2');
+                const winnerInput = window.prompt(
+                    `Knockout draw detected. Enter penalty shootout winner:\n1 = ${team1Name}\n2 = ${team2Name}`,
+                    '1'
+                );
+
+                if (!winnerInput) {
+                    setError('Penalty shootout winner is required for knockout draw results');
+                    return;
+                }
+
+                const normalized = winnerInput.trim();
+                if (normalized === '1') penaltyShootoutWinner = match.team1;
+                else if (normalized === '2') penaltyShootoutWinner = match.team2;
+                else {
+                    setError('Invalid shootout winner. Enter 1 or 2.');
+                    return;
+                }
+            }
+
+            await apiService.finalizeMatch({ matchId, team1Score, team2Score, penaltyShootoutWinner });
             setSuccess(
               import.meta.env.VITE_FINALIZE_MATCH_URL
                                 ? 'Match moved to publishing. It will switch to completed after Azure Function finishes scoring and leaderboard rebuild.'
@@ -428,6 +453,7 @@ const AdminDashboard: React.FC = () => {
                 group: newMatchForm.group || undefined,
                 matchTag: newMatchForm.matchTag || buildMatchTag(newMatchForm.team1, newMatchForm.team2),
                 comment: newMatchForm.comment || undefined,
+                isKnockoutMatch: newMatchForm.isKnockoutMatch,
             };
 
             if (editingMatchId) {
@@ -448,6 +474,7 @@ const AdminDashboard: React.FC = () => {
                 group: '',
                 matchTag: '',
                 comment: '',
+                isKnockoutMatch: false,
             });
             fetchInitialData();
         } catch (err: any) {
@@ -467,6 +494,7 @@ const AdminDashboard: React.FC = () => {
             group: match.group || '',
             matchTag: match.matchTag || buildMatchTag(match.team1, match.team2),
             comment: match.comment || '',
+            isKnockoutMatch: match.isKnockoutMatch || false,
         });
     };
 
@@ -482,6 +510,7 @@ const AdminDashboard: React.FC = () => {
             group: '',
             matchTag: '',
             comment: '',
+            isKnockoutMatch: false,
         });
     };
 
@@ -825,6 +854,10 @@ const AdminDashboard: React.FC = () => {
                                         </div>
                                         <input className="border rounded px-3 py-2" placeholder="Round" value={newMatchForm.round} onChange={(e) => setNewMatchForm(prev => ({ ...prev, round: e.target.value }))} />
                                         <input className="border rounded px-3 py-2" placeholder="Group" value={newMatchForm.group} onChange={(e) => setNewMatchForm(prev => ({ ...prev, group: e.target.value }))} />
+                                        <div className="border rounded px-3 py-2 bg-white flex items-center gap-2 cursor-pointer" onClick={() => setNewMatchForm(prev => ({ ...prev, isKnockoutMatch: !prev.isKnockoutMatch }))}>
+                                            <input type="checkbox" checked={newMatchForm.isKnockoutMatch} onChange={() => {}} className="cursor-pointer" />
+                                            <span className="text-sm font-medium">Knockout Match</span>
+                                        </div>
                                         <input className="border rounded px-3 py-2 md:col-span-2 xl:col-span-3" placeholder="Comment" value={newMatchForm.comment} onChange={(e) => setNewMatchForm(prev => ({ ...prev, comment: e.target.value }))} />
                                     </div>
                                     <div className="mt-4 flex justify-end">
@@ -870,6 +903,7 @@ const AdminDashboard: React.FC = () => {
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Match</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Group</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Round</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                                 {matchTab === 'onboarded' ? 'Kickoff Time Zones' : 'Final Score'}
@@ -886,6 +920,13 @@ const AdminDashboard: React.FC = () => {
                                                 </td>
                                                 <td className="px-4 py-4 text-xs text-gray-700">{match.group || '-'}</td>
                                                 <td className="px-4 py-4 text-xs text-gray-700">{match.round || '-'}</td>
+                                                <td className="px-4 py-4">
+                                                    {match.isKnockoutMatch ? (
+                                                        <span className="text-xs px-2 py-1 rounded font-bold bg-red-100 text-red-700">KNOCKOUT</span>
+                                                    ) : (
+                                                        <span className="text-xs px-2 py-1 rounded font-bold bg-gray-100 text-gray-700">GROUP</span>
+                                                    )}
+                                                </td>
                                                 <td className="px-4 py-4">
                                                     {matchTab === 'onboarded' ? (
                                                         <span className="text-xs px-2 py-1 rounded font-bold bg-amber-100 text-amber-700">

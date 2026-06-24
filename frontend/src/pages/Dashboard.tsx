@@ -13,6 +13,7 @@ const Dashboard: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [userPredictions, setUserPredictions] = useState<Prediction[]>([]);
+  const [activeScoringPopup, setActiveScoringPopup] = useState<'knockout' | 'community' | null>(null);
 
 
 
@@ -87,7 +88,12 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handlePredictionSubmit = (matchId: string, team1Score: number, team2Score: number) => {
+  const handlePredictionSubmit = (
+    matchId: string,
+    team1Score: number,
+    team2Score: number,
+    penaltyShootoutWinner?: string
+  ) => {
     const submittedTime = new Date().toISOString();
 
     setUserPredictions((prev) => {
@@ -99,6 +105,7 @@ const Dashboard: React.FC = () => {
           matchId,
           team1Score,
           team2Score,
+          penaltyShootoutWinner: penaltyShootoutWinner || null,
           submittedTime,
         };
         return next;
@@ -111,6 +118,7 @@ const Dashboard: React.FC = () => {
         matchTag: '',
         team1Score,
         team2Score,
+        penaltyShootoutWinner: penaltyShootoutWinner || null,
         submittedTime,
         points: 0,
       };
@@ -140,9 +148,74 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
-      <div className="mb-6 sm:mb-8">
+      <div className="mb-2 sm:mb-3">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">Welcome, {user?.firstName}!</h1>
-        <p className="text-sm sm:text-base text-white/60">Make predictions on upcoming matches and climb the leaderboard</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm sm:text-base text-white/60">Make predictions on upcoming matches and climb the leaderboard</p>
+          <div className="relative">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveScoringPopup((prev) => (prev === 'knockout' ? null : 'knockout'))}
+                className="inline-flex items-center rounded-full border border-amber-300/45 bg-amber-400/20 px-3 py-1.5 text-xs font-bold tracking-wide text-amber-100 shadow-[0_0_0_1px_rgba(251,191,36,0.12)]"
+                aria-label="Knockout points guidance"
+                aria-expanded={activeScoringPopup === 'knockout'}
+                aria-controls="rule-change-popup"
+              >
+                <span>Knockout Matches</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveScoringPopup((prev) => (prev === 'community' ? null : 'community'))}
+                className="inline-flex items-center rounded-full border border-amber-300/45 bg-amber-400/20 px-3 py-1.5 text-xs font-bold tracking-wide text-amber-100 shadow-[0_0_0_1px_rgba(251,191,36,0.12)]"
+                aria-label="Community weightage point guidance"
+                aria-expanded={activeScoringPopup === 'community'}
+                aria-controls="rule-change-popup"
+              >
+                <span>Community Weightage Point</span>
+              </button>
+            </div>
+
+            {activeScoringPopup && (
+              <div
+                id="rule-change-popup"
+                role="dialog"
+                aria-label="Scoring updates details"
+                className="absolute left-0 top-[calc(100%+8px)] z-20 w-[min(88vw,320px)] rounded-xl border border-amber-300/40 bg-slate-900/95 p-3 shadow-xl backdrop-blur"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-xs font-black uppercase tracking-wider text-amber-200">
+                    {activeScoringPopup === 'knockout' ? 'Knockout Matches' : 'Community Weightage Point'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveScoringPopup(null)}
+                    className="rounded p-0.5 text-white/70 hover:text-white"
+                    aria-label="Close scoring popup"
+                  >
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M6 18L18 6" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="mt-1 flex items-start gap-2">
+                  <span className="text-sm leading-none mt-0.5">⚠️</span>
+                  {activeScoringPopup === 'knockout' ? (
+                    <p className="text-sm text-white/90">
+                      <span className="font-semibold text-amber-200"></span> Get +2 points for correctly predicting the penalty shootout winner.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-white/80 leading-relaxed">
+                      <span className="font-semibold text-amber-200"></span> Communities earn +1 point for every 10 members participating in predictions, starting from Group Stage Round 3.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">

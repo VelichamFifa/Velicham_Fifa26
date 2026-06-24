@@ -34,7 +34,7 @@ import { apiService } from '../services/apiService';
 interface MatchCardProps {
   match: Match;
   userPrediction?: Prediction;
-  onPredictionSubmit?: (matchId: string, team1Score: number, team2Score: number) => void;
+  onPredictionSubmit?: (matchId: string, team1Score: number, team2Score: number, penaltyShootoutWinner?: string) => void;
 }
 
 interface GroupStandingRow {
@@ -127,6 +127,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState('');
   const [submitted, setSubmitted]   = useState(false);
+  const [penaltyShootoutWinner, setPenaltyShootoutWinner] = useState<string>('');
   const [showGroupTable, setShowGroupTable] = useState(false);
   const [groupTableLoading, setGroupTableLoading] = useState(false);
   const [groupTableError, setGroupTableError] = useState('');
@@ -138,11 +139,16 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
     if (userPrediction) {
       setTeam1Score(userPrediction.team1Score);
       setTeam2Score(userPrediction.team2Score);
+      setPenaltyShootoutWinner(userPrediction.penaltyShootoutWinner || '');
     } else {
       setTeam1Score('');
       setTeam2Score('');
+      setPenaltyShootoutWinner('');
     }
   }, [userPrediction]);
+
+  const knockoutMatch = Boolean(match.isKnockoutMatch);
+  const predictedDraw = team1Score !== '' && team2Score !== '' && Number(team1Score) === Number(team2Score);
 
   const handleSubmit = async () => {
     if (!isPredictionOpen) return;
@@ -150,20 +156,37 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
       setError('Enter both scores');
       return;
     }
-    setError('');
-    setLoading(true);
     const nextTeam1Score = Number(team1Score);
     const nextTeam2Score = Number(team2Score);
+    const requiresPenaltyWinner = knockoutMatch && nextTeam1Score === nextTeam2Score;
+    const normalizedPenaltyWinner = penaltyShootoutWinner.trim();
+
+    if (requiresPenaltyWinner && !normalizedPenaltyWinner) {
+      setError('Select penalty shootout winner for knockout draw prediction');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
     try {
       await apiService.submitPrediction({
         matchId: match.matchId,
         team1Score: nextTeam1Score,
         team2Score: nextTeam2Score,
+        penaltyShootoutWinner: requiresPenaltyWinner ? normalizedPenaltyWinner : null,
         comment: '',
       });
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 2500);
-      if (onPredictionSubmit) onPredictionSubmit(match.matchId, nextTeam1Score, nextTeam2Score);
+      if (onPredictionSubmit) {
+        onPredictionSubmit(
+          match.matchId,
+          nextTeam1Score,
+          nextTeam2Score,
+          requiresPenaltyWinner ? normalizedPenaltyWinner : undefined
+        );
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to submit');
     } finally {
@@ -382,6 +405,25 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
             <span className="text-white/30 text-[9px] uppercase tracking-widest">
               {isPredictionOpen ? 'Your Prediction' : 'Closed'}
             </span>
+          )}
+          {!isCompleted && isPredictionOpen && knockoutMatch && predictedDraw && (
+            <div className="mt-1 flex flex-col items-center gap-1.5">
+              <span className="text-[9px] uppercase tracking-widest text-amber-300/90 font-semibold text-center">
+                Penalty shootout winner
+              </span>
+              <select
+                value={penaltyShootoutWinner}
+                onChange={(e) => setPenaltyShootoutWinner(e.target.value)}
+                className="min-w-[170px] h-9 bg-white/10 border border-white/25 rounded-md px-3 py-1.5 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+              >
+                <option value="" className="bg-slate-900 text-sm">Select winner</option>
+                <option value={match.team1} className="bg-slate-900 text-sm">{t1Name}</option>
+                <option value={match.team2} className="bg-slate-900 text-sm">{t2Name}</option>
+              </select>
+              <span className="text-[9px] text-white/45 text-center leading-tight max-w-[140px]">
+                Correct winner earns +2 points.
+              </span>
+            </div>
           )}
           {isCompleted && (
             <span className="text-white/30 text-[9px] uppercase tracking-widest">Final Score</span>

@@ -216,7 +216,7 @@ class ApiService {
     return this.client.post(`/admin/matches/${matchId}/archive`);
   }
 
-  finalizeMatch(data: { matchId: string; team1Score: number; team2Score: number }) {
+  finalizeMatch(data: { matchId: string; team1Score: number; team2Score: number; penaltyShootoutWinner?: string }) {
     const functionsUrl = import.meta.env.VITE_FINALIZE_MATCH_URL as string | undefined;
     if (functionsUrl?.trim()) {
       return axios.post(
@@ -225,6 +225,7 @@ class ApiService {
           matchId: data.matchId,
           team1Score: data.team1Score,
           team2Score: data.team2Score,
+          penaltyShootoutWinner: data.penaltyShootoutWinner,
           rebuildLeaderboards: true,
         },
         { headers: { 'Content-Type': 'application/json' } }

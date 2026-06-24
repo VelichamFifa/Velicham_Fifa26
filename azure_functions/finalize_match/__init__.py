@@ -9,10 +9,17 @@ import azure.functions as func
 from shared.db import connect, fetch_all
 from shared.leaderboards import rebuild_all_leaderboards
 from shared.logging_utils import get_logger, log_step
-from shared.scoring import calculate_prediction_points, prediction_outcome
+from shared.scoring import (
+    calculate_prediction_points,
+    penalty_shootout_bonus_points,
+    prediction_outcome,
+)
 
 
 logger = get_logger(__name__)
+
+# Load community weightage divisor from environment (1 point per N members)
+COMMUNITY_WEIGHTAGE_DIVISOR = int(os.environ.get("COMMUNITY_WEIGHTAGE_DIVISOR", "10"))
 
 
 def _archive_predictions_to_blob(predictions: list, match_id: int, match_tag: str) -> None:
@@ -74,6 +81,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     match_id = body.get("matchId")
     team1_score = body.get("team1Score")
     team2_score = body.get("team2Score")
+    penalty_shootout_winner = body.get("penaltyShootoutWinner")
     log_step(logger, "payload_parsed", function="finalize_match", matchId=match_id)
 
     if not match_id:
@@ -98,7 +106,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     log_step(logger, "validation_complete", function="finalize_match", matchId=match_id)
 
     try:
-        response = _finalize(match_id, team1_score, team2_score)
+        response = _finalize(match_id, team1_score, team2_score, penalty_shootout_winner)
         log_step(logger, "request_completed", function="finalize_match", matchId=match_id, status=response.status_code)
         return response
     except Exception as exc:
@@ -110,7 +118,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
 
-def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpResponse:
+def _finalize(
+    match_id: int,
+    team1_score: int,
+    team2_score: int,
+    penalty_shootout_winner: str | None = None,
+) -> func.HttpResponse:
     logger.info(
         "finalize_match: begin (matchId=%s, team1Score=%s, team2Score=%s)",
         match_id, team1_score, team2_score,
@@ -123,7 +136,7 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
         cur = cnxn.cursor()
 
         # Load match metadata
-        cur.execute("SELECT id, matchTag, matchTime, status FROM matches WHERE id = %s", (match_id,))
+        cur.execute("SELECT id, matchTag, matchTime, status, team1, team2, round, `group`, isKnockoutMatch FROM matches WHERE id = %s", (match_id,))
         match_row = cur.fetchone()
         if not match_row:
             logger.warning("finalize_match: match not found (matchId=%s)", match_id)
@@ -143,11 +156,28 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
         match_tag = match_row["matchTag"]
         match_time = match_row["matchTime"]
         match_time_iso = match_time.isoformat() if isinstance(match_time, datetime) else None
+        match_team1 = match_row["team1"]
+        match_team2 = match_row["team2"]
+        knockout_match = bool(match_row.get("isKnockoutMatch"))
+        if knockout_match and team1_score == team2_score:
+            if not penalty_shootout_winner:
+                return func.HttpResponse(
+                    json.dumps({"error": "penaltyShootoutWinner is required for knockout draw results"}),
+                    status_code=400,
+                    mimetype="application/json",
+                )
+            if penalty_shootout_winner not in (match_team1, match_team2):
+                return func.HttpResponse(
+                    json.dumps({"error": "penaltyShootoutWinner must be one of the match teams"}),
+                    status_code=400,
+                    mimetype="application/json",
+                )
+        resolved_penalty_winner = penalty_shootout_winner if (knockout_match and team1_score == team2_score) else None
         log_step(logger, "match_metadata_loaded", function="finalize_match", matchId=match_id, matchTag=match_tag)
 
         # ── Step 0: Archive predictions to blob FIRST ──── f──────────────────
         cur.execute(
-            "SELECT id, userId, matchTag, team1Score, team2Score, submittedTime FROM predictions WHERE matchId = %s",
+            "SELECT id, userId, matchTag, team1Score, team2Score, penaltyShootoutWinner, submittedTime FROM predictions WHERE matchId = %s",
             (match_id,),
         )
         predictions = fetch_all(cur)
@@ -163,10 +193,10 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
         cur.execute(
             """
             UPDATE matches
-            SET team1Score = %s, team2Score = %s, status = 'publishing', updatedAt = UTC_TIMESTAMP()
+            SET team1Score = %s, team2Score = %s, penaltyShootoutWinner = %s, status = 'publishing', updatedAt = UTC_TIMESTAMP()
             WHERE id = %s
             """,
-            (team1_score, team2_score, match_id),
+            (team1_score, team2_score, resolved_penalty_winner, match_id),
         )
         log_step(logger, "match_publishing", function="finalize_match", matchId=match_id)
 
@@ -190,6 +220,16 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
                 team1_score,
                 team2_score,
             )
+            penalty_bonus = penalty_shootout_bonus_points(
+                knockout_match=knockout_match,
+                predicted_team1=int(p["team1Score"]),
+                predicted_team2=int(p["team2Score"]),
+                actual_team1=team1_score,
+                actual_team2=team2_score,
+                predicted_penalty_winner=p.get("penaltyShootoutWinner"),
+                actual_penalty_winner=resolved_penalty_winner,
+            )
+            points += penalty_bonus
             cur.execute(
                 "UPDATE predictions SET points = %s, updatedAt = UTC_TIMESTAMP() WHERE id = %s",
                 (points, p["id"]),
@@ -218,10 +258,11 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
                 """
                 INSERT INTO results (
                   userId, matchId, matchTag, result, matchPoints, finalPoints,
-                  team1PredictedScore, team2PredictedScore,
+                                    team1PredictedScore, team2PredictedScore,
+                                    predictedPenaltyShootoutWinner, actualPenaltyShootoutWinner, penaltyShootoutPoints,
                   communityName1, communityName2, predictionTime, createdAt, updatedAt
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, UTC_TIMESTAMP(), UTC_TIMESTAMP())
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, UTC_TIMESTAMP(), UTC_TIMESTAMP())
                 ON DUPLICATE KEY UPDATE
                   matchTag            = VALUES(matchTag),
                   result              = VALUES(result),
@@ -229,6 +270,9 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
                   finalPoints         = VALUES(matchPoints),
                   team1PredictedScore = VALUES(team1PredictedScore),
                   team2PredictedScore = VALUES(team2PredictedScore),
+                                    predictedPenaltyShootoutWinner = VALUES(predictedPenaltyShootoutWinner),
+                                    actualPenaltyShootoutWinner = VALUES(actualPenaltyShootoutWinner),
+                                    penaltyShootoutPoints = VALUES(penaltyShootoutPoints),
                   communityName1      = VALUES(communityName1),
                   communityName2      = VALUES(communityName2),
                   predictionTime      = VALUES(predictionTime),
@@ -243,6 +287,9 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
                     points,
                     int(p["team1Score"]),
                     int(p["team2Score"]),
+                    p.get("penaltyShootoutWinner"),
+                    resolved_penalty_winner,
+                    penalty_bonus,
                     community_name1,
                     community_name2,
                     p.get("submittedTime"),
@@ -312,19 +359,21 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
         )
         log_step(logger, "results_ranks_updated", function="finalize_match", matchId=match_id)
 
-        # ── Step 4: Community results ───────────────────────────────────────
-        # communityMatchPoint = AVG match points of all community members for this match
-        # Uses UNION to cover both communityId1 and communityId2 memberships.
+                # Step 4: Community results ───────────────────────────────────────
+                # communityWeightagePoint = 1 point per full N members in the community (N = COMMUNITY_WEIGHTAGE_DIVISOR).
+                # communityMatchPoint = AVG member match points + communityWeightagePoint bonus.
+                # Uses UNION to cover both communityId1 and communityId2 memberships.
         cur.execute(
-            """
+            f"""
             INSERT INTO community_results (
-              communityId, matchId, matchTag, communityMatchPoint, totalCommunityPoint, createdAt, updatedAt
+                            communityId, matchId, matchTag, communityWeightagePoint, communityMatchPoint, totalCommunityPoint, createdAt, updatedAt
             )
             SELECT
               CAST(members.communityId AS CHAR),
               %s,
               %s,
-              ROUND(AVG(r.matchPoints)),
+                            FLOOR(COUNT(DISTINCT members.userId) / {COMMUNITY_WEIGHTAGE_DIVISOR}),
+                            ROUND(AVG(r.matchPoints)) + FLOOR(COUNT(DISTINCT members.userId) / {COMMUNITY_WEIGHTAGE_DIVISOR}),
               0,
               UTC_TIMESTAMP(),
               UTC_TIMESTAMP()
@@ -338,6 +387,7 @@ def _finalize(match_id: int, team1_score: int, team2_score: int) -> func.HttpRes
             GROUP BY members.communityId
             ON DUPLICATE KEY UPDATE
               matchTag            = VALUES(matchTag),
+                            communityWeightagePoint = VALUES(communityWeightagePoint),
               communityMatchPoint = VALUES(communityMatchPoint),
               updatedAt           = UTC_TIMESTAMP()
             """,
