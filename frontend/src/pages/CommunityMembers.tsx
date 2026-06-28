@@ -22,6 +22,7 @@ const CommunityMembers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [ranking, setRanking] = useState<RankingItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (communityId) {
@@ -55,6 +56,10 @@ const CommunityMembers: React.FC = () => {
     }
   };
 
+  const filteredRanking = ranking.filter(
+    (entry) => entry.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -83,6 +88,19 @@ const CommunityMembers: React.FC = () => {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto py-4 px-4">
+        <div className="mb-4 relative">
+          <input
+            type="text"
+            placeholder="Search members..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pl-11 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-sky-400/60 shadow-lg"
+          />
+          <svg className="absolute left-4 top-3.5 w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
         {loading ? (
           <div className="py-20 text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -97,12 +115,12 @@ const CommunityMembers: React.FC = () => {
             {/* Count badge */}
             <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
               <span className="text-xs font-bold text-white/50 uppercase tracking-wider">
-                {ranking.length} {ranking.length === 1 ? 'Member' : 'Members'}
+                {filteredRanking.length} {filteredRanking.length === 1 ? 'Member' : 'Members'}
               </span>
             </div>
 
             <div className="divide-y divide-white/[0.06]">
-              {ranking.map((item) => {
+              {filteredRanking.map((item) => {
                 const isMe = item.userId === user?.userId;
                 return (
                   <div
@@ -131,7 +149,11 @@ const CommunityMembers: React.FC = () => {
                 );
               })}
 
-              {ranking.length === 0 && (
+              {ranking.length > 0 && filteredRanking.length === 0 ? (
+                <div className="py-16 text-center px-6">
+                  <p className="text-white/40 text-sm font-medium">No members found matching your search.</p>
+                </div>
+              ) : ranking.length === 0 && (
                 <div className="py-16 text-center px-6">
                   <p className="text-white/40 text-sm font-medium">No rankings available yet</p>
                 </div>
