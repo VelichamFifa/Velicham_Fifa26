@@ -11,6 +11,7 @@ const LeaderboardPage: React.FC = () => {
   const [dailyCommunityLeaderboard, setDailyCommunityLeaderboard] = useState<CommunityLeaderboardEntry[]>([]);
   const [lastMatchTag, setLastMatchTag] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadLeaderboards();
@@ -47,6 +48,21 @@ const LeaderboardPage: React.FC = () => {
     { key: 'daily-community', label: '👥 Last Match Community Leaders' },
   ] as const;
 
+  const filteredTopLeaderboard = topLeaderboard.filter(
+    (entry) => entry.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const filteredDailyLeaderboard = dailyLeaderboard.filter(
+    (entry) => entry.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const filteredCommunityLeaderboard = communityLeaderboard.filter(
+    (entry) => entry.communityName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const filteredDailyCommunityLeaderboard = dailyCommunityLeaderboard.filter(
+    (entry) => entry.communityName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const showSearch = activeTab === 'top' || activeTab === 'daily' || activeTab === 'community' || activeTab === 'daily-community';
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6 sm:mb-8">Leaderboards</h1>
@@ -81,6 +97,21 @@ const LeaderboardPage: React.FC = () => {
         ))}
       </div>
 
+      {showSearch && (
+        <div className="mb-6 relative">
+          <input
+            type="text"
+            placeholder={`Search in ${tabs.find(t => t.key === activeTab)?.label || 'leaderboard'}...`}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full sm:w-80 bg-white/5 border border-white/10 rounded-xl px-4 py-3 pl-11 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-sky-400/60 shadow-lg"
+          />
+          <svg className="absolute left-4 top-3.5 w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+      )}
+
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-secondary"></div>
@@ -90,7 +121,7 @@ const LeaderboardPage: React.FC = () => {
         <>
           {activeTab === 'top' && (
             <Leaderboard
-              entries={topLeaderboard}
+              entries={filteredTopLeaderboard}
               type="user"
               title="All-Time Top Leaders"
               showCommunityUnderName={true}
@@ -100,7 +131,7 @@ const LeaderboardPage: React.FC = () => {
           {activeTab === 'daily' && (
             <>
               <Leaderboard
-                entries={dailyLeaderboard}
+                entries={filteredDailyLeaderboard}
                 type="user"
                 title="Last Match Leaders"
                 subtitle={lastMatchTag ?? undefined}
@@ -111,7 +142,7 @@ const LeaderboardPage: React.FC = () => {
           )}
           {activeTab === 'community' && (
             <Leaderboard
-              entries={communityLeaderboard}
+              entries={filteredCommunityLeaderboard}
               type="community"
               title="Community Rankings"
             />
@@ -119,7 +150,7 @@ const LeaderboardPage: React.FC = () => {
           {activeTab === 'daily-community' && (
             <>
               <Leaderboard
-                entries={dailyCommunityLeaderboard}
+                entries={filteredDailyCommunityLeaderboard}
                 type="community"
                 title="Last Match Community Leaders"
                 subtitle={lastMatchTag ?? undefined}
