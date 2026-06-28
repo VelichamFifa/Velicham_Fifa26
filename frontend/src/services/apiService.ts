@@ -5,7 +5,7 @@ const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV
     ? '/api'
-    : 'https://fifa26.qa.velichamna.org/api');
+    : 'https://worldcup.velichamna.org/api');
 
 /** Append Azure Functions host key when VITE_AZURE_FUNCTIONS_KEY is set. */
 function withFunctionsKey(url: string): string {
