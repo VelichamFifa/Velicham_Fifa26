@@ -10,6 +10,7 @@ interface LeaderboardProps {
   showCommunityUnderName?: boolean;
   hideState?: boolean;
   disableNavigation?: boolean;
+  hideRank?: boolean;
 }
 
 const medalIcon = (rank: number) => {
@@ -27,6 +28,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   showCommunityUnderName = false,
   hideState = false,
   disableNavigation = false,
+  hideRank = false,
 }) => {
   const navigate = useNavigate();
 
@@ -90,13 +92,15 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               onClick={() => type === 'community' && handleRowClick(entry)}
             >
               {/* Rank */}
-              <div className="flex-shrink-0 w-10 text-center">
-                {medal ? (
-                  <span className="text-xl">{medal}</span>
-                ) : (
-                  <span className="text-sm font-bold text-white/40">#{entry.rank}</span>
-                )}
-              </div>
+              {!hideRank && (
+                <div className="flex-shrink-0 w-10 text-center">
+                  {medal ? (
+                    <span className="text-xl">{medal}</span>
+                  ) : (
+                    <span className="text-sm font-bold text-white/40">#{entry.rank}</span>
+                  )}
+                </div>
+              )}
 
               {/* Name + meta */}
               <div className="flex-1 min-w-0">
@@ -129,7 +133,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
         <table className="w-full">
           <thead className="border-b border-white/10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider">Rank</th>
+              {!hideRank && (
+                <th className="px-6 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider">Rank</th>
+              )}
               <th className="px-6 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider">
                 {type === 'user' ? 'Name' : 'Community'}
               </th>
@@ -161,12 +167,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               className={`border-b border-white/[0.06] transition ${entry.rank <= 3 ? 'bg-white/5' : ''} ${type === 'community' && !disableNavigation ? 'cursor-pointer hover:bg-white/10' : 'hover:bg-white/5'}`}
               onClick={() => type === 'community' && handleRowClick(entry)}
               >
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    {medalIcon(entry.rank) && <span>{medalIcon(entry.rank)}</span>}
-                    <span className="font-bold text-white/60">#{entry.rank}</span>
-                  </div>
-                </td>
+                {!hideRank && (
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      {medalIcon(entry.rank) && <span>{medalIcon(entry.rank)}</span>}
+                      <span className="font-bold text-white/60">#{entry.rank}</span>
+                    </div>
+                  </td>
+                )}
                 <td className="px-6 py-4">
                   <p className="font-medium text-white">
                     {type === 'user'
