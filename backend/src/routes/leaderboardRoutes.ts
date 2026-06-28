@@ -6,6 +6,11 @@ const router = Router();
 
 router.get('/top', leaderboardController.getTopLeaderboard);
 router.get('/daily', leaderboardController.getDailyLeaderboard);
+router.get('/group-stage', leaderboardController.getGroupStageLeaderboard);
+router.get('/gr1', leaderboardController.getGR1Leaderboard);
+router.get('/gr2', leaderboardController.getGR2Leaderboard);
+router.get('/gr3', leaderboardController.getGR3Leaderboard);
+router.get('/round-32', leaderboardController.getRound32Leaderboard);
 router.get('/community', leaderboardController.getCommunityLeaderboard);
 router.get('/community/daily', leaderboardController.getDailyCommunityLeaderboard);
 router.get('/ranking/community/:communityId', leaderboardController.getCommunityUserRanking);

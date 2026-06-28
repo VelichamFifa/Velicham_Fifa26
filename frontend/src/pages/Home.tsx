@@ -155,6 +155,16 @@ const Home: React.FC = () => {
                 Winners
               </Link>
             </div>
+            <div className="flex flex-wrap flex-row gap-3 justify-center px-4 mt-3">
+              <Link
+                to="/group-stages"
+                className="w-40 py-2.5 bg-white/5 border border-purple-400/50 text-purple-300/80 font-bold rounded-xl hover:bg-purple-500/10 hover:text-purple-200 hover:border-purple-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+              >Group Leaderboard</Link>
+              <Link
+                to="/round-32"
+                className="w-40 py-2.5 bg-white/5 border border-teal-400/50 text-teal-300/80 font-bold rounded-xl hover:bg-teal-500/10 hover:text-teal-200 hover:border-teal-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+              >R 32 Leaderboard</Link>
+            </div>
         </div>
 
         {/* Scoring notification — shown for all users */}
