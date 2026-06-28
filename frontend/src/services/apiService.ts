@@ -155,6 +155,26 @@ class ApiService {
     return this.client.get('/leaderboard/daily', { params: { limit, date } });
   }
 
+  getGroupStageLeaderboard(limit?: number) {
+    return this.client.get('/leaderboard/group-stage', { params: { limit } });
+  }
+
+  getGR1Leaderboard(limit?: number) {
+    return this.client.get('/leaderboard/gr1', { params: { limit } });
+  }
+
+  getGR2Leaderboard(limit?: number) {
+    return this.client.get('/leaderboard/gr2', { params: { limit } });
+  }
+
+  getGR3Leaderboard(limit?: number) {
+    return this.client.get('/leaderboard/gr3', { params: { limit } });
+  }
+
+  getRound32Leaderboard(limit?: number) {
+    return this.client.get('/leaderboard/round-32', { params: { limit } });
+  }
+
   getCommunityLeaderboard(limit?: number) {
     return this.client.get('/leaderboard/community', { params: { limit } });
   }

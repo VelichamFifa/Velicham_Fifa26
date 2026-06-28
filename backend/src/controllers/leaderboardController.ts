@@ -91,6 +91,224 @@ export const getDailyLeaderboard = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const getGroupStageLeaderboard = async (req: AuthRequest, res: Response) => {
+  try {
+    const results = await prisma.$queryRaw<
+      Array<{
+        totalPoints: bigint;
+        name: string;
+        state: string;
+        community1: string | null;
+        community2: string | null;
+        userId: string;
+      }>
+    >`
+      SELECT
+        (COALESCE(fur.GR1, 0) + COALESCE(fur.GR2, 0) + COALESCE(fur.GR3, 0)) AS totalPoints,
+        TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
+        UPPER(COALESCE(u.state, '')) AS state,
+        c1.name AS community1,
+        c2.name AS community2,
+        CAST(u.id AS CHAR) AS userId
+      FROM final_user_results fur
+      INNER JOIN users u ON u.id = fur.userId
+      LEFT JOIN communities c1 ON c1.id = u.communityId1
+      LEFT JOIN communities c2 ON c2.id = u.communityId2
+      WHERE (COALESCE(fur.GR1, 0) + COALESCE(fur.GR2, 0) + COALESCE(fur.GR3, 0)) > 0
+      ORDER BY totalPoints DESC, fur.finalPoint DESC, u.id ASC
+    `;
+
+    const leaderboard = results.map(r => ({
+      ...r,
+      totalPoints: Number(r.totalPoints),
+    }));
+
+    res.json({ leaderboard, source: 'database' });
+  } catch (error) {
+    if (error instanceof Error) {
+      (error as any).stack = error.stack;
+    }
+    const errorDetails = logger.error('getGroupStageLeaderboard', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch group stage leaderboard' });
+  }
+};
+
+export const getGR1Leaderboard = async (req: AuthRequest, res: Response) => {
+  try {
+    const results = await prisma.$queryRaw<
+      Array<{
+        totalPoints: bigint;
+        name: string;
+        state: string;
+        community1: string | null;
+        community2: string | null;
+        userId: string;
+      }>
+    >`
+      SELECT
+        COALESCE(fur.GR1, 0) AS totalPoints,
+        TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
+        UPPER(COALESCE(u.state, '')) AS state,
+        c1.name AS community1,
+        c2.name AS community2,
+        CAST(u.id AS CHAR) AS userId
+      FROM final_user_results fur
+      INNER JOIN users u ON u.id = fur.userId
+      LEFT JOIN communities c1 ON c1.id = u.communityId1
+      LEFT JOIN communities c2 ON c2.id = u.communityId2
+      WHERE COALESCE(fur.GR1, 0) > 0
+      ORDER BY totalPoints DESC, fur.finalPoint DESC, u.id ASC
+    `;
+
+    const leaderboard = results.map(r => ({
+      ...r,
+      totalPoints: Number(r.totalPoints),
+    }));
+
+    res.json({ leaderboard, source: 'database' });
+  } catch (error) {
+    const errorDetails = logger.error('getGR1Leaderboard', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch GR1 leaderboard' });
+  }
+};
+
+export const getGR2Leaderboard = async (req: AuthRequest, res: Response) => {
+  try {
+    const results = await prisma.$queryRaw<
+      Array<{
+        totalPoints: bigint;
+        name: string;
+        state: string;
+        community1: string | null;
+        community2: string | null;
+        userId: string;
+      }>
+    >`
+      SELECT
+        COALESCE(fur.GR2, 0) AS totalPoints,
+        TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
+        UPPER(COALESCE(u.state, '')) AS state,
+        c1.name AS community1,
+        c2.name AS community2,
+        CAST(u.id AS CHAR) AS userId
+      FROM final_user_results fur
+      INNER JOIN users u ON u.id = fur.userId
+      LEFT JOIN communities c1 ON c1.id = u.communityId1
+      LEFT JOIN communities c2 ON c2.id = u.communityId2
+      WHERE COALESCE(fur.GR2, 0) > 0
+      ORDER BY totalPoints DESC, fur.finalPoint DESC, u.id ASC
+    `;
+
+    const leaderboard = results.map(r => ({
+      ...r,
+      totalPoints: Number(r.totalPoints),
+    }));
+
+    res.json({ leaderboard, source: 'database' });
+  } catch (error) {
+    const errorDetails = logger.error('getGR2Leaderboard', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch GR2 leaderboard' });
+  }
+};
+
+export const getGR3Leaderboard = async (req: AuthRequest, res: Response) => {
+  try {
+    const results = await prisma.$queryRaw<
+      Array<{
+        totalPoints: bigint;
+        name: string;
+        state: string;
+        community1: string | null;
+        community2: string | null;
+        userId: string;
+      }>
+    >`
+      SELECT
+        COALESCE(fur.GR3, 0) AS totalPoints,
+        TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
+        UPPER(COALESCE(u.state, '')) AS state,
+        c1.name AS community1,
+        c2.name AS community2,
+        CAST(u.id AS CHAR) AS userId
+      FROM final_user_results fur
+      INNER JOIN users u ON u.id = fur.userId
+      LEFT JOIN communities c1 ON c1.id = u.communityId1
+      LEFT JOIN communities c2 ON c2.id = u.communityId2
+      WHERE COALESCE(fur.GR3, 0) > 0
+      ORDER BY totalPoints DESC, fur.finalPoint DESC, u.id ASC
+    `;
+
+    const leaderboard = results.map(r => ({
+      ...r,
+      totalPoints: Number(r.totalPoints),
+    }));
+
+    res.json({ leaderboard, source: 'database' });
+  } catch (error) {
+    const errorDetails = logger.error('getGR3Leaderboard', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch GR3 leaderboard' });
+  }
+};
+
+export const getRound32Leaderboard = async (req: AuthRequest, res: Response) => {
+  try {
+    const results = await prisma.$queryRaw<
+      Array<{
+        totalPoints: bigint;
+        name: string;
+        state: string;
+        community1: string | null;
+        community2: string | null;
+        userId: string;
+      }>
+    >`
+      SELECT
+        COALESCE(fur.R32, 0) AS totalPoints,
+        TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
+        UPPER(COALESCE(u.state, '')) AS state,
+        c1.name AS community1,
+        c2.name AS community2,
+        CAST(u.id AS CHAR) AS userId
+      FROM final_user_results fur
+      INNER JOIN users u ON u.id = fur.userId
+      LEFT JOIN communities c1 ON c1.id = u.communityId1
+      LEFT JOIN communities c2 ON c2.id = u.communityId2
+      WHERE COALESCE(fur.R32, 0) > 0
+      ORDER BY totalPoints DESC, fur.finalPoint DESC, u.id ASC
+    `;
+
+    const leaderboard = results.map(r => ({
+      ...r,
+      totalPoints: Number(r.totalPoints),
+    }));
+
+    res.json({ leaderboard, source: 'database' });
+  } catch (error) {
+    const errorDetails = logger.error('getRound32Leaderboard', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch round 32 leaderboard' });
+  }
+};
+
 export const getCommunityLeaderboard = async (req: AuthRequest, res: Response) => {
   try {
     const { limit = '100' } = req.query;

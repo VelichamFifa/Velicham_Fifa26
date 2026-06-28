@@ -19,6 +19,8 @@ import Contact from './pages/Contact';
 import Communities from './pages/Communities';
 import WinnersPage from './pages/Winners';
 
+import GroupLeaderboardPage from './pages/GroupLeaderboardPage';
+import Round32LeaderboardPage from './pages/Round32LeaderboardPage';
 function RouteTelemetry() {
   const location = useLocation();
   const lastTrackedPathRef = useRef<string>('');
@@ -57,6 +59,8 @@ function App() {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/communities" element={<Communities />} />
             <Route path="/winners" element={<WinnersPage />} />
+            <Route path="/group-stages" element={<GroupLeaderboardPage />} />
+            <Route path="/round-32" element={<Round32LeaderboardPage />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/contact" element={<Contact />} />
           </Routes>
