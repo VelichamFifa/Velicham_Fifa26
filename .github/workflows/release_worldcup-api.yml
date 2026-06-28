@@ -6,7 +6,7 @@ name: Build and deploy Node.js app to Azure Web App - worldcup-api
 on:
   push:
     branches:
-      - release1
+      - release
     paths:
       - backend/**
       - .github/workflows/release_worldcup-api.yml
