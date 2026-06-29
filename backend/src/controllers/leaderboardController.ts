@@ -279,17 +279,22 @@ export const getRound32Leaderboard = async (req: AuthRequest, res: Response) => 
       }>
     >`
       SELECT
-        COALESCE(fur.R32, 0) AS totalPoints,
+        CASE
+          WHEN COALESCE(fur.R32, 0) > 0 THEN COALESCE(fur.R32, 0)
+          ELSE GREATEST(0, COALESCE(fur.finalPoint, 0) - (COALESCE(fur.GR1, 0) + COALESCE(fur.GR2, 0) + COALESCE(fur.GR3, 0)))
+        END AS totalPoints,
         TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
         UPPER(COALESCE(u.state, '')) AS state,
         c1.name AS community1,
         c2.name AS community2,
         CAST(u.id AS CHAR) AS userId
       FROM final_user_results fur
-      INNER JOIN users u ON u.id = fur.userId
+      JOIN users u ON u.id = fur.userId
       LEFT JOIN communities c1 ON c1.id = u.communityId1
       LEFT JOIN communities c2 ON c2.id = u.communityId2
-      WHERE COALESCE(fur.R32, 0) > 0
+      WHERE
+        (COALESCE(fur.R32, 0) > 0) OR
+        (COALESCE(fur.finalPoint, 0) > (COALESCE(fur.GR1, 0) + COALESCE(fur.GR2, 0) + COALESCE(fur.GR3, 0)))
       ORDER BY totalPoints DESC, fur.finalPoint DESC, u.id ASC
     `;
 
@@ -770,7 +775,19 @@ export const rebuildMatchLeaders = async (req: AuthRequest, res: Response) => {
 
     await prisma.$executeRawUnsafe(insertQuery);
 
-    res.json({ message: 'mv_match_leaders rebuilt successfully', matchId: matchIdNum });
+    // Per your request, update community_results for communityId=1
+    const communityUpdateQuery = `
+      UPDATE community_results
+      SET
+        communityMatchPoint = communityMatchPoint - communityWeightagePoint,
+        totalCommunityPoint = totalCommunityPoint - communityWeightagePoint
+      WHERE
+        communityId = '1' AND matchId = ${matchIdNum}
+    `;
+
+    await prisma.$executeRawUnsafe(communityUpdateQuery);
+
+    res.json({ message: 'mv_match_leaders rebuilt and community points adjusted successfully', matchId: matchIdNum });
   } catch (error) {
     const errorDetails = logger.error('rebuildMatchLeaders', error, {
       method: req.method,

@@ -66,7 +66,7 @@ const Round32LeaderboardPage: React.FC = () => {
               entries={filteredLeaderboard}
               type="user"
               title="Round of 32"
-              subtitle="Points from the R32 stage"
+              subtitle=""
               showCommunityUnderName={true}
               hideState={true}
               hideRank={true}
