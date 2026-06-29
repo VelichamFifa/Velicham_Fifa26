@@ -126,6 +126,16 @@ const MyPredictions: React.FC = () => {
                                                 prediction.historicRank?.finalRank;
                                             const matchPoints = prediction.matchPoints;
                                             const finalPoints = prediction.finalPoints;
+                                            const predictedPenaltyWinnerId = prediction.predictedPenaltyShootoutWinner;
+                                            let predictedPenaltyWinnerName = '';
+                                            if (predictedPenaltyWinnerId && match) {
+                                                if (predictedPenaltyWinnerId === match.team1) {
+                                                    predictedPenaltyWinnerName = team1Name;
+                                                } else if (predictedPenaltyWinnerId === match.team2) {
+                                                    predictedPenaltyWinnerName = team2Name;
+                                                }
+                                            }
+
                                             return (
                                                 <tr key={prediction.id} className="hover:bg-gray-50 transition-colors">
                                                     <td className="px-4 py-2 whitespace-nowrap">
@@ -142,8 +152,13 @@ const MyPredictions: React.FC = () => {
                                                         )}
                                                     </td>
                                                     <td className="px-4 py-2 whitespace-nowrap text-center">
-                                                        <div className="font-mono bg-blue-50 px-3 py-1 rounded-lg text-blue-700 font-bold text-sm">
-                                                            {pred1 != null && pred2 != null ? `${pred1} - ${pred2}` : '-'}
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="font-mono bg-blue-50 px-3 py-1 rounded-lg text-blue-700 font-bold text-sm">
+                                                                {pred1 != null && pred2 != null ? `${pred1} - ${pred2}` : '-'}
+                                                            </div>
+                                                            {predictedPenaltyWinnerName && (
+                                                                <div className="text-[10px] text-gray-500 mt-1">({predictedPenaltyWinnerName} on pens)</div>
+                                                            )}
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-2 whitespace-nowrap text-center">
@@ -214,6 +229,15 @@ const MyPredictions: React.FC = () => {
                                 const finalRank = prediction.finalRank ?? prediction.historicRank?.finalRank;
                                 const matchPoints = prediction.matchPoints;
                                 const finalPoints = prediction.finalPoints;
+                                const predictedPenaltyWinnerId = prediction.predictedPenaltyShootoutWinner;
+                                let predictedPenaltyWinnerName = '';
+                                if (predictedPenaltyWinnerId && match) {
+                                    if (predictedPenaltyWinnerId === match.team1) {
+                                        predictedPenaltyWinnerName = team1Name;
+                                    } else if (predictedPenaltyWinnerId === match.team2) {
+                                        predictedPenaltyWinnerName = team2Name;
+                                    }
+                                }
                                 const roundLabel = match?.round ? (/^\d+$/.test(String(match.round).trim()) ? `Round ${match.round}` : match.round) : '';
 
                                 return (
@@ -294,6 +318,9 @@ const MyPredictions: React.FC = () => {
                                                     <span className="text-sky-200 font-black text-sm tabular-nums leading-none">
                                                         {pred1 != null && pred2 != null ? `${pred1}–${pred2}` : '–'}
                                                     </span>
+                                                    {predictedPenaltyWinnerName && (
+                                                        <span className="text-sky-400 text-[8px] font-semibold uppercase tracking-wider leading-none mt-0.5">{predictedPenaltyWinnerName} wins</span>
+                                                    )}
                                                 </div>
                                             </div>
 
