@@ -128,10 +128,22 @@ const MyPredictions: React.FC = () => {
                                             const finalPoints = prediction.finalPoints;
                                             const predictedPenaltyWinnerId = prediction.predictedPenaltyShootoutWinner;
                                             let predictedPenaltyWinnerName = '';
+                                            const actualPenaltyWinnerId = match?.penaltyShootoutWinner;
+                                            let actualPenaltyWinnerName = '';
+                                            const isKnockout = match?.isKnockoutMatch;
+
                                             if (predictedPenaltyWinnerId && match) {
                                                 if (predictedPenaltyWinnerId === match.team1) {
                                                     predictedPenaltyWinnerName = team1Name;
                                                 } else if (predictedPenaltyWinnerId === match.team2) {
+                                                    predictedPenaltyWinnerName = team2Name;
+                                                }
+                                            }
+
+                                            if (actualPenaltyWinnerId && match) {
+                                                if (actualPenaltyWinnerId === match.team1) {
+                                                    actualPenaltyWinnerName = team1Name;
+                                                } else if (actualPenaltyWinnerId === match.team2) {
                                                     predictedPenaltyWinnerName = team2Name;
                                                 }
                                             }
@@ -163,9 +175,17 @@ const MyPredictions: React.FC = () => {
                                                     </td>
                                                     <td className="px-4 py-2 whitespace-nowrap text-center">
                                                         {match?.status === 'completed' ? (
-                                                            <span className="font-mono bg-gray-100 px-3 py-1 rounded-lg text-gray-700 font-bold text-sm">
-                                                                {match?.team1Score} - {match?.team2Score}
-                                                            </span>
+                                                            <div className="flex flex-col items-center">
+                                                                <span className="font-mono bg-gray-100 px-3 py-1 rounded-lg text-gray-700 font-bold text-sm">
+                                                                    {match?.team1Score} - {match?.team2Score}
+                                                                </span>
+                                                                {isKnockout && (
+                                                                    <div className="text-[10px] text-gray-500 mt-1">(Normal & Extra time)</div>
+                                                                )}
+                                                                {actualPenaltyWinnerName && (
+                                                                    <div className="text-[10px] text-green-700 font-bold mt-1">({actualPenaltyWinnerName} won on pens)</div>
+                                                                )}
+                                                            </div>
                                                         ) : (
                                                             <span className="text-gray-400 text-xs">-</span>
                                                         )}
@@ -231,6 +251,8 @@ const MyPredictions: React.FC = () => {
                                 const finalPoints = prediction.finalPoints;
                                 const predictedPenaltyWinnerId = prediction.predictedPenaltyShootoutWinner;
                                 let predictedPenaltyWinnerName = '';
+                                const actualPenaltyWinnerId = match?.penaltyShootoutWinner;
+                                let actualPenaltyWinnerName = '';
                                 if (predictedPenaltyWinnerId && match) {
                                     if (predictedPenaltyWinnerId === match.team1) {
                                         predictedPenaltyWinnerName = team1Name;
@@ -238,7 +260,16 @@ const MyPredictions: React.FC = () => {
                                         predictedPenaltyWinnerName = team2Name;
                                     }
                                 }
+
+                                if (actualPenaltyWinnerId && match) {
+                                    if (actualPenaltyWinnerId === match.team1) {
+                                        actualPenaltyWinnerName = team1Name;
+                                    } else if (actualPenaltyWinnerId === match.team2) {
+                                        actualPenaltyWinnerName = team2Name;
+                                    }
+                                }
                                 const roundLabel = match?.round ? (/^\d+$/.test(String(match.round).trim()) ? `Round ${match.round}` : match.round) : '';
+                                const isKnockout = match?.isKnockoutMatch;
 
                                 return (
                                     <div
@@ -310,8 +341,13 @@ const MyPredictions: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 <span className="text-white/30 text-[9px] uppercase tracking-widest">
-                                                    {isCompleted ? 'Final Score' : match?.matchTime ? format(new Date(match.matchTime), 'MMM dd • HH:mm') : 'TBD'}
+                                                    {isCompleted
+                                                        ? isKnockout ? 'Final Score in Normal & Extra Time' : 'Final Score'
+                                                        : match?.matchTime ? format(new Date(match.matchTime), 'MMM dd • HH:mm') : 'TBD'}
                                                 </span>
+                                                {actualPenaltyWinnerName && (
+                                                    <span className="text-amber-300 text-[8px] font-semibold uppercase tracking-wider leading-none mt-0.5">{actualPenaltyWinnerName} wins on penalties</span>
+                                                )}
                                                 {/* Your prediction */}
                                                 <div className="flex flex-col items-center gap-0.5 bg-sky-500/20 border border-sky-400/30 rounded-md px-3 py-1">
                                                     <span className="text-sky-400 text-[8px] font-semibold uppercase tracking-wider leading-none">Your Prediction</span>
@@ -319,7 +355,7 @@ const MyPredictions: React.FC = () => {
                                                         {pred1 != null && pred2 != null ? `${pred1}–${pred2}` : '–'}
                                                     </span>
                                                     {predictedPenaltyWinnerName && (
-                                                        <span className="text-sky-400 text-[8px] font-semibold uppercase tracking-wider leading-none mt-0.5">{predictedPenaltyWinnerName} wins</span>
+                                                        <span className="text-sky-400 text-[8px] font-semibold tracking-wider leading-none mt-0.5">Penalty Winner - {predictedPenaltyWinnerName}</span>
                                                     )}
                                                 </div>
                                             </div>
