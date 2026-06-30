@@ -411,8 +411,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
             )}
           </div>
           {!isCompleted && (
-            <span className="text-white/30 text-[9px] uppercase tracking-widest">
-              {isPredictionOpen ? 'Your Prediction' : 'Closed'}
+            <span className="text-white/30 text-[8px] uppercase tracking-widest">
+              {isPredictionOpen ? 'Your Prediction in Normal & Extra Time' : 'Closed'}
             </span>
           )}
           {!isCompleted && isPredictionOpen && knockoutMatch && predictedDraw && (
