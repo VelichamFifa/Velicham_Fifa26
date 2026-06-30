@@ -155,10 +155,12 @@ const buildPredictionsFromResults = async (
           team2: result.match.team2,
           team1Score: result.match.team1Score,
           team2Score: result.match.team2Score,
+          penaltyShootoutWinner: result.match.penaltyShootoutWinner,
           matchTime: result.match.matchTime,
           predictionsEndingTime: result.match.predictionsEndingTime,
           status: result.match.status,
           matchTag: result.match.matchTag,
+          isKnockoutMatch: result.match.isKnockoutMatch,
           team1Info: teamById.get(result.match.team1)
             ? {
                 teamName: teamById.get(result.match.team1)!.teamName,

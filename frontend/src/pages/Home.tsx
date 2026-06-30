@@ -244,44 +244,66 @@ const Home: React.FC = () => {
           ))}
         </div>
 
-        {/* Scoring Rules */}
-        <div
-          className="relative overflow-hidden rounded-2xl border border-white/10 p-6 max-w-md mx-auto shadow-2xl"
-          style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
-        >
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        {/* Rules Section */}
+        <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
+          {/* Scoring Rules */}
+          <div
+            className="relative overflow-hidden rounded-2xl border border-white/10 p-6 shadow-2xl"
+            style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
+          >
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
               style={{
               backgroundImage: 'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)',
               }}
             />
             <div className="relative z-10">
-            <h3 className="text-lg font-bold text-white mb-3 border-b border-white/10 pb-2">📊 Scoring Rules</h3>
-            <ul className="text-sm text-white/70 space-y-3">
-              <li className="flex items-center gap-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500/20 text-green-400 text-[10px] border border-green-500/20 font-bold">5</span>
-                <span><strong>Correct Result:</strong> 5 points</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-blue-400 text-[10px] border border-blue-500/20 font-bold">2</span>
-                <span><strong>Correct Team 1 Score:</strong> 2 points</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-blue-400 text-[10px] border border-blue-500/20 font-bold">2</span>
-                <span><strong>Correct Team 2 Score:</strong> 2 points</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/20 text-sky-400 text-[10px] border border-sky-500/20 font-bold">1</span>
-                <span><strong>Correct Goal Difference:</strong> 1 point</span>
-              </li>
-              <li className="flex items-center gap-3 p-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/40 text-emerald-300 text-[10px] border border-emerald-500/60 font-bold">+2</span>
-                <span className="text-emerald-100"><strong>✨ Correct penalty shootout winner in Knockout matches:</strong> 2 points</span>
-              </li>
-              <li className="flex items-center gap-3 p-3 rounded-lg border border-purple-500/40 bg-purple-500/10">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/40 text-purple-300 text-[10px] border border-purple-500/60 font-bold">1</span>
-                <span className="text-purple-100"><strong>✨ Community Weightage:</strong> 1 point per 10 community members</span>
-              </li>
-            </ul>
+              <h3 className="text-lg font-bold text-white mb-3 border-b border-white/10 pb-2">📊 Scoring Rules</h3>
+              <ul className="text-sm text-white/70 space-y-3">
+                <li className="flex items-center gap-3">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500/20 text-green-400 text-[10px] border border-green-500/20 font-bold">5</span>
+                  <span><strong>Correct Result:</strong> 5 points</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-blue-400 text-[10px] border border-blue-500/20 font-bold">2</span>
+                  <span><strong>Correct Team 1 Score:</strong> 2 points</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-blue-400 text-[10px] border border-blue-500/20 font-bold">2</span>
+                  <span><strong>Correct Team 2 Score:</strong> 2 points</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/20 text-sky-400 text-[10px] border border-sky-500/20 font-bold">1</span>
+                  <span><strong>Correct Goal Difference:</strong> 1 point</span>
+                </li>
+                <li className="flex items-center gap-3 p-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/40 text-emerald-300 text-[10px] border border-emerald-500/60 font-bold">+2</span>
+                  <span className="text-emerald-100"><strong>✨ Correct penalty shootout winner in Knockout matches:</strong> 2 points</span>
+                </li>
+                <li className="flex items-center gap-3 p-3 rounded-lg border border-purple-500/40 bg-purple-500/10">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/40 text-purple-300 text-[10px] border border-purple-500/60 font-bold">1</span>
+                  <span className="text-purple-100"><strong>✨ Community Weightage:</strong> 1 point per 10 community members</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Knockout Rules */}
+          <div
+            className="relative overflow-hidden rounded-2xl border border-white/10 p-6 shadow-2xl"
+            style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1a2744 50%, #0c1a1a 100%)' }}
+          >
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+              style={{ backgroundImage: 'radial-gradient(ellipse 70% 50% at 50% 50%, #ffffff 0%, transparent 70%)' }}
+            />
+            <div className="relative z-10">
+              <h3 className="text-lg font-bold text-white mb-3 border-b border-white/10 pb-2">🛡️ Knockout Rules</h3>
+              <div className="text-sm text-white/70 space-y-3">
+                <p>Standard scoring (up to 10 points) is based on the score in Normal and Extra time (120 minutes) and NOT penalty score.</p>
+                <p className="p-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-100">If the match goes to penalties, users who predicted a draw in normal time and extra time, and correctly selected the penalty shootout winner receive an additional <strong>+2 bonus points</strong>.</p>
+                <p>If a user predicts a draw + penalty winner, but the match finishes in normal time or extra time without penalties, they will not receive the 5 points for correct result.</p>
+                <p>Predicting a team to win in normal time does not qualify for the penalty bonus, even if that team eventually wins the shootout.</p>
+              </div>
+            </div>
           </div>
         </div>
 

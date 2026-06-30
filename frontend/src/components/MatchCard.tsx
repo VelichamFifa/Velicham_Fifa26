@@ -199,6 +199,15 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
   const roundLabel = /^\d+$/.test(match.round.trim()) ? `Round ${match.round}` : match.round;
   const groupKey = normalizeGroupKey(match.group);
   const groupLabel = groupKey ? toDisplayGroupLabel(groupKey) : null;
+  const hasExistingPenaltyPrediction =
+    knockoutMatch &&
+    userPrediction &&
+    isNumericScore(userPrediction.team1Score) &&
+    isNumericScore(userPrediction.team2Score) &&
+    userPrediction.team1Score === userPrediction.team2Score &&
+    userPrediction.penaltyShootoutWinner;
+  const predictedPenaltyWinnerName =
+    hasExistingPenaltyPrediction && userPrediction?.penaltyShootoutWinner === match.team1 ? t1Name : t2Name;
 
   const loadGroupStandings = async () => {
     if (!groupKey) return;
@@ -423,6 +432,14 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, userPrediction, onPredicti
               <span className="text-[9px] text-white/45 text-center leading-tight max-w-[140px]">
                 Correct winner earns +2 points.
               </span>
+            </div>
+          )}
+          {!isCompleted && !isPredictionOpen && hasExistingPenaltyPrediction && (
+            <div className="mt-2 flex flex-col items-center gap-0.5">
+              <span className="text-[9px] uppercase tracking-widest text-amber-300/90 font-semibold text-center">
+                Penalty Winner Pick
+              </span>
+              <span className="text-sm font-bold text-white">{predictedPenaltyWinnerName}</span>
             </div>
           )}
           {isCompleted && (
