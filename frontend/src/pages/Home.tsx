@@ -172,7 +172,7 @@ const Home: React.FC = () => {
             <div className="rounded-md border border-yellow-400/40 bg-yellow-500/15 px-3 py-2 flex items-start gap-2">
               <span className="text-sm leading-none mt-0.5">⚠️</span>
               <p className="text-yellow-100/90 text-xs sm:text-sm">
-                <strong>Knockout Matches:</strong> Get +2 points for correctly predicting the penalty shootout winner.
+                <strong>Knockout Matches:</strong> Get +2 points for correctly predicting the penalty shootout winner.Please check the Knockout Rules section in Home for more details.
               </p>
             </div>
             <div className="rounded-md border border-yellow-400/40 bg-yellow-500/15 px-3 py-2 flex items-start gap-2">
@@ -275,9 +275,12 @@ const Home: React.FC = () => {
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/20 text-sky-400 text-[10px] border border-sky-500/20 font-bold">1</span>
                   <span><strong>Correct Goal Difference:</strong> 1 point</span>
                 </li>
-                <li className="flex items-center gap-3 p-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/40 text-emerald-300 text-[10px] border border-emerald-500/60 font-bold">+2</span>
-                  <span className="text-emerald-100"><strong>✨ Correct penalty shootout winner in Knockout matches:</strong> 2 points</span>
+                <li className="flex items-start gap-3 p-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/40 text-emerald-300 text-[10px] border border-emerald-500/60 font-bold mt-0.5">+2</span>
+                  <div>
+                    <span className="text-emerald-100"><strong>✨ Correct penalty shootout winner:</strong> 2 points</span>
+                    <p className="text-xs text-emerald-200/70 mt-1">Please check the Knockout Rules section for more details.</p>
+                  </div>
                 </li>
                 <li className="flex items-center gap-3 p-3 rounded-lg border border-purple-500/40 bg-purple-500/10">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/40 text-purple-300 text-[10px] border border-purple-500/60 font-bold">1</span>

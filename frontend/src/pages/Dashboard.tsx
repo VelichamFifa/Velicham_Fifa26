@@ -204,7 +204,8 @@ const Dashboard: React.FC = () => {
                   <span className="text-sm leading-none mt-0.5">⚠️</span>
                   {activeScoringPopup === 'knockout' ? (
                     <p className="text-sm text-white/90">
-                      <span className="font-semibold text-amber-200"></span> Get +2 points for correctly predicting the penalty shootout winner.
+                      <span className="font-semibold text-amber-200"></span> Get +2 points for correctly predicting the penalty shootout winner.Please check the Knockout Rules section in<Link to="/" className="text-sky-400 hover:text-sky-300 underline ml-1">Home</Link> for more details.
+                                      
                     </p>
                   ) : (
                     <p className="text-sm text-white/80 leading-relaxed">
