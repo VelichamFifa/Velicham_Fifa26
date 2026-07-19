@@ -6,10 +6,15 @@ import { Match, Prediction } from '../types';
 import MatchCard from '../components/MatchCard';
 
 interface Winner {
+  id: number;
   userId: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   photoId?: string | null;
   rank: number;
+  city: string;
+  state: string;
+  country: string;
 }
 
 const PODIUM_STYLE: Record<number, { label: string; border: string; text: string; icon: string }> = {
@@ -103,19 +108,30 @@ const Home: React.FC = () => {
     const loadOverallWinners = async () => {
       try {
         setLoadingOverallWinners(true);
-        const res = await apiService.getTopLeaderboard(3);
-        const leaderboard = Array.isArray(res.data?.leaderboard) ? res.data.leaderboard : [];
+        const res = await apiService.getWinners();
+        const groupedUsers = res.data?.groupedUsers || res.data?.grouped || {};
+        const overallRoundKey = Object.keys(groupedUsers).find(
+          (key) => key.trim().toLowerCase() === 'overall'
+        );
+        const overallUsers = overallRoundKey && Array.isArray(groupedUsers[overallRoundKey])
+          ? groupedUsers[overallRoundKey]
+          : [];
 
         setOverallWinners(
-          leaderboard
+          overallUsers
             .filter((entry: any) => [1, 2, 3].includes(entry.rank))
             .sort((a: any, b: any) => a.rank - b.rank)
             .slice(0, 3)
             .map((entry: any) => ({
+              id: entry.id,
               userId: String(entry.userId),
-              name: entry.name,
+              firstName: entry.firstName || '',
+              lastName: entry.lastName || '',
               rank: entry.rank,
-              photoId: null,
+              photoId: entry.photoId ?? null,
+              city: entry.city || '',
+              state: entry.state || '',
+              country: entry.country || '',
             }))
         );
       } catch (err) {
@@ -547,7 +563,11 @@ const Home: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 {overallWinners.map((winner) => {
                   const style = PODIUM_STYLE[winner.rank] || PODIUM_STYLE[3];
-                  const name = winner.name?.trim() || 'Winner';
+                  const name = `${winner.firstName || ''} ${winner.lastName || ''}`.trim() || 'Winner';
+                  const address = [winner.city, winner.state, winner.country]
+                    .map((value) => (value || '').trim())
+                    .filter((value) => value.length > 0)
+                    .join(', ');
                   const nameParts = name.split(/\s+/).filter(Boolean);
                   const initials = (nameParts[0]?.charAt(0) || nameParts[1]?.charAt(0) || 'W').toUpperCase();
 
@@ -567,6 +587,9 @@ const Home: React.FC = () => {
                         )}
                       </div>
                       <p className="mt-3 text-white font-semibold text-sm sm:text-base">{name || 'Winner'}</p>
+                      {address ? (
+                        <p className="mt-1 text-xs text-white/65 leading-relaxed">{address}</p>
+                      ) : null}
                       <p className={`text-xs font-medium mt-1 ${style.text}`}>{style.label}</p>
                     </div>
                   );
