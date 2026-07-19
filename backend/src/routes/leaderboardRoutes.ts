@@ -12,6 +12,7 @@ router.get('/gr2', leaderboardController.getGR2Leaderboard);
 router.get('/gr3', leaderboardController.getGR3Leaderboard);
 router.get('/round-32', leaderboardController.getRound32Leaderboard);
 router.get('/knockout', leaderboardController.getKnockoutLeaderboard);
+router.get('/super-round', leaderboardController.getSuperRoundLeaderboard);
 router.get('/community', leaderboardController.getCommunityLeaderboard);
 router.get('/community/daily', leaderboardController.getDailyCommunityLeaderboard);
 router.get('/ranking/community/:communityId', leaderboardController.getCommunityUserRanking);

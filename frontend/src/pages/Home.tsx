@@ -160,7 +160,7 @@ const Home: React.FC = () => {
             <span className="absolute -top-3 left-4 sm:left-6 px-3 py-1 rounded-full border border-white/20 bg-[#0f172a] text-[10px] sm:text-xs font-bold text-white uppercase tracking-[0.2em]">
               Stage Leaderboards
             </span>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
               <Link
                 to="/group-stages"
                 className="min-w-0 py-2.5 bg-white/5 border border-purple-400/50 text-purple-300/80 font-bold rounded-xl hover:bg-purple-500/10 hover:text-purple-200 hover:border-purple-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
@@ -190,6 +190,12 @@ const Home: React.FC = () => {
                 className="min-w-0 py-2.5 bg-white/5 border border-rose-400/50 text-rose-300/80 font-bold rounded-xl hover:bg-rose-500/10 hover:text-rose-200 hover:border-rose-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700 col-span-2 sm:col-span-1"
               >
                 Semi
+              </Link>
+              <Link
+                to="/super-round-leaderboard"
+                className="min-w-0 py-2.5 bg-white/5 border border-amber-400/50 text-amber-300/80 font-bold rounded-xl hover:bg-amber-500/10 hover:text-amber-200 hover:border-amber-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700 col-span-2 sm:col-span-1"
+              >
+                Super Round
               </Link>
             </div>
           </div>

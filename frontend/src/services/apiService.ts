@@ -180,6 +180,10 @@ class ApiService {
     return this.client.get('/leaderboard/knockout', { params: { limit, round } });
   }
 
+  getSuperRoundLeaderboard(limit?: number) {
+    return this.client.get('/leaderboard/super-round', { params: { limit } });
+  }
+
   getCommunityLeaderboard(limit?: number) {
     return this.client.get('/leaderboard/community', { params: { limit } });
   }

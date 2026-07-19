@@ -24,6 +24,7 @@ import Round32LeaderboardPage from './pages/Round32LeaderboardPage';
 import R16LeaderboardPage from './pages/R16LeaderboardPage';
 import QuarterLeaderboardPage from './pages/QuarterLeaderboardPage';
 import SemifinalLeaderboardPage from './pages/SemifinalLeaderboardPage';
+import SuperRoundLeaderboardPage from './pages/SuperRoundLeaderboardPage';
 function RouteTelemetry() {
   const location = useLocation();
   const lastTrackedPathRef = useRef<string>('');
@@ -67,6 +68,7 @@ function App() {
             <Route path="/round-16" element={<R16LeaderboardPage />} />
             <Route path="/quarter-leaderboard" element={<QuarterLeaderboardPage />} />
             <Route path="/semifinal-leaderboard" element={<SemifinalLeaderboardPage />} />
+            <Route path="/super-round-leaderboard" element={<SuperRoundLeaderboardPage />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/contact" element={<Contact />} />
           </Routes>
