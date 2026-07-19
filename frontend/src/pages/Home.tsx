@@ -5,11 +5,73 @@ import { apiService } from '../services/apiService';
 import { Match, Prediction } from '../types';
 import MatchCard from '../components/MatchCard';
 
+interface Winner {
+  userId: string;
+  name: string;
+  photoId?: string | null;
+  rank: number;
+}
+
+const PODIUM_STYLE: Record<number, { label: string; border: string; text: string; icon: string }> = {
+  1: { label: 'First Place', border: 'border-yellow-400/50', text: 'text-yellow-300', icon: '🥇' },
+  2: { label: 'Second Place', border: 'border-slate-300/50', text: 'text-slate-200', icon: '🥈' },
+  3: { label: 'Third Place', border: 'border-amber-600/50', text: 'text-amber-300', icon: '🥉' },
+};
+
+const HomeWinnerPhoto: React.FC<{ photoId: string; initials: string; alt: string }> = ({ photoId, initials, alt }) => {
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    let createdUrl: string | null = null;
+
+    setObjectUrl(null);
+    setFailed(false);
+
+    apiService
+      .getWinnerPhoto(photoId)
+      .then((res) => {
+        if (!active) return;
+        createdUrl = URL.createObjectURL(res.data as Blob);
+        setObjectUrl(createdUrl);
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      });
+
+    return () => {
+      active = false;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
+    };
+  }, [photoId]);
+
+  if (failed || !objectUrl) {
+    return (
+      <div className="w-24 h-24 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white">
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={objectUrl}
+      alt={alt}
+      className="w-24 h-24 rounded-full object-cover border-2 border-white/20 shadow-lg"
+      onError={() => setFailed(true)}
+    />
+  );
+};
+
 const Home: React.FC = () => {
   const { isLoggedIn, user, logout } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [userPredictions, setUserPredictions] = useState<Prediction[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
+  const [overallWinners, setOverallWinners] = useState<Winner[]>([]);
+  const [loadingOverallWinners, setLoadingOverallWinners] = useState(false);
+  const [showIntroCollision, setShowIntroCollision] = useState(false);
 
   const getPredictionMatchId = (prediction: Prediction): string => {
     if (typeof prediction.matchId === 'string') return prediction.matchId;
@@ -36,6 +98,54 @@ const Home: React.FC = () => {
     };
     load();
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    const loadOverallWinners = async () => {
+      try {
+        setLoadingOverallWinners(true);
+        const res = await apiService.getTopLeaderboard(3);
+        const leaderboard = Array.isArray(res.data?.leaderboard) ? res.data.leaderboard : [];
+
+        setOverallWinners(
+          leaderboard
+            .filter((entry: any) => [1, 2, 3].includes(entry.rank))
+            .sort((a: any, b: any) => a.rank - b.rank)
+            .slice(0, 3)
+            .map((entry: any) => ({
+              userId: String(entry.userId),
+              name: entry.name,
+              rank: entry.rank,
+              photoId: null,
+            }))
+        );
+      } catch (err) {
+        console.error('Failed to load overall winners:', err);
+        setOverallWinners([]);
+      } finally {
+        setLoadingOverallWinners(false);
+      }
+    };
+
+    loadOverallWinners();
+  }, []);
+
+  useEffect(() => {
+    const introKey = 'home-ball-collision-intro-v1';
+
+    try {
+      if (sessionStorage.getItem(introKey) === '1') return;
+      sessionStorage.setItem(introKey, '1');
+      setShowIntroCollision(true);
+    } catch {
+      setShowIntroCollision(true);
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowIntroCollision(false);
+    }, 4700);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const displayMatches = useMemo(() => {
     const active = matches.filter((m) => {
@@ -85,6 +195,275 @@ const Home: React.FC = () => {
 
   return (
     <div>
+      <style>{`
+        @keyframes rocketLaunch {
+          0% {
+            transform: translateY(0) scale(0.35);
+            opacity: 0;
+          }
+          18% {
+            opacity: 0;
+          }
+          34% {
+            opacity: 1;
+          }
+          82% {
+            opacity: 1;
+          }
+          100% {
+            transform: translate(var(--drift, 0px), var(--rise, -360px)) scale(1);
+            opacity: 0;
+          }
+        }
+
+        @keyframes introBallLeft {
+          0% { transform: translate(-52vw, 34vh) scale(0.92) rotate(0deg); opacity: 0; }
+          12% { opacity: 1; }
+          48% { transform: translate(-8vw, -20vh) scale(1) rotate(340deg); opacity: 1; }
+          58% { transform: translate(0vw, -20vh) scale(1.06) rotate(430deg); opacity: 1; }
+          100% { transform: translate(10vw, 36vh) scale(0.9) rotate(670deg); opacity: 0; }
+        }
+
+        @keyframes introBallRight {
+          0% { transform: translate(52vw, 34vh) scale(0.92) rotate(0deg); opacity: 0; }
+          12% { opacity: 1; }
+          48% { transform: translate(8vw, -20vh) scale(1) rotate(-340deg); opacity: 1; }
+          58% { transform: translate(0vw, -20vh) scale(1.06) rotate(-430deg); opacity: 1; }
+          100% { transform: translate(-10vw, 36vh) scale(0.9) rotate(-670deg); opacity: 0; }
+        }
+
+        @keyframes introCollisionFlash {
+          0%, 46% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+          56% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.95; }
+          74% { transform: translate(-50%, -50%) scale(1.8); opacity: 0.35; }
+          100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
+        }
+
+        .intro-collision-overlay {
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          z-index: 50;
+          overflow: hidden;
+        }
+
+        .intro-ball {
+          position: absolute;
+          left: 50%;
+          top: 56%;
+          width: clamp(48px, 9vw, 76px);
+          height: clamp(48px, 9vw, 76px);
+          object-fit: contain;
+          filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.45));
+          opacity: 0;
+        }
+
+        .intro-ball.left { animation: introBallLeft 4.6s cubic-bezier(0.2, 0.9, 0.3, 1) 1 forwards; }
+        .intro-ball.right { animation: introBallRight 4.6s cubic-bezier(0.2, 0.9, 0.3, 1) 1 forwards; }
+
+        .intro-hit-flash {
+          position: absolute;
+          left: 50%;
+          top: 36%;
+          width: clamp(64px, 14vw, 140px);
+          height: clamp(64px, 14vw, 140px);
+          transform: translate(-50%, -50%);
+        }
+
+        .intro-hit-flash::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 9999px;
+          background:
+            radial-gradient(circle, rgba(255,255,255,0.92) 0%, rgba(255,206,107,0.72) 26%, rgba(255,130,53,0.2) 56%, rgba(255,130,53,0) 74%);
+          filter: blur(0.4px);
+          animation: introCollisionFlash 4.6s ease-out 1 forwards;
+          opacity: 0;
+        }
+
+        @keyframes fireworkBurst {
+          0%, 80% {
+            transform: scale(calc(var(--burst-from, 0.2)));
+            opacity: 0;
+          }
+          86% {
+            transform: scale(calc(var(--burst-mid, 0.9)));
+            opacity: 1;
+          }
+          100% {
+            transform: scale(calc(var(--burst-to, 1.7)));
+            opacity: 0;
+          }
+        }
+
+        @keyframes fireworkFlash {
+          0%, 80% {
+            transform: translate(-50%, -50%) scale(0.2);
+            opacity: 0;
+          }
+          86% {
+            transform: translate(-50%, -50%) scale(1.1);
+            opacity: 0.95;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(2.4);
+            opacity: 0;
+          }
+        }
+
+        @keyframes smokeFade {
+          0%, 72% {
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 0;
+          }
+          80% {
+            transform: translate(-50%, -58%) scale(0.95);
+            opacity: 0.28;
+          }
+          100% {
+            transform: translate(-50%, -95%) scale(1.45);
+            opacity: 0;
+          }
+        }
+
+        .home-firework {
+          position: absolute;
+          bottom: 0;
+          width: 6px;
+          height: 6px;
+          border-radius: 9999px;
+          animation-name: rocketLaunch;
+          animation-timing-function: ease-out;
+          animation-iteration-count: infinite;
+          will-change: transform, opacity;
+          background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, hsla(var(--hue, 42), 100%, 72%, 0.95) 50%, hsla(var(--hue, 42), 100%, 40%, 0) 82%);
+          box-shadow:
+            0 0 10px hsla(var(--hue, 42), 100%, 70%, 0.95),
+            0 0 22px hsla(var(--hue, 42), 100%, 58%, 0.6);
+          mix-blend-mode: screen;
+        }
+
+        .home-firework::before {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 5px;
+          width: 1.5px;
+          height: 110px;
+          transform: translateX(-50%);
+          background: linear-gradient(to top, hsla(var(--hue, 42), 100%, 72%, 0.85), hsla(var(--hue, 42), 100%, 72%, 0));
+          filter: blur(0.8px);
+        }
+
+        .home-firework::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: var(--burst-size, 80px);
+          height: var(--burst-size, 80px);
+          transform: translate(-50%, -50%);
+          border-radius: 9999px;
+          opacity: 0;
+          animation: fireworkBurst var(--dur, 2.8s) ease-out infinite;
+          animation-delay: var(--delay, 0s);
+          background:
+            radial-gradient(circle at 50% 6%, rgba(255, 255, 255, 0.98) 0 5%, transparent 6%),
+            radial-gradient(circle at 83% 17%, hsla(calc(var(--hue, 42) + 28), 100%, 70%, 0.95) 0 4%, transparent 5%),
+            radial-gradient(circle at 94% 50%, hsla(var(--hue, 42), 100%, 84%, 0.98) 0 4%, transparent 5%),
+            radial-gradient(circle at 83% 83%, hsla(calc(var(--hue, 42) - 24), 100%, 62%, 0.95) 0 4%, transparent 5%),
+            radial-gradient(circle at 50% 94%, rgba(255, 255, 255, 0.95) 0 5%, transparent 6%),
+            radial-gradient(circle at 17% 83%, hsla(calc(var(--hue, 42) + 28), 100%, 70%, 0.95) 0 4%, transparent 5%),
+            radial-gradient(circle at 6% 50%, hsla(var(--hue, 42), 100%, 84%, 0.98) 0 4%, transparent 5%),
+            radial-gradient(circle at 17% 17%, hsla(calc(var(--hue, 42) - 24), 100%, 62%, 0.95) 0 4%, transparent 5%),
+            radial-gradient(circle at 64% 33%, hsla(calc(var(--hue, 42) + 52), 100%, 72%, 0.9) 0 3%, transparent 4%),
+            radial-gradient(circle at 36% 67%, hsla(calc(var(--hue, 42) - 38), 100%, 70%, 0.9) 0 3%, transparent 4%);
+          filter: drop-shadow(0 0 10px hsla(var(--hue, 42), 100%, 72%, 0.9));
+        }
+
+        .home-firework b {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: calc(var(--burst-size, 80px) * 0.5);
+          height: calc(var(--burst-size, 80px) * 0.5);
+          border-radius: 9999px;
+          transform: translate(-50%, -50%);
+          opacity: 0;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, hsla(var(--hue, 42), 100%, 72%, 0.48) 42%, rgba(255, 255, 255, 0) 72%);
+          filter: blur(1.2px);
+          animation: fireworkFlash var(--dur, 2.8s) ease-out infinite;
+          animation-delay: var(--delay, 0s);
+          pointer-events: none;
+        }
+
+        .home-firework i {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 3px;
+          height: 3px;
+          border-radius: 9999px;
+          background: hsla(calc(var(--hue, 42) + 18), 100%, 82%, 0.95);
+          box-shadow: 0 0 8px hsla(calc(var(--hue, 42) + 18), 100%, 72%, 0.95);
+          transform: translate(-50%, -50%);
+          opacity: 0;
+          animation: fireworkBurst var(--dur, 2.8s) ease-out infinite;
+          animation-delay: calc(var(--delay, 0s) + 0.08s);
+        }
+
+        .home-firework em {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: calc(var(--burst-size, 80px) * 0.52);
+          height: calc(var(--burst-size, 80px) * 0.52);
+          border-radius: 9999px;
+          transform: translate(-50%, -50%);
+          opacity: 0;
+          background: radial-gradient(circle, rgba(232, 236, 244, 0.35) 0%, rgba(176, 184, 198, 0.16) 42%, rgba(109, 120, 139, 0) 72%);
+          filter: blur(2px);
+          animation: smokeFade var(--dur, 2.8s) ease-out infinite;
+          animation-delay: calc(var(--delay, 0s) + 0.12s);
+          pointer-events: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .home-firework,
+          .home-firework::after {
+            animation: none;
+            opacity: 0;
+          }
+
+          .intro-collision-overlay {
+            display: none;
+          }
+        }
+      `}</style>
+
+      {showIntroCollision && (
+        <div className="intro-collision-overlay" aria-hidden="true">
+          <img src="/original-world-cup.png" alt="" className="intro-ball left" />
+          <img src="/original-world-cup.png" alt="" className="intro-ball right" />
+          <div className="intro-hit-flash" />
+        </div>
+      )}
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 block" aria-hidden="true">
+        <div className="absolute left-1 sm:left-4 bottom-0 h-40 sm:h-56 w-14 sm:w-20">
+          <span className="home-firework" style={{ left: '4px', animationDuration: '2.9s', animationDelay: '0s', ['--dur' as any]: '2.9s', ['--delay' as any]: '0s', ['--drift' as any]: '128px', ['--rise' as any]: '-470px', ['--hue' as any]: '26', ['--burst-size' as any]: '84px', ['--burst-from' as any]: '0.16', ['--burst-mid' as any]: '0.86', ['--burst-to' as any]: '1.7' }}><b /><i /><em /></span>
+          <span className="home-firework" style={{ left: '28px', animationDuration: '2.3s', animationDelay: '0.8s', ['--dur' as any]: '2.3s', ['--delay' as any]: '0.8s', ['--drift' as any]: '112px', ['--rise' as any]: '-420px', ['--hue' as any]: '198', ['--burst-size' as any]: '104px', ['--burst-from' as any]: '0.2', ['--burst-mid' as any]: '0.98', ['--burst-to' as any]: '2.05' }}><b /><i /><em /></span>
+          <span className="home-firework" style={{ left: '50px', animationDuration: '3.2s', animationDelay: '1.4s', ['--dur' as any]: '3.2s', ['--delay' as any]: '1.4s', ['--drift' as any]: '142px', ['--rise' as any]: '-500px', ['--hue' as any]: '332', ['--burst-size' as any]: '92px', ['--burst-from' as any]: '0.18', ['--burst-mid' as any]: '0.9', ['--burst-to' as any]: '1.85' }}><b /><i /><em /></span>
+        </div>
+
+        <div className="absolute right-1 sm:right-4 bottom-0 h-40 sm:h-56 w-14 sm:w-20">
+          <span className="home-firework" style={{ left: '44px', animationDuration: '2.8s', animationDelay: '0.3s', ['--dur' as any]: '2.8s', ['--delay' as any]: '0.3s', ['--drift' as any]: '-128px', ['--rise' as any]: '-470px', ['--hue' as any]: '40', ['--burst-size' as any]: '100px', ['--burst-from' as any]: '0.18', ['--burst-mid' as any]: '0.92', ['--burst-to' as any]: '1.96' }}><b /><i /><em /></span>
+          <span className="home-firework" style={{ left: '24px', animationDuration: '2.2s', animationDelay: '1s', ['--dur' as any]: '2.2s', ['--delay' as any]: '1s', ['--drift' as any]: '-110px', ['--rise' as any]: '-420px', ['--hue' as any]: '220', ['--burst-size' as any]: '82px', ['--burst-from' as any]: '0.14', ['--burst-mid' as any]: '0.82', ['--burst-to' as any]: '1.66' }}><b /><i /><em /></span>
+          <span className="home-firework" style={{ left: '2px', animationDuration: '3.1s', animationDelay: '1.6s', ['--dur' as any]: '3.1s', ['--delay' as any]: '1.6s', ['--drift' as any]: '-142px', ['--rise' as any]: '-500px', ['--hue' as any]: '302', ['--burst-size' as any]: '110px', ['--burst-from' as any]: '0.2', ['--burst-mid' as any]: '1.02', ['--burst-to' as any]: '2.12' }}><b /><i /><em /></span>
+        </div>
+      </div>
+
       <div className="relative w-full overflow-hidden shadow-2xl border-b border-white/10 bg-primary">
         <img src="/Cover.png" alt="WORLD CUP 2026 Cover" className="w-full h-auto object-cover max-h-[500px] sm:max-h-[700px] block" />
         
@@ -154,6 +533,48 @@ const Home: React.FC = () => {
             >
               Winners
             </Link>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-white/15 bg-white/5 backdrop-blur-sm shadow-xl px-4 py-5 sm:px-6 sm:py-6 max-w-6xl mx-auto">
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <h2 className="text-sm sm:text-base font-bold text-white uppercase tracking-[0.18em]">Overall Winners</h2>
+              <Link to="/winners" className="text-xs text-sky-300 hover:text-sky-200 font-semibold">View all winners</Link>
+            </div>
+
+            {loadingOverallWinners ? (
+              <div className="text-center py-6 text-white/50 text-sm">Loading overall winners...</div>
+            ) : overallWinners.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                {overallWinners.map((winner) => {
+                  const style = PODIUM_STYLE[winner.rank] || PODIUM_STYLE[3];
+                  const name = winner.name?.trim() || 'Winner';
+                  const nameParts = name.split(/\s+/).filter(Boolean);
+                  const initials = (nameParts[0]?.charAt(0) || nameParts[1]?.charAt(0) || 'W').toUpperCase();
+
+                  return (
+                    <div
+                      key={winner.userId}
+                      className={`rounded-2xl border ${style.border} bg-gradient-to-br from-[#0f172a] via-[#1a2744] to-[#0c1a1a] p-4 flex flex-col items-center text-center`}
+                    >
+                      <div className="text-xl mb-2">{style.icon}</div>
+                      <div className="relative">
+                        {winner.photoId ? (
+                          <HomeWinnerPhoto photoId={winner.photoId} initials={initials} alt={name} />
+                        ) : (
+                          <div className="w-24 h-24 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white">
+                            {initials}
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-3 text-white font-semibold text-sm sm:text-base">{name || 'Winner'}</p>
+                      <p className={`text-xs font-medium mt-1 ${style.text}`}>{style.label}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-white/40 text-sm">Overall winners will appear here once final results are published.</div>
+            )}
           </div>
 
           <div className="relative mt-6 rounded-2xl border border-white/15 bg-white/5 backdrop-blur-sm shadow-xl px-4 pt-7 pb-4 sm:px-5 sm:pt-8 sm:pb-5 max-w-6xl mx-auto">
