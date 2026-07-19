@@ -124,47 +124,81 @@ const Home: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-6 sm:py-10">
 
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="flex flex-row gap-3 justify-center px-4">
-              {isLoggedIn && (
-                <Link
-                  to="/dashboard"
-                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
-                >
-                  Dashboard
-                </Link>
-              )}
-              {!isLoggedIn && (
-                <Link
-                  to="/login"
-                  className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
-                >
-                  Login to Predict
-                </Link>
-              )}
+        <div className="text-center mb-6 sm:mb-8 px-4">
+          <div className="flex flex-row flex-wrap gap-3 justify-center">
+            {isLoggedIn && (
               <Link
-                to="/leaderboard"
-                className="w-40 py-2.5 bg-white/5 border border-sky-400/50 text-white/70 font-bold rounded-xl hover:bg-white/15 hover:text-white hover:border-sky-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+                to="/dashboard"
+                className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
               >
-                Leaderboard
+                Dashboard
               </Link>
+            )}
+            {!isLoggedIn && (
               <Link
-                to="/winners"
-                className="w-40 py-2.5 bg-white/5 border border-yellow-400/50 text-yellow-300/80 font-bold rounded-xl hover:bg-yellow-500/10 hover:text-yellow-200 hover:border-yellow-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+                to="/login"
+                className="w-40 py-2.5 bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-lg shadow-sky-500/20 text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
               >
-                Winners
+                Login to Predict
               </Link>
-            </div>
-            <div className="flex flex-wrap flex-row gap-3 justify-center px-4 mt-3">
+            )}
+            <Link
+              to="/leaderboard"
+              className="w-40 py-2.5 bg-white/5 border border-sky-400/50 text-white/70 font-bold rounded-xl hover:bg-white/15 hover:text-white hover:border-sky-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+            >
+              Overall Leaderboard
+            </Link>
+            <Link
+              to="/winners"
+              className="w-40 py-2.5 bg-white/5 border border-yellow-400/50 text-yellow-300/80 font-bold rounded-xl hover:bg-yellow-500/10 hover:text-yellow-200 hover:border-yellow-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+            >
+              Winners
+            </Link>
+          </div>
+
+          <div className="relative mt-6 rounded-2xl border border-white/15 bg-white/5 backdrop-blur-sm shadow-xl px-4 pt-7 pb-4 sm:px-5 sm:pt-8 sm:pb-5 max-w-6xl mx-auto">
+            <span className="absolute -top-3 left-4 sm:left-6 px-3 py-1 rounded-full border border-white/20 bg-[#0f172a] text-[10px] sm:text-xs font-bold text-white uppercase tracking-[0.2em]">
+              Stage Leaderboards
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
               <Link
                 to="/group-stages"
-                className="w-40 py-2.5 bg-white/5 border border-purple-400/50 text-purple-300/80 font-bold rounded-xl hover:bg-purple-500/10 hover:text-purple-200 hover:border-purple-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
-              >Group Leaderboard</Link>
+                className="min-w-0 py-2.5 bg-white/5 border border-purple-400/50 text-purple-300/80 font-bold rounded-xl hover:bg-purple-500/10 hover:text-purple-200 hover:border-purple-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+              >
+                Group
+              </Link>
               <Link
                 to="/round-32"
-                className="w-40 py-2.5 bg-white/5 border border-teal-400/50 text-teal-300/80 font-bold rounded-xl hover:bg-teal-500/10 hover:text-teal-200 hover:border-teal-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
-              >Rd 32 Leaderboard</Link>
+                className="min-w-0 py-2.5 bg-white/5 border border-teal-400/50 text-teal-300/80 font-bold rounded-xl hover:bg-teal-500/10 hover:text-teal-200 hover:border-teal-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+              >
+                R 32
+              </Link>
+              <Link
+                to="/round-16"
+                className="min-w-0 py-2.5 bg-white/5 border border-cyan-400/50 text-cyan-300/80 font-bold rounded-xl hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+              >
+                R 16
+              </Link>
+              <Link
+                to="/quarter-leaderboard"
+                className="min-w-0 py-2.5 bg-white/5 border border-emerald-400/50 text-emerald-300/80 font-bold rounded-xl hover:bg-emerald-500/10 hover:text-emerald-200 hover:border-emerald-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+              >
+                Quarter
+              </Link>
+              <Link
+                to="/semifinal-leaderboard"
+                className="min-w-0 py-2.5 bg-white/5 border border-rose-400/50 text-rose-300/80 font-bold rounded-xl hover:bg-rose-500/10 hover:text-rose-200 hover:border-rose-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700 col-span-2 sm:col-span-1"
+              >
+                Semi
+              </Link>
+              <Link
+                to="/super-round-leaderboard"
+                className="min-w-0 py-2.5 bg-white/5 border border-amber-400/50 text-amber-300/80 font-bold rounded-xl hover:bg-amber-500/10 hover:text-amber-200 hover:border-amber-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700 col-span-2 sm:col-span-1"
+              >
+                Super Round
+              </Link>
             </div>
+          </div>
         </div>
 
         {/* Scoring notification — shown for all users */}
@@ -182,6 +216,8 @@ const Home: React.FC = () => {
               </p>
             </div>
         </div>
+
+       
 
         {/* Match Prediction Tiles — shown only when logged in */}
         {isLoggedIn && (

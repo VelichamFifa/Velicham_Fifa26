@@ -314,6 +314,182 @@ export const getRound32Leaderboard = async (req: AuthRequest, res: Response) => 
   }
 };
 
+export const getKnockoutLeaderboard = async (req: AuthRequest, res: Response) => {
+  try {
+    const { limit = '10', round } = req.query;
+    const parsedLimit = parseInt(limit as string, 10);
+    const limitNum = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 10;
+    const selectedRound = ['R16', 'R8', 'Semi'].includes(String(round || ''))
+      ? String(round)
+      : 'totalPoints';
+
+    const results = await prisma.$queryRaw<
+      Array<{
+        totalPoints: bigint;
+        R16: bigint;
+        R8: bigint;
+        Semi: bigint;
+        name: string;
+        state: string;
+        community1: string | null;
+        community2: string | null;
+        userId: string;
+        finalPoint: bigint;
+      }>
+    >`
+      SELECT
+        COALESCE(fur.R16, 0) AS R16,
+        COALESCE(fur.R8, 0) AS R8,
+        COALESCE(fur.Semi, 0) AS Semi,
+        (COALESCE(fur.R16, 0) + COALESCE(fur.R8, 0) + COALESCE(fur.Semi, 0)) AS totalPoints,
+        COALESCE(fur.finalPoint, 0) AS finalPoint,
+        TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
+        UPPER(COALESCE(u.state, '')) AS state,
+        c1.name AS community1,
+        c2.name AS community2,
+        CAST(u.id AS CHAR) AS userId
+      FROM final_user_results fur
+      INNER JOIN users u ON u.id = fur.userId
+      LEFT JOIN communities c1 ON c1.id = u.communityId1
+      LEFT JOIN communities c2 ON c2.id = u.communityId2
+      WHERE (COALESCE(fur.R16, 0) + COALESCE(fur.R8, 0) + COALESCE(fur.Semi, 0)) > 0
+    `;
+
+    const leaderboard = results
+      .map((r) => ({
+        ...r,
+        totalPoints: Number(r.totalPoints),
+        R16: Number(r.R16),
+        R8: Number(r.R8),
+        Semi: Number(r.Semi),
+        finalPoint: Number(r.finalPoint),
+      }))
+      .sort((a, b) => {
+        const aScore = selectedRound === 'totalPoints' ? a.totalPoints : a[selectedRound as 'R16' | 'R8' | 'Semi'];
+        const bScore = selectedRound === 'totalPoints' ? b.totalPoints : b[selectedRound as 'R16' | 'R8' | 'Semi'];
+
+        if (bScore !== aScore) return bScore - aScore;
+        if (b.finalPoint !== a.finalPoint) return b.finalPoint - a.finalPoint;
+        return a.userId.localeCompare(b.userId);
+      })
+      .slice(0, limitNum);
+
+    let lastScore: number | null = null;
+    let lastFinalPoint: number | null = null;
+    let currentRank = 0;
+
+    const rankedLeaderboard = leaderboard.map((entry, index) => {
+      const currentScore = selectedRound === 'totalPoints' ? entry.totalPoints : entry[selectedRound as 'R16' | 'R8' | 'Semi'];
+
+      if (index === 0 || currentScore !== lastScore || entry.finalPoint !== lastFinalPoint) {
+        currentRank = index + 1;
+        lastScore = currentScore;
+        lastFinalPoint = entry.finalPoint;
+      }
+
+      return {
+        ...entry,
+        rank: currentRank,
+      };
+    });
+
+    res.json({ leaderboard: rankedLeaderboard, source: 'database' });
+  } catch (error) {
+    const errorDetails = logger.error('getKnockoutLeaderboard', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch knockout leaderboard' });
+  }
+};
+
+export const getSuperRoundLeaderboard = async (req: AuthRequest, res: Response) => {
+  try {
+    const { limit = '100' } = req.query;
+    const parsedLimit = parseInt(limit as string, 10);
+    const limitNum = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 100;
+
+    const results = await prisma.$queryRaw<
+      Array<{
+        totalPoints: bigint;
+        name: string;
+        state: string;
+        community1: string | null;
+        community2: string | null;
+        userId: string;
+        finalPoint: bigint;
+      }>
+    >`
+      SELECT
+        (
+          COALESCE(fur.R16, 0) +
+          COALESCE(fur.R8, 0) +
+          COALESCE(fur.Semi, 0) +
+          COALESCE(fur.Third, 0) +
+          COALESCE(fur.Final, 0)
+        ) AS totalPoints,
+        COALESCE(fur.finalPoint, 0) AS finalPoint,
+        TRIM(CONCAT(u.firstName, ' ', u.lastName)) AS name,
+        UPPER(COALESCE(u.state, '')) AS state,
+        c1.name AS community1,
+        c2.name AS community2,
+        CAST(u.id AS CHAR) AS userId
+      FROM final_user_results fur
+      INNER JOIN users u ON u.id = fur.userId
+      LEFT JOIN communities c1 ON c1.id = u.communityId1
+      LEFT JOIN communities c2 ON c2.id = u.communityId2
+      WHERE
+        (
+          COALESCE(fur.R16, 0) +
+          COALESCE(fur.R8, 0) +
+          COALESCE(fur.Semi, 0) +
+          COALESCE(fur.Third, 0) +
+          COALESCE(fur.Final, 0)
+        ) > 0
+    `;
+
+    const leaderboard = results
+      .map((r) => ({
+        ...r,
+        totalPoints: Number(r.totalPoints),
+        finalPoint: Number(r.finalPoint),
+      }))
+      .sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+        if (b.finalPoint !== a.finalPoint) return b.finalPoint - a.finalPoint;
+        return a.userId.localeCompare(b.userId);
+      })
+      .slice(0, limitNum);
+
+    let lastScore: number | null = null;
+    let lastFinalPoint: number | null = null;
+    let currentRank = 0;
+
+    const rankedLeaderboard = leaderboard.map((entry, index) => {
+      if (index === 0 || entry.totalPoints !== lastScore || entry.finalPoint !== lastFinalPoint) {
+        currentRank = index + 1;
+        lastScore = entry.totalPoints;
+        lastFinalPoint = entry.finalPoint;
+      }
+
+      return {
+        ...entry,
+        rank: currentRank,
+      };
+    });
+
+    res.json({ leaderboard: rankedLeaderboard, source: 'database' });
+  } catch (error) {
+    const errorDetails = logger.error('getSuperRoundLeaderboard', error, {
+      method: req.method,
+      path: req.path,
+      userId: req.user?.userId,
+    });
+    res.status(errorDetails.statusCode || 500).json({ error: 'Failed to fetch super round leaderboard' });
+  }
+};
+
 export const getCommunityLeaderboard = async (req: AuthRequest, res: Response) => {
   try {
     const { limit = '100' } = req.query;

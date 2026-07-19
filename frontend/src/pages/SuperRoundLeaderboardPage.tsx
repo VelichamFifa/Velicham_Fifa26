@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { apiService } from '../services/apiService';
 import { LeaderboardEntry } from '../types';
 import Leaderboard from '../components/Leaderboard';
 
-const Round32LeaderboardPage: React.FC = () => {
+const SuperRoundLeaderboardPage: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -13,11 +13,11 @@ const Round32LeaderboardPage: React.FC = () => {
     const loadLeaderboard = async () => {
       try {
         setLoading(true);
-        const res = await apiService.getRound32Leaderboard();
+        const res = await apiService.getSuperRoundLeaderboard(150);
         setLeaderboard(res.data?.leaderboard || []);
       } catch (err) {
-        console.error('Failed to load Round of 32 leaderboard:', err);
-        setError('Could not load the leaderboard. Please try again later.');
+        console.error('Failed to load Super Round leaderboard:', err);
+        setError('Could not load the Super Round leaderboard. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -26,16 +26,16 @@ const Round32LeaderboardPage: React.FC = () => {
     loadLeaderboard();
   }, []);
 
-  const filteredLeaderboard = leaderboard.filter(
-    (entry) => entry.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredLeaderboard = leaderboard.filter((entry) =>
+    entry.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">🏆 R 32 Leaderboard</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">🏆 Super Round Leaderboard</h1>
         <p className="text-white/50 text-sm sm:text-base">
-          See who topped the charts during R 32.
+          Combined points from R16, Quarter, Semi, Third Place, and Final.
         </p>
       </div>
 
@@ -55,7 +55,7 @@ const Round32LeaderboardPage: React.FC = () => {
       {loading ? (
         <div className="text-center py-20">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-sky-400"></div>
-          <p className="mt-4 text-white/50 text-sm">Loading leaderboard…</p>
+          <p className="mt-4 text-white/50 text-sm">Loading leaderboard...</p>
         </div>
       ) : error ? (
         <div className="text-center py-16 text-red-400">{error}</div>
@@ -65,8 +65,8 @@ const Round32LeaderboardPage: React.FC = () => {
             <Leaderboard
               entries={filteredLeaderboard}
               type="user"
-              title="R 32 Leaderboard"
-              subtitle=""
+              title="Super Round Leaderboard"
+              subtitle="R16 + Quarter + Semi + Third + Final"
               showCommunityUnderName={true}
               hideState={true}
               hideRank={true}
@@ -77,7 +77,7 @@ const Round32LeaderboardPage: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-16 text-white/40">
-              <p className="text-lg font-medium">No results for this stage yet.</p>
+              <p className="text-lg font-medium">No Super Round results yet.</p>
             </div>
           )}
         </div>
@@ -86,4 +86,4 @@ const Round32LeaderboardPage: React.FC = () => {
   );
 };
 
-export default Round32LeaderboardPage;
+export default SuperRoundLeaderboardPage;
