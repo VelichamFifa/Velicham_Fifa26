@@ -76,7 +76,6 @@ const Home: React.FC = () => {
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [overallWinners, setOverallWinners] = useState<Winner[]>([]);
   const [loadingOverallWinners, setLoadingOverallWinners] = useState(false);
-  const [showIntroCollision, setShowIntroCollision] = useState(false);
 
   const getPredictionMatchId = (prediction: Prediction): string => {
     if (typeof prediction.matchId === 'string') return prediction.matchId;
@@ -143,24 +142,6 @@ const Home: React.FC = () => {
     };
 
     loadOverallWinners();
-  }, []);
-
-  useEffect(() => {
-    const introKey = 'home-ball-collision-intro-v1';
-
-    try {
-      if (sessionStorage.getItem(introKey) === '1') return;
-      sessionStorage.setItem(introKey, '1');
-      setShowIntroCollision(true);
-    } catch {
-      setShowIntroCollision(true);
-    }
-
-    const timer = window.setTimeout(() => {
-      setShowIntroCollision(false);
-    }, 4700);
-
-    return () => window.clearTimeout(timer);
   }, []);
 
   const displayMatches = useMemo(() => {
@@ -230,72 +211,6 @@ const Home: React.FC = () => {
             transform: translate(var(--drift, 0px), var(--rise, -360px)) scale(1);
             opacity: 0;
           }
-        }
-
-        @keyframes introBallLeft {
-          0% { transform: translate(-52vw, 34vh) scale(0.92) rotate(0deg); opacity: 0; }
-          12% { opacity: 1; }
-          48% { transform: translate(-8vw, -20vh) scale(1) rotate(340deg); opacity: 1; }
-          58% { transform: translate(0vw, -20vh) scale(1.06) rotate(430deg); opacity: 1; }
-          100% { transform: translate(10vw, 36vh) scale(0.9) rotate(670deg); opacity: 0; }
-        }
-
-        @keyframes introBallRight {
-          0% { transform: translate(52vw, 34vh) scale(0.92) rotate(0deg); opacity: 0; }
-          12% { opacity: 1; }
-          48% { transform: translate(8vw, -20vh) scale(1) rotate(-340deg); opacity: 1; }
-          58% { transform: translate(0vw, -20vh) scale(1.06) rotate(-430deg); opacity: 1; }
-          100% { transform: translate(-10vw, 36vh) scale(0.9) rotate(-670deg); opacity: 0; }
-        }
-
-        @keyframes introCollisionFlash {
-          0%, 46% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
-          56% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.95; }
-          74% { transform: translate(-50%, -50%) scale(1.8); opacity: 0.35; }
-          100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
-        }
-
-        .intro-collision-overlay {
-          position: fixed;
-          inset: 0;
-          pointer-events: none;
-          z-index: 50;
-          overflow: hidden;
-        }
-
-        .intro-ball {
-          position: absolute;
-          left: 50%;
-          top: 56%;
-          width: clamp(48px, 9vw, 76px);
-          height: clamp(48px, 9vw, 76px);
-          object-fit: contain;
-          filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.45));
-          opacity: 0;
-        }
-
-        .intro-ball.left { animation: introBallLeft 4.6s cubic-bezier(0.2, 0.9, 0.3, 1) 1 forwards; }
-        .intro-ball.right { animation: introBallRight 4.6s cubic-bezier(0.2, 0.9, 0.3, 1) 1 forwards; }
-
-        .intro-hit-flash {
-          position: absolute;
-          left: 50%;
-          top: 36%;
-          width: clamp(64px, 14vw, 140px);
-          height: clamp(64px, 14vw, 140px);
-          transform: translate(-50%, -50%);
-        }
-
-        .intro-hit-flash::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 9999px;
-          background:
-            radial-gradient(circle, rgba(255,255,255,0.92) 0%, rgba(255,206,107,0.72) 26%, rgba(255,130,53,0.2) 56%, rgba(255,130,53,0) 74%);
-          filter: blur(0.4px);
-          animation: introCollisionFlash 4.6s ease-out 1 forwards;
-          opacity: 0;
         }
 
         @keyframes fireworkBurst {
@@ -451,20 +366,8 @@ const Home: React.FC = () => {
             animation: none;
             opacity: 0;
           }
-
-          .intro-collision-overlay {
-            display: none;
-          }
         }
       `}</style>
-
-      {showIntroCollision && (
-        <div className="intro-collision-overlay" aria-hidden="true">
-          <img src="/original-world-cup.png" alt="" className="intro-ball left" />
-          <img src="/original-world-cup.png" alt="" className="intro-ball right" />
-          <div className="intro-hit-flash" />
-        </div>
-      )}
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 block" aria-hidden="true">
         <div className="absolute left-1 sm:left-4 bottom-0 h-40 sm:h-56 w-14 sm:w-20">
