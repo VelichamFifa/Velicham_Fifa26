@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import type { KnockoutRound } from '../types';
 
 
 const API_BASE_URL =
@@ -173,6 +174,10 @@ class ApiService {
 
   getRound32Leaderboard(limit?: number) {
     return this.client.get('/leaderboard/round-32', { params: { limit } });
+  }
+
+  getKnockoutLeaderboard(limit?: number, round?: KnockoutRound) {
+    return this.client.get('/leaderboard/knockout', { params: { limit, round } });
   }
 
   getCommunityLeaderboard(limit?: number) {

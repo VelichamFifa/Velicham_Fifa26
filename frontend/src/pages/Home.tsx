@@ -163,7 +163,19 @@ const Home: React.FC = () => {
               <Link
                 to="/round-32"
                 className="w-40 py-2.5 bg-white/5 border border-teal-400/50 text-teal-300/80 font-bold rounded-xl hover:bg-teal-500/10 hover:text-teal-200 hover:border-teal-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
-              >Rd 32 Leaderboard</Link>
+              >R 32 Leaderboard</Link>
+              <Link
+                to="/round-16"
+                className="w-40 py-2.5 bg-white/5 border border-cyan-400/50 text-cyan-300/80 font-bold rounded-xl hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+              >R16 Leaderboard</Link>
+              <Link
+                to="/quarter-leaderboard"
+                className="w-40 py-2.5 bg-white/5 border border-emerald-400/50 text-emerald-300/80 font-bold rounded-xl hover:bg-emerald-500/10 hover:text-emerald-200 hover:border-emerald-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+              >Quarter Leaderboard</Link>
+              <Link
+                to="/semifinal-leaderboard"
+                className="w-40 py-2.5 bg-white/5 border border-rose-400/50 text-rose-300/80 font-bold rounded-xl hover:bg-rose-500/10 hover:text-rose-200 hover:border-rose-400 active:scale-[0.98] transition-all duration-200 text-center inline-flex items-center justify-center tracking-wide shadow-xl backdrop-blur-sm text-sm animate-in fade-in slide-in-from-bottom-2 duration-700 delay-700"
+              >Semifinal Leaderboard</Link>
             </div>
         </div>
 
@@ -182,6 +194,8 @@ const Home: React.FC = () => {
               </p>
             </div>
         </div>
+
+       
 
         {/* Match Prediction Tiles — shown only when logged in */}
         {isLoggedIn && (

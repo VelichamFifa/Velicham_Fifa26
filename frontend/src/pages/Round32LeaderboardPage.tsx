@@ -33,9 +33,9 @@ const Round32LeaderboardPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">🏆 Round of 32 Leaderboard</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">🏆 R 32 Leaderboard</h1>
         <p className="text-white/50 text-sm sm:text-base">
-          See who topped the charts during the Round of 32.
+          See who topped the charts during R 32.
         </p>
       </div>
 
@@ -65,7 +65,7 @@ const Round32LeaderboardPage: React.FC = () => {
             <Leaderboard
               entries={filteredLeaderboard}
               type="user"
-              title="Round of 32"
+              title="R 32 Leaderboard"
               subtitle=""
               showCommunityUnderName={true}
               hideState={true}

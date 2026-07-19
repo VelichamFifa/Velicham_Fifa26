@@ -21,6 +21,9 @@ import WinnersPage from './pages/Winners';
 
 import GroupLeaderboardPage from './pages/GroupLeaderboardPage';
 import Round32LeaderboardPage from './pages/Round32LeaderboardPage';
+import R16LeaderboardPage from './pages/R16LeaderboardPage';
+import QuarterLeaderboardPage from './pages/QuarterLeaderboardPage';
+import SemifinalLeaderboardPage from './pages/SemifinalLeaderboardPage';
 function RouteTelemetry() {
   const location = useLocation();
   const lastTrackedPathRef = useRef<string>('');
@@ -61,6 +64,9 @@ function App() {
             <Route path="/winners" element={<WinnersPage />} />
             <Route path="/group-stages" element={<GroupLeaderboardPage />} />
             <Route path="/round-32" element={<Round32LeaderboardPage />} />
+            <Route path="/round-16" element={<R16LeaderboardPage />} />
+            <Route path="/quarter-leaderboard" element={<QuarterLeaderboardPage />} />
+            <Route path="/semifinal-leaderboard" element={<SemifinalLeaderboardPage />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/contact" element={<Contact />} />
           </Routes>

@@ -92,6 +92,21 @@ export interface LeaderboardEntry {
   email: string;
 }
 
+export interface KnockoutLeaderboardEntry {
+  rank: number;
+  totalPoints: number;
+  R16: number;
+  R8: number;
+  Semi: number;
+  name: string;
+  state: string;
+  community1?: string;
+  community2?: string;
+  userId: string;
+}
+
+export type KnockoutRound = 'R16' | 'R8' | 'Semi';
+
 export interface CommunityLeaderboardEntry {
   rank: number;
   totalPoints: number;
